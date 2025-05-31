@@ -9,15 +9,88 @@ generator client {
   output   = "../app/generated/prisma"
 }
 
+enum Role {
+  PATIENT
+  DOCTOR
+  SUPER_ADMIN
+  IT_ADMIN
+}
+
+enum AppointmentStatus {
+  PENDING // booked, awaiting confirmation
+  CONFIRMED // confirmed by the doctor
+  CANCELLED // cancelled by either party
+  RESCHEDULED // was moved to a different time
+  COMPLETED // appointment is done
+}
+
 model User {
   id            String    @id @default(cuid())
-  name          String?
   email         String    @unique
-  emailVerified DateTime?
+  name          String
   image         String?
+  phone         String?
+  emailVerified DateTime?
+
+  role    Role
+  doctor  Doctor?
+  patient Patient?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("users")
+}
+
+model Doctor {
+  id             String        @id @default(uuid())
+  userId         String        @unique
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialization String
+  availability   Availability?
+  appointments   Appointment[]
+
+  @@map("doctors")
+}
+
+model Patient {
+  id           String        @id @default(uuid())
+  userId       String        @unique
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@map("patients")
+}
+
+model Availability {
+  id            String @id @default(uuid())
+  doctorId      String @unique
+  daysAvailable Int[] // 0 = Sunday ... 6 = Saturday
+  opening       String // e.g., "09:00"
+  closing       String // e.g., "17:00"
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@map("availabilities")
+}
+
+model Appointment {
+  id          String            @id @default(uuid())
+  doctorId    String
+  patientId   String
+  status      AppointmentStatus @default(PENDING)
+  queueNumber Int
+  date        DateTime
+  reason      String?
+  previousId  String?
+
+  doctor          Doctor        @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patient         Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  previous        Appointment?  @relation("RescheduleLink", fields: [previousId], references: [id])
+  rescheduledFrom Appointment[] @relation("RescheduleLink")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("appointments")
 }
