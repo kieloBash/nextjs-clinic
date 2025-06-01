@@ -1,7 +1,11 @@
 import { PrismaClient } from "./app/generated/prisma";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
+declare global {
+  // Prevent multiple instances in dev
+  var prisma: PrismaClient | undefined;
+}
+const globalForPrisma = globalThis as typeof globalThis & {
+  prisma?: PrismaClient;
 };
 
 export const prisma =

@@ -4,6 +4,7 @@ import { checkUserExists } from "./libs/user";
 import authConfig from "./auth.config";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
+import { prisma } from "./prisma";
 
 export type ExtendedUser = DefaultSession["user"] & {
     role: string;
@@ -15,8 +16,6 @@ declare module "next-auth" {
         user: ExtendedUser;
     }
 }
-
-const prisma = new PrismaClient();
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     pages: {
@@ -90,7 +89,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         },
     },
-    adapter: PrismaAdapter(prisma),
+    adapter: PrismaAdapter(prisma as any),
     session: { strategy: 'jwt', },
     secret: process.env.AUTH_SECRET,
     debug: process.env.NODE_ENV === 'development',
