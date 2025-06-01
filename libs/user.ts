@@ -17,3 +17,14 @@ export async function checkUserExists({
     },
   });
 }
+
+export async function getDoctor({ doctorId }: { doctorId: string }) {
+  return await prisma.user.findFirst({
+    where: {
+      id: doctorId,
+      role: {
+        roleName: "DOCTOR",
+      },
+    },
+  });
+}

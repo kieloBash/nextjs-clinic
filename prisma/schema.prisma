@@ -134,7 +134,7 @@ model TimeSlot {
   doctor      User         @relation("DoctorTimeSlot", fields: [doctorId], references: [id])
   appointment Appointment? // one-to-one back reference
 
-  @@index([doctorId, date, startTime])
+  @@unique([doctorId, date, startTime])
   @@index([status]) // To filter OPEN/CLOSED slots
   @@map("time-slots")
 }
