@@ -22,6 +22,11 @@ enum InvoiceStatus {
   PAID
 }
 
+enum QueueStatus {
+  WAITING
+  APPROVED
+}
+
 enum TimeSlotStatus {
   OPEN
   CLOSED
@@ -50,6 +55,8 @@ model User {
   invoices              Invoice[]      @relation("InvoicePatient")
   createdInvoices       Invoice[]      @relation("InvoiceCreator")
   doctorTimeSlots       TimeSlot[]     @relation("DoctorTimeSlot")
+  queuesAsPatient       Queue[]        @relation("QueuePatient")
+  queuesAsDoctor        Queue[]        @relation("QueueDoctor")
 
   @@map("users")
 }
@@ -195,20 +202,25 @@ model Invoice {
 }
 
 model Queue {
-  id            String @id @default(cuid())
-  appointmentId String
+  id            String      @id @default(cuid())
+  patientId     String
+  doctorId      String
+  appointmentId String?
+  position      Int
+  status        QueueStatus
 
-  position Int
-  status   InvoiceStatus
-
-  createdAt DateTime @default(now())
+  date      DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relation
-  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  // Relations
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  patient     User         @relation("QueuePatient", fields: [patientId], references: [id])
+  doctor      User         @relation("QueueDoctor", fields: [doctorId], references: [id])
 
-  @@index([appointmentId]) // Efficient lookup by appointment
-  @@index([status]) // Useful if filtering queues by status (e.g., PENDING)
-  @@index([position]) // Useful if sorting or finding the next in queue
+  @@unique([patientId, doctorId])
+  @@index([doctorId, date, position])
+  @@index([appointmentId])
+  @@index([status])
+  @@index([position])
   @@map("queues")
 }
