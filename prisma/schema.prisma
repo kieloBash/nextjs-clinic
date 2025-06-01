@@ -9,13 +9,6 @@ generator client {
   output   = "../app/generated/prisma"
 }
 
-enum Role {
-  PATIENT
-  DOCTOR
-  SUPER_ADMIN
-  IT_ADMIN
-}
-
 enum AppointmentStatus {
   PENDING // booked, awaiting confirmation
   CONFIRMED // confirmed by the doctor
@@ -24,73 +17,197 @@ enum AppointmentStatus {
   COMPLETED // appointment is done
 }
 
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String
-  image         String?
-  phone         String?
-  emailVerified DateTime?
+enum InvoiceStatus {
+  PENDING
+  PAID
+}
 
-  role    Role
-  doctor  Doctor?
-  patient Patient?
+enum TimeSlotStatus {
+  OPEN
+  CLOSED
+}
+
+model User {
+  id     String  @id @default(cuid())
+  email  String  @unique
+  name   String
+  image  String?
+  phone  String?
+  roleId String
+
+  accounts Account[]
+  sessions Session[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations
+  role                  Role           @relation(fields: [roleId], references: [id])
+  appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
+  appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
+  notifications         Notification[]
+  invoices              Invoice[]      @relation("InvoicePatient")
+  createdInvoices       Invoice[]      @relation("InvoiceCreator")
+  doctorTimeSlots       TimeSlot[]     @relation("DoctorTimeSlot")
 
   @@map("users")
 }
 
-model Doctor {
-  id             String        @id @default(uuid())
-  userId         String        @unique
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  specialization String
-  availability   Availability?
-  appointments   Appointment[]
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
 
-  @@map("doctors")
-}
-
-model Patient {
-  id           String        @id @default(uuid())
-  userId       String        @unique
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  appointments Appointment[]
-
-  @@map("patients")
-}
-
-model Availability {
-  id            String @id @default(uuid())
-  doctorId      String @unique
-  daysAvailable Int[] // 0 = Sunday ... 6 = Saturday
-  opening       String // e.g., "09:00"
-  closing       String // e.g., "17:00"
-
-  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-
-  @@map("availabilities")
-}
-
-model Appointment {
-  id          String            @id @default(uuid())
-  doctorId    String
-  patientId   String
-  status      AppointmentStatus @default(PENDING)
-  queueNumber Int
-  date        DateTime
-  reason      String?
-  previousId  String?
-
-  doctor          Doctor        @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  patient         Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  previous        Appointment?  @relation("RescheduleLink", fields: [previousId], references: [id])
-  rescheduledFrom Appointment[] @relation("RescheduleLink")
+  // Added this field due to the To confirm your identity error 
+  refresh_token_expires_in Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // @@id([provider, providerAccountId])
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PasswordResetToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Appointment {
+  id         String            @id @default(cuid())
+  patientId  String
+  doctorId   String
+  date       DateTime
+  status     AppointmentStatus @default(PENDING)
+  timeSlotId String            @unique // one appointment per timeslot
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  patient  User                 @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor   User                 @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  timeSlot TimeSlot             @relation(fields: [timeSlotId], references: [id])
+  history  AppointmentHistory[]
+  queue    Queue[]
+
+  @@index([doctorId, date]) // For finding a doctor’s schedule
+  @@index([patientId, date]) // For checking patient history
+  @@index([status]) // For filtering appointments by status
+  @@index([date]) // For calendar or availability views
   @@map("appointments")
+}
+
+model TimeSlot {
+  id        String         @id @default(cuid())
+  doctorId  String
+  date      DateTime
+  startTime DateTime
+  endTime   DateTime
+  status    TimeSlotStatus
+
+  // Relaions
+  doctor      User         @relation("DoctorTimeSlot", fields: [doctorId], references: [id])
+  appointment Appointment? // one-to-one back reference
+
+  @@index([doctorId, date, startTime])
+  @@index([status]) // To filter OPEN/CLOSED slots
+  @@map("time-slots")
+}
+
+model AppointmentHistory {
+  id            String            @id @default(cuid())
+  appointmentId String
+  newStatus     AppointmentStatus
+  changed_at    DateTime
+  description   String?
+
+  // Relation
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+
+  @@map("appointment-histories")
+}
+
+model Notification {
+  id      String @id @default(cuid())
+  userId  String
+  message String
+
+  sentAt DateTime @default(now())
+
+  // Relation
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model Role {
+  id       String @id @default(cuid())
+  roleName String @unique
+
+  // Relation
+  users User[]
+
+  @@map("roles")
+}
+
+model Invoice {
+  id        String @id @default(cuid())
+  patientId String
+  createdBy String
+
+  amount Float
+  status InvoiceStatus
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  patient User @relation("InvoicePatient", fields: [patientId], references: [id])
+  creator User @relation("InvoiceCreator", fields: [createdBy], references: [id])
+
+  @@map("invoices")
+}
+
+model Queue {
+  id            String @id @default(cuid())
+  appointmentId String
+
+  position Int
+  status   InvoiceStatus
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+
+  @@index([appointmentId]) // Efficient lookup by appointment
+  @@index([status]) // Useful if filtering queues by status (e.g., PENDING)
+  @@index([position]) // Useful if sorting or finding the next in queue
+  @@map("queues")
 }

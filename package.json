@@ -9,7 +9,11 @@
     "lint": "next lint",
     "migrate": "npx prisma migrate dev",
     "generate": "npx prisma generate",
-    "db-push": "npx prisma db push"
+    "db-push": "npx prisma db push",
+    "seed": "npx prisma db seed"
+  },
+  "prisma": {
+    "seed": "ts-node --project tsconfig.seed.json prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",
@@ -25,6 +29,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
