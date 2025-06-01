@@ -36,3 +36,14 @@ export async function getDoctor({ doctorId }: { doctorId: string }) {
     },
   });
 }
+
+export async function getPatient({ patientId }: { patientId: string }) {
+  return await prisma.user.findFirst({
+    where: {
+      id: patientId,
+      role: {
+        roleName: "PATIENT",
+      },
+    },
+  });
+}
