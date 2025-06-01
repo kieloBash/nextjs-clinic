@@ -1,6 +1,8 @@
 import { AppointmentStatus, TimeSlotStatus } from "@/app/generated/prisma";
+import { createNotification } from "@/libs/notification";
 import { getTimeSlot } from "@/libs/timeslot";
 import { getDoctor, getPatient } from "@/libs/user";
+import { MISSING_PARAMETERS, NEW_BOOKED_APPOINTMENT_HISTORY, NEW_BOOKED_TIMESLOT_CLOSED, PENDING_BOOKING_NOTIFICATION_DOCTOR, PENDING_BOOKING_NOTIFICATION_PATIENT } from "@/utils/constants";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -11,7 +13,7 @@ export async function POST(request: Request) {
         // Validate required parameters
         if (!doctorId || !patientId || !timeSlotId) {
             return new NextResponse(
-                JSON.stringify({ message: "Missing parameters!" }),
+                JSON.stringify({ message: MISSING_PARAMETERS }),
                 { status: 400 }
             );
         }
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
         if (timeSlot.status === TimeSlotStatus.CLOSED) {
             return new NextResponse(
                 JSON.stringify({
-                    message: "Sorry, timeslot has already been booked/closed. Please book another timeslot. Thank you!",
+                    message: NEW_BOOKED_TIMESLOT_CLOSED,
                 }),
                 { status: 400 }
             );
@@ -57,8 +59,22 @@ export async function POST(request: Request) {
                 data: { status: TimeSlotStatus.CLOSED },
             });
 
+            await Promise.all([
+                await tx.appointmentHistory.create({
+                    data: {
+                        appointmentId: newAppointment.id,
+                        description: NEW_BOOKED_APPOINTMENT_HISTORY(patient.name, doctor.name),
+                        newStatus: AppointmentStatus.PENDING
+                    }
+                }),
+                await createNotification({ tx, userId: patientId, message: PENDING_BOOKING_NOTIFICATION_PATIENT }),
+                await createNotification({ tx, userId: doctorId, message: PENDING_BOOKING_NOTIFICATION_DOCTOR })
+            ])
+
             return { newAppointment, updatedTimeSlot };
         });
+
+        // TODO: send sms
 
         return new NextResponse(
             JSON.stringify({

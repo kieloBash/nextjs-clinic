@@ -1,5 +1,6 @@
 import { checkValidRole } from "@/libs/role";
 import { prisma } from "@/prisma";
+import { MISSING_PARAMETERS } from "@/utils/constants";
 import { encryptPassword } from "@/utils/helpers/password";
 import { NextResponse } from "next/server";
 
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
   const passwordRaw = formData.get("password");
 
   if (!nameRaw || !roleRaw || !emailRaw || !passwordRaw) {
-    return new NextResponse(JSON.stringify({ message: "Missing parameters" }), {
+    return new NextResponse(JSON.stringify({ message: MISSING_PARAMETERS }), {
       status: 400,
     });
   }
