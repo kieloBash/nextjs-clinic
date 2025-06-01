@@ -8,11 +8,11 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "5", 10);
     const searchTerm = searchParams.get("searchTerm") || "";
 
-    const searchWhere = searchTerm && searchTerm.trim() !== ""
+    const searchWhere: any = searchTerm && searchTerm.trim() !== ""
         ? {
             name: {
                 contains: searchTerm,
-                mode: Prisma.QueryMode.insensitive,
+                mode: "insensitive",
             },
         }
         : {};
