@@ -1,21 +1,29 @@
 import { prisma } from "@/prisma";
+import { UserFullType } from "@/types/user.type";
 
 export async function checkUserExists({
   email,
   phone,
+  id
 }: {
   email?: string;
   phone?: string;
-}) {
-  if (!email && !phone) {
-    throw new Error("At least one of email or phone must be provided");
+  id?: string;
+}): Promise<UserFullType> {
+  if (!email && !phone && !id) {
+    throw new Error("At least one of email or phone or id must be provided");
   }
 
   return await prisma.user.findFirst({
     where: {
-      OR: [...(email ? [{ email }] : []), ...(phone ? [{ phone }] : [])],
+      OR: [
+        ...(email ? [{ email }] : []),
+        ...(phone ? [{ phone }] : []),
+        ...(id ? [{ id }] : [])
+      ],
     },
-  });
+    include: { role: true }
+  }) as any;
 }
 
 export async function getDoctor({ doctorId }: { doctorId: string }) {

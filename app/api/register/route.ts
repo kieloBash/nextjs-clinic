@@ -1,5 +1,6 @@
 import { checkValidRole } from "@/libs/role";
 import { prisma } from "@/prisma";
+import { encryptPassword } from "@/utils/helpers/password";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -8,8 +9,9 @@ export async function POST(request: Request) {
   const nameRaw = formData.get("name");
   const roleRaw = formData.get("role");
   const emailRaw = formData.get("email");
+  const passwordRaw = formData.get("password");
 
-  if (!nameRaw || !roleRaw || !emailRaw) {
+  if (!nameRaw || !roleRaw || !emailRaw || !passwordRaw) {
     return new NextResponse(JSON.stringify({ message: "Missing parameters" }), {
       status: 400,
     });
@@ -24,12 +26,17 @@ export async function POST(request: Request) {
 
   const name = nameRaw.toString();
   const email = emailRaw.toString();
+  const password = passwordRaw.toString();
+
+  const hashedPassword = await encryptPassword(password);
+
 
   const newUser = await prisma.user.create({
     data: {
       name,
       email,
       roleId: existingRole.id,
+      hashedPassword
     },
   });
 

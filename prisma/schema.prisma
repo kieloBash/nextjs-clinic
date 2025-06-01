@@ -28,12 +28,13 @@ enum TimeSlotStatus {
 }
 
 model User {
-  id     String  @id @default(cuid())
-  email  String  @unique
-  name   String
-  image  String?
-  phone  String?
-  roleId String
+  id             String  @id @default(cuid())
+  email          String  @unique
+  name           String
+  image          String?
+  phone          String?
+  roleId         String
+  hashedPassword String
 
   accounts Account[]
   sessions Session[]
