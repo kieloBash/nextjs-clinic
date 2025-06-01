@@ -1,6 +1,7 @@
 import { QueueStatus } from "@/app/generated/prisma";
 import { getDoctor, getPatient } from "@/libs/user";
 import { prisma } from "@/prisma"; // Ensure you import this correctly
+import { MISSING_PARAMETERS } from "@/utils/constants";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
         // Validate required parameters
         if (!doctorId || !patientId) {
             return new NextResponse(
-                JSON.stringify({ message: "Missing doctorId or patientId." }),
+                JSON.stringify({ message: MISSING_PARAMETERS }),
                 { status: 400 }
             );
         }

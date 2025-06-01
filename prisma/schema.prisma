@@ -148,11 +148,12 @@ model TimeSlot {
 }
 
 model AppointmentHistory {
-  id            String            @id @default(cuid())
+  id            String             @id @default(cuid())
   appointmentId String
-  newStatus     AppointmentStatus
-  changed_at    DateTime
-  description   String?
+  newStatus     AppointmentStatus?
+  description   String
+
+  createdAt DateTime @default(now())
 
   // Relation
   appointment Appointment @relation(fields: [appointmentId], references: [id])

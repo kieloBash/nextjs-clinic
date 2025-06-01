@@ -1,4 +1,5 @@
 import { prisma } from "@/prisma";
+import { MISSING_PARAMETERS } from "@/utils/constants";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -7,7 +8,7 @@ export async function POST(request: Request) {
   const nameRaw = formData.get("name");
 
   if (!nameRaw) {
-    return new NextResponse(JSON.stringify({ message: "Missing parameters" }), {
+    return new NextResponse(JSON.stringify({ message: MISSING_PARAMETERS }), {
       status: 400,
     });
   }

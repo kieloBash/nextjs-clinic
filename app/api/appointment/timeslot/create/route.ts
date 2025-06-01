@@ -4,6 +4,7 @@ import { getDoctor } from "@/libs/user";
 import { prisma } from "@/prisma";
 import { NextResponse } from "next/server";
 import { parseDate } from "@/utils/helpers/date";
+import { MISSING_PARAMETERS } from "@/utils/constants";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
   const statusRaw = formData.get("status");
 
   if (!dateRaw || !startTimeRaw || !endTimeRaw || !doctorIdRaw || !statusRaw) {
-    return new NextResponse(JSON.stringify({ message: "Missing parameters" }), {
+    return new NextResponse(JSON.stringify({ message: MISSING_PARAMETERS }), {
       status: 400,
     });
   }
