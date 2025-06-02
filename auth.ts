@@ -2,13 +2,13 @@ import NextAuth, { DefaultSession } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { checkUserExists } from "./libs/user";
 import authConfig from "./auth.config";
-import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { prisma } from "./prisma";
 
 export type ExtendedUser = DefaultSession["user"] & {
     role: string;
     accessToken?: string;
+    isExpired?: boolean;
 };
 
 declare module "next-auth" {
@@ -16,6 +16,8 @@ declare module "next-auth" {
         user: ExtendedUser;
     }
 }
+
+const TOKEN_EXPIRES_IN = 60 * 60 * 24; // 24 hrs
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     pages: {
@@ -41,6 +43,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
         async session({ session, token }) {
             console.log("Start session")
+
+            const now = Math.floor(Date.now() / 1000);
+            const expiry = token.expiresAt as any;
+
+            if (expiry && now > expiry) {
+                console.warn("Session has expired.");
+                (session.user.isExpired as any) = true;
+            }
 
             if (token.sub && session.user) {
                 session.user.id = token.sub;
@@ -68,29 +78,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             const existingUser = await checkUserExists({ id: token.sub });
 
             if (!existingUser) return token;
+
+            const payload = {
+                sub: existingUser.id,
+                name: existingUser.name,
+                email: existingUser.email,
+                role: existingUser.role.roleName,
+            };
+
+            const signedToken = jwt.sign(payload, process.env.AUTH_SECRET!, {
+                expiresIn: TOKEN_EXPIRES_IN,
+            });
+
             token.role = existingUser.role.roleName;
             token.name = existingUser.name;
             token.email = existingUser.email;
             token.picture = existingUser.image;
-            token.accessToken = jwt.sign(
-                {
-                    sub: existingUser.id,
-                    name: existingUser.name,
-                    email: existingUser.email,
-                    role: existingUser.role.roleName,
-                },
-                process.env.AUTH_SECRET!,
-                { expiresIn: "7d" }
-            );
+            token.accessToken = signedToken;
+            token.expiresAt = Math.floor(Date.now() / 1000) + TOKEN_EXPIRES_IN;
 
-            console.log("Token: ", token);
+            console.log("Token:", token);
             console.log("End jwt")
             return token;
 
         },
     },
     adapter: PrismaAdapter(prisma as any),
-    session: { strategy: 'jwt', },
+    session: { strategy: 'jwt', maxAge: TOKEN_EXPIRES_IN },
     secret: process.env.AUTH_SECRET,
     debug: process.env.NODE_ENV === 'development',
     ...authConfig
