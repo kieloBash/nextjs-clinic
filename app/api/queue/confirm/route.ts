@@ -90,7 +90,7 @@ export async function POST(request: Request) {
 
         return new NextResponse(
             JSON.stringify({
-                message: "An error occurred while adding to the queue.",
+                message: "An error occurred while confirming the queue.",
                 error: error.message || error,
             }),
             { status: 500 }
