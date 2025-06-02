@@ -2,15 +2,22 @@ import { getDoctor } from "@/libs/user";
 import { MISSING_PARAMETERS } from "@/utils/constants";
 import { prisma } from "@/prisma"; // Ensure this path matches your project
 import { NextResponse } from "next/server";
+import { checkSessionUser, currentUser } from "@/libs/auth";
 
 export async function DELETE(
     _request: Request,
     { params }: { params: { doctorId: string } }
 ) {
+    const sessionUser = await checkSessionUser() as any;
+
     const { doctorId } = await params;
 
     if (!doctorId) {
         return NextResponse.json({ message: MISSING_PARAMETERS }, { status: 400 });
+    }
+
+    if (sessionUser.id !== doctorId) {
+        return NextResponse.json({ message: "Unauthorized user!" }, { status: 401 });
     }
 
     try {

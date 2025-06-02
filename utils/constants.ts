@@ -44,3 +44,5 @@ export const QUEUE_ADDED_NOTIFICATION_DOCTOR = (patientName: string, lineNumber:
     `Patient ${patientName} has been added to the queue at position #${lineNumber}.`;
 
 export const MISSING_PARAMETERS = "Missing parameters!";
+export const NO_SESSION = "Uh oh, you are not currently logged in!";
+export const HAS_SESSION = "User is logged in!";

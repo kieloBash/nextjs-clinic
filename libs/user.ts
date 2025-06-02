@@ -1,6 +1,7 @@
 import { prisma } from "@/prisma";
 import { UserFullType } from "@/types/user.type";
 
+
 export async function checkUserExists({
   email,
   phone,
