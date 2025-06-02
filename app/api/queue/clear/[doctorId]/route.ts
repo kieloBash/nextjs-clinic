@@ -5,13 +5,12 @@ import { NextResponse } from "next/server";
 import { checkSessionUser, currentUser } from "@/libs/auth";
 
 export async function DELETE(
-    _request: Request,
-    { params }: { params: { doctorId: string } }
-) {
+    request: Request) {
     const sessionUser = await checkSessionUser() as any;
 
-    const { doctorId } = await params;
-
+    const url = new URL(request.url);
+    const doctorId = url.pathname.split("/").pop();
+    
     if (!doctorId) {
         return NextResponse.json({ message: MISSING_PARAMETERS }, { status: 400 });
     }
