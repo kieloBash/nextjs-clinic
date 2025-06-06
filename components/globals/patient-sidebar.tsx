@@ -25,7 +25,7 @@ export function PatientSidebar({ routes }: { routes: INavLink[] }) {
         <>
             <div
                 className={cn(
-                    "fixed h-screen left-0 z-50 w-64 bg-primary text-primary-foreground transform transition-transform duration-300 ease-in-out md:translate-x-0 md:relative md:z-0")}
+                    "sticky top-0 left-0 h-screen z-50 w-64 bg-primary text-primary-foreground")}
             >
                 <div className="flex flex-col h-full">
                     {/* Logo */}

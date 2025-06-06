@@ -17,9 +17,6 @@ export default function SimpleLoadingPage() {
                 {/* Loading Text */}
                 <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading HealthCare</h2>
                 <p className="text-gray-600 mb-6">Please wait while we prepare your experience</p>
-
-                {/* Spinner */}
-                <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
             </div>
         </div>
     )
