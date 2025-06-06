@@ -1,0 +1,275 @@
+import React, { useState } from 'react'
+import { Card, CardContent } from "@/components/ui/card"
+import { eachDayOfInterval, endOfWeek, format, isSameDay, parseISO, startOfWeek } from 'date-fns'
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from '@/components/ui/button'
+import { UserIcon } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+
+const generateTimeSlots = () => {
+    const slots = []
+    for (let hour = 8; hour < 18; hour++) {
+        slots.push(`${hour.toString().padStart(2, "0")}:00`)
+        slots.push(`${hour.toString().padStart(2, "0")}:30`)
+    }
+    return slots
+}
+
+interface IGoogleCalendarProps {
+    currentDate?: Date
+    appointments?: any[]
+    timeSlots?: any[]
+}
+
+const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments = [], timeSlots = [] }: IGoogleCalendarProps) => {
+    const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
+    const timeSlotsList = generateTimeSlots();
+
+    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
+    const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
+    const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
+
+    const getAppointmentsForDay = (day: Date) => {
+        return appointments.filter((apt) => isSameDay(parseISO(apt.date), day))
+    }
+
+    const getTimeSlotsForDay = (day: Date) => {
+        return timeSlots.filter((slot) => isSameDay(parseISO(slot.date), day))
+    }
+
+    const getAppointmentPosition = (time: string, duration: number) => {
+        const [hours, minutes] = time.split(":").map(Number)
+        const startMinutes = (hours - 8) * 60 + minutes
+        const top = (startMinutes / 30) * 40 // 40px per 30-minute slot
+        const height = (duration / 30) * 40
+        return { top, height }
+    }
+
+    const generateTimeSlotBlocks = (timeSlot: any) => {
+        const blocks = []
+        const [startHours, startMinutes] = timeSlot.startTime.split(":").map(Number)
+        const [endHours, endMinutes] = timeSlot.endTime.split(":").map(Number)
+
+        const startTotalMinutes = startHours * 60 + startMinutes
+        const endTotalMinutes = endHours * 60 + endMinutes
+        const duration = timeSlot.duration
+
+        for (let time = startTotalMinutes; time < endTotalMinutes; time += duration) {
+            const hours = Math.floor(time / 60)
+            const minutes = time % 60
+            const timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
+
+            // Check if this time slot is already booked
+            const isBooked = appointments.some(
+                (apt) => isSameDay(parseISO(apt.date), parseISO(timeSlot.date)) && apt.time === timeString,
+            )
+
+            if (!isBooked) {
+                blocks.push({
+                    id: `${timeSlot.id}-${timeString}`,
+                    time: timeString,
+                    duration: duration,
+                    available: true,
+                })
+            }
+        }
+
+        return blocks
+    }
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case "confirmed":
+                return "bg-blue-500 hover:bg-blue-600 text-white border-blue-600"
+            case "pending":
+                return "bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-600"
+            case "cancelled":
+                return "bg-red-500 hover:bg-red-600 text-white border-red-600"
+            default:
+                return "bg-gray-500 hover:bg-gray-600 text-white border-gray-600"
+        }
+    }
+
+
+    return (
+        <>
+            <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                    <div className="flex">
+                        {/* Time Column */}
+                        <div className="w-20 bg-gray-50 border-r">
+                            <div className="h-12 border-b"></div> {/* Header spacer */}
+                            {timeSlotsList.map((time, index) => (
+                                <div
+                                    key={time}
+                                    className={`h-10 border-b border-gray-200 flex items-center justify-end pr-2 text-xs text-gray-600 ${index % 2 === 0 ? "font-medium" : "text-gray-400"
+                                        }`}
+                                >
+                                    {index % 2 === 0 ? time : ""}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Days Columns */}
+                        <div className="flex-1 overflow-x-auto">
+                            <div className="flex min-w-full">
+                                {weekDays.map((day) => {
+                                    const dayAppointments = getAppointmentsForDay(day)
+                                    const isToday = isSameDay(day, new Date())
+
+                                    return (
+                                        <div key={day.toISOString()} className="flex-1 min-w-32 border-r border-gray-200">
+                                            {/* Day Header */}
+                                            <div
+                                                className={`h-12 border-b border-gray-200 flex flex-col items-center justify-center ${isToday ? "bg-blue-50" : "bg-white"
+                                                    }`}
+                                            >
+                                                <div className="text-xs text-gray-600 font-medium">{format(day, "EEE")}</div>
+                                                <div
+                                                    className={`text-lg font-bold ${isToday
+                                                        ? "bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                                                        : ""
+                                                        }`}
+                                                >
+                                                    {format(day, "d")}
+                                                </div>
+                                            </div>
+
+                                            {/* Time Slots */}
+                                            <div className="relative">
+                                                {timeSlotsList.map((time, index) => (
+                                                    <div
+                                                        key={time}
+                                                        className={`h-10 border-b border-gray-100 ${index % 2 === 0 ? "border-gray-200" : ""}`}
+                                                    />
+                                                ))}
+
+                                                {/* Time Slots and Appointments */}
+                                                {dayAppointments.map((appointment) => {
+                                                    const { top, height } = getAppointmentPosition(appointment.time, appointment.duration)
+                                                    return (
+                                                        <div
+                                                            key={appointment.id}
+                                                            className={`absolute left-1 right-1 rounded-md p-1 cursor-pointer transition-colors ${getStatusColor(appointment.status)}`}
+                                                            style={{ top: `${top}px`, height: `${height}px` }}
+                                                            onClick={() => setSelectedAppointment(appointment)}
+                                                        >
+                                                            <div className="text-xs font-medium truncate">{appointment.patientName}</div>
+                                                            <div className="text-xs opacity-90 truncate">
+                                                                {appointment.time} - {appointment.type}
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+
+                                                {/* Available Time Slots */}
+                                                {getTimeSlotsForDay(day).map((timeSlot) => {
+                                                    const availableBlocks = generateTimeSlotBlocks(timeSlot)
+                                                    return availableBlocks.map((block) => {
+                                                        const { top, height } = getAppointmentPosition(block.time, block.duration)
+                                                        return (
+                                                            <div
+                                                                key={block.id}
+                                                                className="absolute left-1 right-1 rounded-md p-1 cursor-pointer transition-colors bg-green-100 hover:bg-green-200 border border-green-300 border-dashed"
+                                                                style={{ top: `${top}px`, height: `${height}px` }}
+                                                                onClick={() => console.log("Available slot clicked:", block)}
+                                                            >
+                                                                <div className="text-xs font-medium text-green-700">Available</div>
+                                                                <div className="text-xs text-green-600">
+                                                                    {block.time} ({block.duration}min)
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    })
+                                                })}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Legend */}
+            <div className="flex items-center justify-center space-x-6 mt-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                    <span className="text-sm">Confirmed Appointments</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                    <span className="text-sm">Pending Appointments</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-green-100 border border-green-300 border-dashed rounded"></div>
+                    <span className="text-sm">Available Time Slots</span>
+                </div>
+            </div>
+
+            {selectedAppointment && (
+                <Dialog open={!!selectedAppointment} onOpenChange={() => setSelectedAppointment(null)}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Appointment Details</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                            <div className="flex items-center space-x-4">
+                                <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full">
+                                    <UserIcon className="w-6 h-6 text-primary" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-lg">{selectedAppointment.patientName}</h3>
+                                    <Badge className={getStatusColor(selectedAppointment.status)}>{selectedAppointment.status}</Badge>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm font-medium text-gray-600">Date</label>
+                                    <p>{format(parseISO(selectedAppointment.date), "EEEE, MMMM d, yyyy")}</p>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-600">Time</label>
+                                    <p>
+                                        {selectedAppointment.time} ({selectedAppointment.duration} min)
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-600">Type</label>
+                                    <p>{selectedAppointment.type}</p>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-600">Phone</label>
+                                    <p>{selectedAppointment.patientPhone}</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-medium text-gray-600">Email</label>
+                                <p>{selectedAppointment.patientEmail}</p>
+                            </div>
+                        </div>
+
+                        <DialogFooter className="flex space-x-2">
+                            <Button variant="outline">Reschedule</Button>
+                            <Button variant="outline" className="text-red-600 hover:text-red-700">
+                                Cancel Appointment
+                            </Button>
+                            <Button>Confirm</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
+        </>
+    )
+}
+
+export default GoogleCalendar
