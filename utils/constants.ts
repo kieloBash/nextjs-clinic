@@ -46,3 +46,5 @@ export const QUEUE_ADDED_NOTIFICATION_DOCTOR = (patientName: string, lineNumber:
 export const MISSING_PARAMETERS = "Missing parameters!";
 export const NO_SESSION = "Uh oh, you are not currently logged in!";
 export const HAS_SESSION = "User is logged in!";
+export const CREATED_PROMPT_SUCCESS = "Created Successfully!";
+export const WELCOME_PROMPT = "Welcome back, great to see you again!";
