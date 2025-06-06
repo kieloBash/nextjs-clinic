@@ -18,34 +18,7 @@ import { REGISTER_ACCOUNT } from "@/utils/api-endpoints"
 import { showToast } from "@/utils/helpers/show-toast"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { useLoading } from "@/components/providers/loading-provider"
-
-// Mock schemas - replace with your actual schemas
-const patientFormSchema = z
-    .object({
-        name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-        email: z.string().email({ message: "Please enter a valid email address" }),
-        password: z.string().min(8, { message: "Password must be at least 8 characters" }).max(100),
-        confirmPassword: z.string(),
-        phone: z.string().min(10, { message: "Please enter a valid phone number" }),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-        message: "Passwords do not match",
-        path: ["confirmPassword"],
-    })
-
-const doctorFormSchema = z
-    .object({
-        name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-        email: z.string().email({ message: "Please enter a valid email address" }),
-        password: z.string().min(8, { message: "Password must be at least 8 characters" }).max(100),
-        confirmPassword: z.string(),
-        phone: z.string().min(10, { message: "Please enter a valid phone number" }),
-        specialization: z.string().min(2, { message: "Please enter your specialization" }),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-        message: "Passwords do not match",
-        path: ["confirmPassword"],
-    })
+import { doctorFormSchema, patientFormSchema } from "./schema"
 
 export default function SignupPage() {
     const [activeTab, setActiveTab] = useState("patient")
@@ -94,11 +67,11 @@ export default function SignupPage() {
                 }
             });
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
+            patientForm.reset();
         } catch (error: any) {
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
         } finally {
             setIsLoading(false)
-            patientForm.reset();
         }
     }
 
@@ -121,11 +94,11 @@ export default function SignupPage() {
                 }
             });
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
+            doctorForm.reset();
         } catch (error: any) {
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
         } finally {
             setIsLoading(false)
-            doctorForm.reset();
         }
     }
 
@@ -153,10 +126,10 @@ export default function SignupPage() {
                     {/* Logo/Brand Section */}
                     <div className="flex justify-center mb-2">
                         <div className="relative">
-                            <div className="w-16 h-16 bg-gradient-to-br from-primary to-green-600 rounded-full flex items-center justify-center shadow-lg">
+                            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-green-600 rounded-full flex items-center justify-center shadow-lg">
                                 <Heart className="w-8 h-8 text-white" />
                             </div>
-                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                                 <CheckCircle className="w-4 h-4 text-white" />
                             </div>
                         </div>
@@ -244,7 +217,7 @@ export default function SignupPage() {
                                                         <Input
                                                             disabled={isLoading}
                                                             type={showPassword ? "text" : "password"}
-                                                            className="pl-10 pr-10 h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 transition-colors"
+                                                            className="pl-10 pr-10 h-10 border-gray-200 focus:border-primary focus:ring-primary transition-colors"
                                                             placeholder="Create a strong password"
                                                             {...field}
                                                         />
@@ -274,7 +247,7 @@ export default function SignupPage() {
                                                         <Input
                                                             disabled={isLoading}
                                                             type={showConfirmPassword ? "text" : "password"}
-                                                            className="pl-10 pr-10 h-12 border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 transition-colors"
+                                                            className="pl-10 pr-10 h-10 border-gray-200 focus:border-primary focus:ring-primary transition-colors"
                                                             placeholder="Confirm your password"
                                                             {...field}
                                                         />
@@ -295,7 +268,7 @@ export default function SignupPage() {
                                     <Button
                                         disabled={isLoading}
                                         type="submit"
-                                        className="w-full h-12 bg-gradient-to-r from-primary to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                                        className="w-full h-12 bg-gradient-to-r from-primary to-emerald-700 hover:from-primary hover:to-emerald-800 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
                                     >
                                         {isLoading ? (
                                             <div className="flex items-center gap-2">
@@ -361,7 +334,7 @@ export default function SignupPage() {
                                                         <Input
                                                             disabled={isLoading}
                                                             type={showPassword ? "text" : "password"}
-                                                            className="pl-10 pr-10 h-12 border-gray-200 focus:border-green-500 focus:ring-green-500 transition-colors"
+                                                            className="pl-10 pr-10 h-10 border-gray-200 focus:border-primary focus:ring-primary transition-colors"
                                                             placeholder="Create a strong password"
                                                             {...field}
                                                         />
@@ -391,7 +364,7 @@ export default function SignupPage() {
                                                         <Input
                                                             disabled={isLoading}
                                                             type={showConfirmPassword ? "text" : "password"}
-                                                            className="pl-10 pr-10 h-12 border-gray-200 focus:border-green-500 focus:ring-green-500 transition-colors"
+                                                            className="pl-10 pr-10 h-10 border-gray-200 focus:border-primary focus:ring-primary transition-colors"
                                                             placeholder="Confirm your password"
                                                             {...field}
                                                         />
@@ -412,7 +385,7 @@ export default function SignupPage() {
                                     <Button
                                         disabled={isLoading}
                                         type="submit"
-                                        className="w-full h-12 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                                        className="w-full h-12 bg-gradient-to-r from-primary to-emerald-700 hover:from-primary hover:to-emerald-800 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
                                     >
                                         {isLoading ? (
                                             <div className="flex items-center gap-2">
@@ -433,7 +406,7 @@ export default function SignupPage() {
                     <div className="text-sm text-center text-gray-600">
                         Already have an account?{" "}
                         <Link
-                            href="/login"
+                            href="/auth/sign-up"
                             className="text-primary hover:text-emerald-700 font-medium underline underline-offset-4 transition-colors"
                         >
                             Sign in here
