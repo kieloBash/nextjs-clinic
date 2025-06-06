@@ -1,10 +1,27 @@
-import { Prisma } from "@prisma/client";
 import { TimeSlotStatus } from "@/app/generated/prisma";
 import { getDoctor } from "@/libs/user";
 import { prisma } from "@/prisma";
 import { NextResponse } from "next/server";
 import { parseDate } from "@/utils/helpers/date";
 import { MISSING_PARAMETERS } from "@/utils/constants";
+import { isBefore, isAfter, startOfDay, differenceInMinutes, addHours } from "date-fns";
+
+export function isDateTodayOrFuture(date: Date): boolean {
+  return !isBefore(date, startOfDay(new Date()));
+}
+
+export function isStartTimeBeforeEndTime(start: Date, end: Date): boolean {
+  return isBefore(start, end);
+}
+
+export function isMinimumDurationMet(start: Date, end: Date, minMinutes = 30): boolean {
+  return differenceInMinutes(end, start) >= minMinutes;
+}
+
+export function isAtLeastOneHourFromNow(dateTime: Date): boolean {
+  const oneHourFromNow = addHours(new Date(), 1);
+  return isAfter(dateTime, oneHourFromNow);
+}
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -42,6 +59,33 @@ export async function POST(request: Request) {
   const startTime = parseDate(startTimeRaw.toString());
   const endTime = parseDate(endTimeRaw.toString());
 
+  if (!isDateTodayOrFuture(date)) {
+    return new NextResponse(
+      JSON.stringify({ message: "Date must be today or in the future." }),
+      { status: 400 }
+    );
+  }
+
+  if (!isStartTimeBeforeEndTime(startTime, endTime)) {
+    return new NextResponse(
+      JSON.stringify({ message: "Start time must be before end time." }),
+      { status: 400 }
+    );
+  }
+
+  if (!isMinimumDurationMet(startTime, endTime)) {
+    return new NextResponse(
+      JSON.stringify({ message: "Time slot must be at least 30 minutes long." }),
+      { status: 400 }
+    );
+  }
+
+  if (!isAtLeastOneHourFromNow(startTime)) {
+    return new NextResponse(
+      JSON.stringify({ message: "Start time must be at least 1 hour from now." }),
+      { status: 400 }
+    );
+  }
   try {
     const newTimeSlot = await prisma.timeSlot.create({
       data: {
@@ -54,7 +98,7 @@ export async function POST(request: Request) {
     });
 
     return new NextResponse(
-      JSON.stringify({ message: "Created time slot", data: newTimeSlot }),
+      JSON.stringify({ message: "Created time slot", payload: newTimeSlot }),
       { status: 200 }
     );
   } catch (error: any) {

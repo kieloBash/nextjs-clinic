@@ -10,13 +10,20 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from '@/components/ui/button'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form } from "@/components/ui/form"
 import { Plus } from 'lucide-react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { FormInput } from '@/components/forms/input'
+import { useCurrentUser } from '@/libs/hooks'
+import { useLoading } from '@/components/providers/loading-provider'
+import axios from 'axios'
+import { CREATED_PROMPT_SUCCESS } from '@/utils/constants'
+import { showToast } from '@/utils/helpers/show-toast'
+import { CREATE_TIMESLOT } from '@/utils/api-endpoints'
+import { mergeTimeWithDate } from '@/utils/helpers/date'
 
 const timeSlotSchema = z.object({
     date: z.string().min(1, "Date is required"),
@@ -25,8 +32,9 @@ const timeSlotSchema = z.object({
 })
 
 const CreateTimeSlotModal = () => {
+    const user = useCurrentUser();
     const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [timeSlots, setTimeSlots] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(false);
 
     const form = useForm<z.infer<typeof timeSlotSchema>>({
         resolver: zodResolver(timeSlotSchema),
@@ -37,14 +45,32 @@ const CreateTimeSlotModal = () => {
         },
     })
 
-    function onSubmitTimeSlot(values: z.infer<typeof timeSlotSchema>) {
-        const newTimeSlot: any = {
-            ...values,
+    async function onSubmitTimeSlot(values: z.infer<typeof timeSlotSchema>) {
+        if (!user || !user?.id) return null;
+
+        const formData = new FormData();
+        formData.append("date", values.date);
+        formData.append("startTime", mergeTimeWithDate(values.startTime, new Date(values.date)) as any);
+        formData.append("endTime", mergeTimeWithDate(values.endTime, new Date(values.date)) as any);
+        formData.append("status", "OPEN");
+        formData.append("doctorId", user.id);
+
+        try {
+            setIsLoading(true)
+            const res = await axios.post(CREATE_TIMESLOT, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
+            setIsDialogOpen(false)
+            form.reset()
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
+        } finally {
+            setIsLoading(false)
         }
-        setTimeSlots((prev) => [...prev, newTimeSlot])
-        setIsDialogOpen(false)
-        form.reset()
-        console.log("New time slot created:", newTimeSlot)
+
     }
 
     return (
@@ -68,6 +94,7 @@ const CreateTimeSlotModal = () => {
                             label='Date'
                             type='date'
                             className='w-full'
+                            disabled={isLoading}
                         />
                         <div className="grid grid-cols-2 gap-4">
                             <FormInput
@@ -75,16 +102,18 @@ const CreateTimeSlotModal = () => {
                                 name="startTime"
                                 label='Start Time'
                                 type='time'
+                                disabled={isLoading}
                             />
                             <FormInput
                                 control={form.control}
                                 name="endTime"
                                 label='End Time'
                                 type='time'
+                                disabled={isLoading}
                             />
                         </div>
                         <DialogFooter>
-                            <Button type="submit">Create Time Slot</Button>
+                            <Button disabled={isLoading} type="submit">Create Time Slot</Button>
                         </DialogFooter>
                     </form>
                 </Form>
