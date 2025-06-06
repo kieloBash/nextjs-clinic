@@ -1,4 +1,5 @@
 import DoctorLayout from '@/components/globals/doctor-layout';
+import PatientLayout from '@/components/globals/patient-layout';
 import { Button } from '@/components/ui/button';
 import { currentUser } from '@/libs/auth'
 import { ILayout } from '@/types/global.type'
@@ -18,7 +19,7 @@ const Layout = async ({ children }: ILayout) => {
         )
     } else if (user.role === "PATIENT") {
         return (
-            <>{children}</>
+            <PatientLayout user={user}>{children}</PatientLayout>
         )
     } else {
         return (

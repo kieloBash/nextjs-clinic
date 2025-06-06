@@ -19,7 +19,7 @@ interface INavLink {
     isActive: boolean;
 }
 
-export function DoctorSidebar({ routes }: { routes: INavLink[] }) {
+export function PatientSidebar({ routes }: { routes: INavLink[] }) {
 
     return (
         <>
