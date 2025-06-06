@@ -1,7 +1,8 @@
 import { QueueStatus } from "@/app/generated/prisma";
+import { createNotification } from "@/libs/notification";
 import { getDoctor, getPatient } from "@/libs/user";
 import { prisma } from "@/prisma"; // Ensure you import this correctly
-import { MISSING_PARAMETERS } from "@/utils/constants";
+import { MISSING_PARAMETERS, QUEUE_ADDED_NOTIFICATION_DOCTOR, QUEUE_ADDED_NOTIFICATION_PATIENT } from "@/utils/constants";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
             where: {
                 doctorId,
                 patientId,
+                status: QueueStatus.WAITING
             },
         });
 
@@ -77,6 +79,11 @@ export async function POST(request: Request) {
                 date: today,
             },
         });
+
+        await Promise.all([
+            await createNotification({ userId: newQueue.patientId, message: QUEUE_ADDED_NOTIFICATION_PATIENT(newQueue.position) }),
+            await createNotification({ userId: newQueue.doctorId, message: QUEUE_ADDED_NOTIFICATION_DOCTOR(patient.name, newQueue.position) })
+        ])
 
         return new NextResponse(
             JSON.stringify({
