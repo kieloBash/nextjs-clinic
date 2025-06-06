@@ -1,13 +1,23 @@
 'use client'
-import { signOut } from 'next-auth/react'
+import { useCurrentUser } from '@/libs/hooks';
 import React from 'react'
+import DoctorMainPage from './_components/doctor-main';
+import PatientMainPage from './_components/patient.main';
 
 const DashboardPage = () => {
-    return (
-        <div>
-            <button type='button' onClick={() => signOut()}>Log out!</button>
-        </div>
+    const user = useCurrentUser();
 
+    if (user) {
+        if (user.role === "DOCTOR")
+            return <DoctorMainPage user={user} />
+        else if (user.role === "PATIENT") {
+            return <PatientMainPage user={user} />
+        }
+    }
+
+
+    return (
+        <div className="">No Roles found!</div>
     )
 }
 

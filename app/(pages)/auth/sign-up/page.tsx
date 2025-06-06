@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { FormInput } from "@/components/forms/input"
 import { REGISTER_ACCOUNT } from "@/utils/api-endpoints"
 import { showToast } from "@/utils/helpers/show-toast"
-import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
+import { APP_NAME, CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { useLoading } from "@/components/providers/loading-provider"
 import { doctorFormSchema, patientFormSchema } from "./schema"
 
@@ -137,7 +137,7 @@ export default function SignUpPage() {
 
                     <div className="text-center space-y-2">
                         <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-green-600 bg-clip-text text-transparent">
-                            Join HealthCare+
+                            Join {APP_NAME}+
                         </CardTitle>
                         <CardDescription className="text-gray-600 text-base">
                             Your trusted medical partner for better health
