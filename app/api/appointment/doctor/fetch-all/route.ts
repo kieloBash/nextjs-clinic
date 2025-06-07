@@ -26,16 +26,16 @@ export async function GET(request: Request) {
         }
     }
 
-    const timeSlots = await prisma.timeSlot.findMany({
+    const appointments = await prisma.appointment.findMany({
         where: {
             doctorId,
             ...filters,
         },
+        include: { timeSlot: true, patient: true, doctor: true },
         orderBy: [
-            { date: "asc" },
-            { startTime: "asc" }
+            { date: "asc" }
         ]
     })
 
-    return new NextResponse(JSON.stringify({ message: "Fetched timeslots per doctor", payload: timeSlots }), { status: 200 })
+    return new NextResponse(JSON.stringify({ message: "Fetched appointments of doctor", payload: appointments }), { status: 200 })
 }
