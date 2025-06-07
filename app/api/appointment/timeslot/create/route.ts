@@ -23,6 +23,11 @@ function isAtLeastOneHourFromNow(dateTime: Date): boolean {
   return isAfter(dateTime, oneHourFromNow);
 }
 
+function isMaximumDurationMet(start: Date, end: Date, maxMinutes = 180): boolean {
+  return differenceInMinutes(end, start) <= maxMinutes;
+}
+
+
 export async function POST(request: Request) {
   const formData = await request.formData();
 
@@ -83,6 +88,13 @@ export async function POST(request: Request) {
   if (!isAtLeastOneHourFromNow(startTime)) {
     return new NextResponse(
       JSON.stringify({ message: "Start time must be at least 1 hour from now." }),
+      { status: 400 }
+    );
+  }
+
+  if (!isMaximumDurationMet(startTime, endTime)) {
+    return new NextResponse(
+      JSON.stringify({ message: "Time slot must not exceed 3 hours." }),
       { status: 400 }
     );
   }

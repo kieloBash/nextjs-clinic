@@ -14,11 +14,10 @@ import { Badge } from '@/components/ui/badge'
 import { Appointment, TimeSlot, TimeSlotStatus } from '@/app/generated/prisma'
 import { FullAppointmentType } from '@/types/prisma.type'
 import { formatTimeToString, getDifferenceTimeSlot } from '@/utils/helpers/date'
-import { toZonedTime } from 'date-fns-tz'
 
 const generateTimeSlots = () => {
     const slots = []
-    for (let hour = 8; hour < 18; hour++) {
+    for (let hour = 8; hour < 24; hour++) {
         slots.push(`${hour.toString().padStart(2, "0")}:00`)
         slots.push(`${hour.toString().padStart(2, "0")}:30`)
     }
@@ -44,7 +43,6 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
     }
 
     const getTimeSlotsForDay = (day: Date) => {
-
         return timeSlots.filter((slot) => isSameDay(new Date(slot.date), day) && slot.status !== TimeSlotStatus.CLOSED)
     }
 
