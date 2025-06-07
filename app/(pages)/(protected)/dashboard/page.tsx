@@ -3,15 +3,23 @@ import { useCurrentUser } from '@/libs/hooks';
 import React from 'react'
 import DoctorMainPage from './_components/doctor-main';
 import PatientMainPage from './_components/patient.main';
+import DoctorLayout from '@/components/globals/doctor-layout';
+import PatientLayout from '@/components/globals/patient-layout';
 
 const DashboardPage = () => {
     const user = useCurrentUser();
-
     if (user) {
         if (user.role === "DOCTOR")
-            return <DoctorMainPage user={user} />
+            return (
+                <DoctorLayout user={user}>
+                    <DoctorMainPage user={user} />
+                </DoctorLayout>)
         else if (user.role === "PATIENT") {
-            return <PatientMainPage user={user} />
+            return (
+                <PatientLayout user={user}>
+                    <PatientMainPage user={user} />
+                </PatientLayout>
+            )
         }
     }
 

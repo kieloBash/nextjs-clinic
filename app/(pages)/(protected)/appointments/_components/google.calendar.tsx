@@ -22,8 +22,6 @@ interface IGoogleCalendarProps {
 }
 
 const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments = [], timeSlots = [] }: IGoogleCalendarProps) => {
-    console.log(appointments)
-
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
     const timeSlotsList = generateTimeSlots();
 
@@ -122,8 +120,6 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                 {weekDays.map((day) => {
                                     const dayAppointments = getAppointmentsForDay(day)
                                     const isToday = isSameDay(day, new Date())
-
-                                    console.log(day, dayAppointments.length)
 
                                     return (
                                         <div key={day.toISOString()} className="flex-1 min-w-32 border-r border-gray-200">

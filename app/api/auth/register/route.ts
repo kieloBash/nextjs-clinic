@@ -14,8 +14,6 @@ export async function POST(request: Request) {
     const phoneRaw = formData.get("phone");
     const passwordRaw = formData.get("password");
 
-    console.log(nameRaw, roleRaw, passwordRaw, roleRaw, phoneRaw)
-
     if (!nameRaw || !roleRaw || !emailRaw || !passwordRaw || !phoneRaw) {
       return new NextResponse(
         JSON.stringify({ message: MISSING_PARAMETERS }),
