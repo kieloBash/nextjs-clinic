@@ -12,6 +12,7 @@ import GoogleCalendar from "./google.calendar"
 import CreateTimeSlotModal from "./timeslot-create-modal"
 import useDoctorTimeSlots from "../_hooks/use-timeslots"
 import { useCurrentUser } from "@/libs/hooks"
+import useDoctorAppointments from "../_hooks/use-appointments"
 
 export default function DoctorAppointmentsPage() {
     const user = useCurrentUser();
@@ -22,6 +23,7 @@ export default function DoctorAppointmentsPage() {
     const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
 
     const timeslots = useDoctorTimeSlots({ doctorId: user?.id, statusFilter: "OPEN" });
+    const appointments = useDoctorAppointments({ doctorId: user?.id });
 
     return (
         <div className="container mx-auto px-6 py-4 space-y-6">
@@ -56,7 +58,9 @@ export default function DoctorAppointmentsPage() {
                 </TabsList>
 
                 <TabsContent value="calendar" className="space-y-4">
-                    <GoogleCalendar currentDate={selectedDate} timeSlots={timeslots?.payload ?? []} />
+                    <GoogleCalendar currentDate={selectedDate}
+                        timeSlots={timeslots?.payload ?? []}
+                        appointments={appointments?.payload ?? []} />
                 </TabsContent>
             </Tabs>
         </div>
