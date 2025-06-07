@@ -11,11 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import GoogleCalendar from "./google.calendar"
 import CreateTimeSlotModal from "./timeslot-create-modal"
 import useDoctorTimeSlots from "../_hooks/use-timeslots"
-import { useCurrentUser } from "@/libs/hooks"
 import useDoctorAppointments from "../_hooks/use-appointments"
+import { User } from "next-auth"
 
-export default function DoctorAppointmentsPage() {
-    const user = useCurrentUser();
+export default function DoctorAppointmentsPage({ user }: { user: User }) {
     const [selectedDate, setSelectedDate] = useState(new Date())
 
     // Get current week dates
