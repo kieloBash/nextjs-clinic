@@ -16,7 +16,7 @@ function useDebounce<T>(value: T, delay: number): T {
   }, [value, delay]);
 
   return debouncedValue;
-}   
+}
 
 export default useDebounce;
 
@@ -26,7 +26,11 @@ export const useCurrentRole = () => {
 };
 
 export const useCurrentUser = () => {
+  console.log("FETCHING useCurrentUser")
   const session = useSession();
 
+  console.log("SESSION: ", session);
+
+  console.log("END useCurrentUser")
   return session?.data?.user;
 };

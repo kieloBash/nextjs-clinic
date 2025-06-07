@@ -8,20 +8,22 @@ import PatientLayout from '@/components/globals/patient-layout';
 
 const DashboardPage = () => {
     const user = useCurrentUser();
-    if (user) {
-        if (user.role === "DOCTOR")
-            return (
-                <DoctorLayout user={user}>
-                    <DoctorMainPage user={user} />
-                </DoctorLayout>)
-        else if (user.role === "PATIENT") {
-            return (
-                <PatientLayout user={user}>
-                    <PatientMainPage user={user} />
-                </PatientLayout>
-            )
-        }
-    }
+
+    console.log(user)
+    // if (user) {
+    //     if (user.role === "DOCTOR")
+    //         return (
+    //             <DoctorLayout user={user}>
+    //                 <DoctorMainPage user={user} />
+    //             </DoctorLayout>)
+    //     else if (user.role === "PATIENT") {
+    //         return (
+    //             <PatientLayout user={user}>
+    //                 <PatientMainPage user={user} />
+    //             </PatientLayout>
+    //         )
+    //     }
+    // }
 
 
     return (
