@@ -81,6 +81,7 @@ export default function SignUpPage() {
         const formData = new FormData();
         formData.append("name", values.name);
         formData.append("email", values.email);
+        formData.append("phone", values.phone);
         formData.append("specialization", values.specialization);
         formData.append("role", "DOCTOR");
         formData.append("password", values.password);
