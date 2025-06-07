@@ -34,11 +34,13 @@ export default function SignInPage() {
     async function onSubmit(values: z.infer<typeof loginFormSchema>) {
         try {
             setIsLoading(true)
+            console.log("VALUES:", values)
             await signIn("credentials", {
                 email: values.email, password: values.password
+            }).then(() => {
+                showToast("success", WELCOME_PROMPT)
+                form.reset()
             })
-            showToast("success", WELCOME_PROMPT)
-            form.reset()
         } catch (error: any) {
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
         } finally {
