@@ -27,6 +27,25 @@ function isMaximumDurationMet(start: Date, end: Date, maxMinutes = 180): boolean
   return differenceInMinutes(end, start) <= maxMinutes;
 }
 
+async function hasOverlappingTimeSlot(doctorId: string, start: Date, end: Date): Promise<boolean> {
+  const overlappingSlots = await prisma.timeSlot.findFirst({
+    where: {
+      doctorId,
+      OR: [
+        {
+          startTime: {
+            lte: end,
+          },
+          endTime: {
+            gte: start,
+          },
+        },
+      ],
+    },
+  });
+
+  return !!overlappingSlots;
+}
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -98,6 +117,14 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
+
+  if (await hasOverlappingTimeSlot(doctorId, startTime, endTime)) {
+    return new NextResponse(
+      JSON.stringify({ message: "This time slot overlaps with an existing one." }),
+      { status: 400 }
+    );
+  }
+
   try {
     const newTimeSlot = await prisma.timeSlot.create({
       data: {
