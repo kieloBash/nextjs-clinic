@@ -5,6 +5,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url || "");
 
     const doctorId = searchParams.get("doctorId") || "";
+    const statusFilter = searchParams.get("statusFilter") || "ALL";
 
     if (!doctorId) {
         return new NextResponse(JSON.stringify({ message: "No doctor specified" }), {
@@ -19,9 +20,16 @@ export async function GET(request: Request) {
         });
     }
 
+    const filters: any = {
+        ...statusFilter && statusFilter !== "ALL" && {
+            status: statusFilter
+        }
+    }
+
     const timeSlots = await prisma.timeSlot.findMany({
         where: {
             doctorId,
+            ...filters,
         },
         orderBy: [
             { date: "asc" },
@@ -29,5 +37,5 @@ export async function GET(request: Request) {
         ]
     })
 
-    return new NextResponse(JSON.stringify({ message: "Fetched timeslots per doctor", data: timeSlots }), { status: 200 })
+    return new NextResponse(JSON.stringify({ message: "Fetched timeslots per doctor", payload: timeSlots }), { status: 200 })
 }

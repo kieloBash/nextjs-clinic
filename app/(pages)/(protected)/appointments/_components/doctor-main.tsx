@@ -1,23 +1,27 @@
 "use client"
 
 import { useState } from "react"
-import { format, addDays, startOfWeek, endOfWeek } from "date-fns"
+import { format, addDays, startOfWeek, endOfWeek, isSameDay } from "date-fns"
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-import { z } from "zod"
 import GoogleCalendar from "./google.calendar"
 import CreateTimeSlotModal from "./timeslot-create-modal"
+import useDoctorTimeSlots from "../_hooks/use-timeslots"
+import { useCurrentUser } from "@/libs/hooks"
 
 export default function DoctorAppointmentsPage() {
+    const user = useCurrentUser();
     const [selectedDate, setSelectedDate] = useState(new Date())
 
     // Get current week dates
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
     const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
+
+    const timeslots = useDoctorTimeSlots({ doctorId: user?.id, statusFilter: "OPEN" });
 
     return (
         <div className="container mx-auto px-6 py-4 space-y-6">
@@ -52,7 +56,7 @@ export default function DoctorAppointmentsPage() {
                 </TabsList>
 
                 <TabsContent value="calendar" className="space-y-4">
-                    <GoogleCalendar currentDate={selectedDate} />
+                    <GoogleCalendar currentDate={selectedDate} timeSlots={timeslots?.payload ?? []} />
                 </TabsContent>
             </Tabs>
         </div>

@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
-import { eachDayOfInterval, endOfWeek, format, isSameDay, parseISO, startOfWeek } from 'date-fns'
+import { differenceInMinutes, eachDayOfInterval, endOfWeek, format, isSameDay, parseISO, startOfWeek } from 'date-fns'
 import {
     Dialog,
     DialogContent,
@@ -11,6 +11,10 @@ import {
 import { Button } from '@/components/ui/button'
 import { UserIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Appointment, TimeSlot, TimeSlotStatus } from '@/app/generated/prisma'
+import { FullAppointmentType } from '@/types/prisma.type'
+import { formatTimeToString, getDifferenceTimeSlot } from '@/utils/helpers/date'
+import { toZonedTime } from 'date-fns-tz'
 
 const generateTimeSlots = () => {
     const slots = []
@@ -23,8 +27,8 @@ const generateTimeSlots = () => {
 
 interface IGoogleCalendarProps {
     currentDate?: Date
-    appointments?: any[]
-    timeSlots?: any[]
+    appointments?: FullAppointmentType[]
+    timeSlots?: TimeSlot[]
 }
 
 const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments = [], timeSlots = [] }: IGoogleCalendarProps) => {
@@ -33,14 +37,15 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
 
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
     const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
-    const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
+    const weekDays = useMemo(() => eachDayOfInterval({ start: weekStart, end: weekEnd }), [selectedDate])
 
     const getAppointmentsForDay = (day: Date) => {
-        return appointments.filter((apt) => isSameDay(parseISO(apt.date), day))
+        return appointments.filter((apt) => isSameDay(apt.date, day))
     }
 
     const getTimeSlotsForDay = (day: Date) => {
-        return timeSlots.filter((slot) => isSameDay(parseISO(slot.date), day))
+
+        return timeSlots.filter((slot) => isSameDay(new Date(slot.date), day) && slot.status !== TimeSlotStatus.CLOSED)
     }
 
     const getAppointmentPosition = (time: string, duration: number) => {
@@ -51,14 +56,14 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
         return { top, height }
     }
 
-    const generateTimeSlotBlocks = (timeSlot: any) => {
+    const generateTimeSlotBlocks = (timeSlot: TimeSlot) => {
         const blocks = []
-        const [startHours, startMinutes] = timeSlot.startTime.split(":").map(Number)
-        const [endHours, endMinutes] = timeSlot.endTime.split(":").map(Number)
+        const [startHours, startMinutes] = formatTimeToString(timeSlot.startTime).split(":").map(Number)
+        const [endHours, endMinutes] = formatTimeToString(timeSlot.endTime).split(":").map(Number)
 
         const startTotalMinutes = startHours * 60 + startMinutes
         const endTotalMinutes = endHours * 60 + endMinutes
-        const duration = timeSlot.duration
+        const duration = getDifferenceTimeSlot(timeSlot)
 
         for (let time = startTotalMinutes; time < endTotalMinutes; time += duration) {
             const hours = Math.floor(time / 60)
@@ -67,7 +72,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
 
             // Check if this time slot is already booked
             const isBooked = appointments.some(
-                (apt) => isSameDay(parseISO(apt.date), parseISO(timeSlot.date)) && apt.time === timeString,
+                (apt) => isSameDay(apt.date, timeSlot.date) && apt?.timeSlot && formatTimeToString(apt.timeSlot.startTime) === timeString,
             )
 
             if (!isBooked) {
@@ -152,7 +157,10 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
 
                                                 {/* Time Slots and Appointments */}
                                                 {dayAppointments.map((appointment) => {
-                                                    const { top, height } = getAppointmentPosition(appointment.time, appointment.duration)
+                                                    if (!appointment?.timeSlot) return null;
+
+                                                    const { top, height } = getAppointmentPosition(formatTimeToString(appointment.timeSlot.startTime), differenceInMinutes(appointment.timeSlot.endTime, appointment.timeSlot.startTime))
+
                                                     return (
                                                         <div
                                                             key={appointment.id}
@@ -160,17 +168,18 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                             style={{ top: `${top}px`, height: `${height}px` }}
                                                             onClick={() => setSelectedAppointment(appointment)}
                                                         >
-                                                            <div className="text-xs font-medium truncate">{appointment.patientName}</div>
+                                                            <div className="text-xs font-medium truncate">{appointment.patient.name}</div>
                                                             <div className="text-xs opacity-90 truncate">
-                                                                {appointment.time} - {appointment.type}
+                                                                {formatTimeToString(appointment.timeSlot.startTime)} - {appointment.status}
                                                             </div>
                                                         </div>
                                                     )
                                                 })}
 
                                                 {/* Available Time Slots */}
-                                                {getTimeSlotsForDay(day).map((timeSlot) => {
+                                                {getTimeSlotsForDay(day).map((timeSlot: TimeSlot) => {
                                                     const availableBlocks = generateTimeSlotBlocks(timeSlot)
+
                                                     return availableBlocks.map((block) => {
                                                         const { top, height } = getAppointmentPosition(block.time, block.duration)
                                                         return (
@@ -214,7 +223,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                 </div>
             </div>
 
-            {selectedAppointment && (
+            {/* {selectedAppointment && (
                 <Dialog open={!!selectedAppointment} onOpenChange={() => setSelectedAppointment(null)}>
                     <DialogContent>
                         <DialogHeader>
@@ -267,7 +276,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-            )}
+            )} */}
         </>
     )
 }

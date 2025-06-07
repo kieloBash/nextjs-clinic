@@ -18,12 +18,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { FormInput } from '@/components/forms/input'
 import { useCurrentUser } from '@/libs/hooks'
-import { useLoading } from '@/components/providers/loading-provider'
 import axios from 'axios'
 import { CREATED_PROMPT_SUCCESS } from '@/utils/constants'
 import { showToast } from '@/utils/helpers/show-toast'
 import { CREATE_TIMESLOT } from '@/utils/api-endpoints'
 import { mergeTimeWithDate } from '@/utils/helpers/date'
+import { useQueryClient } from '@tanstack/react-query'
+import { KEY_GET_DOCTOR_TIMESLOTS } from '../_hooks/keys'
 
 const timeSlotSchema = z.object({
     date: z.string().min(1, "Date is required"),
@@ -33,6 +34,8 @@ const timeSlotSchema = z.object({
 
 const CreateTimeSlotModal = () => {
     const user = useCurrentUser();
+    const queryClient = useQueryClient();
+
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false);
 
@@ -65,6 +68,7 @@ const CreateTimeSlotModal = () => {
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
             setIsDialogOpen(false)
             form.reset()
+            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS] })
         } catch (error: any) {
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
         } finally {

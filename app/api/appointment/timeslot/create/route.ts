@@ -6,19 +6,19 @@ import { parseDate } from "@/utils/helpers/date";
 import { MISSING_PARAMETERS } from "@/utils/constants";
 import { isBefore, isAfter, startOfDay, differenceInMinutes, addHours } from "date-fns";
 
-export function isDateTodayOrFuture(date: Date): boolean {
+function isDateTodayOrFuture(date: Date): boolean {
   return !isBefore(date, startOfDay(new Date()));
 }
 
-export function isStartTimeBeforeEndTime(start: Date, end: Date): boolean {
+function isStartTimeBeforeEndTime(start: Date, end: Date): boolean {
   return isBefore(start, end);
 }
 
-export function isMinimumDurationMet(start: Date, end: Date, minMinutes = 30): boolean {
+function isMinimumDurationMet(start: Date, end: Date, minMinutes = 30): boolean {
   return differenceInMinutes(end, start) >= minMinutes;
 }
 
-export function isAtLeastOneHourFromNow(dateTime: Date): boolean {
+function isAtLeastOneHourFromNow(dateTime: Date): boolean {
   const oneHourFromNow = addHours(new Date(), 1);
   return isAfter(dateTime, oneHourFromNow);
 }

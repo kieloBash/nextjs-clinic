@@ -8,7 +8,8 @@ export function parseDate(dateString: string) {
     return new Date(parsedDate);
 }
 
-import { setHours, setMinutes, setSeconds, format } from "date-fns";
+import { TimeSlot } from "@/app/generated/prisma";
+import { setHours, setMinutes, setSeconds, format, differenceInMinutes } from "date-fns";
 
 export function mergeTimeWithDate(
     timeStr: string,
@@ -20,4 +21,12 @@ export function mergeTimeWithDate(
     let result = setSeconds(setMinutes(setHours(baseDate, hours), minutes), 0);
 
     return returnFormatted ? format(result, formatStr) : result;
+}
+
+export function formatTimeToString(date: Date) {
+    return format(date, "HH:mm")
+}
+
+export function getDifferenceTimeSlot(timeSlot: TimeSlot) {
+    return differenceInMinutes(timeSlot.endTime, timeSlot.startTime)
 }

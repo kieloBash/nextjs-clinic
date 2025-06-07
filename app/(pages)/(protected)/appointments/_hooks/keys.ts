@@ -1,0 +1,1 @@
+export const KEY_GET_DOCTOR_TIMESLOTS = "get-doctor-timeslots";
