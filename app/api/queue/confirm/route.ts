@@ -1,8 +1,10 @@
-import { AppointmentStatus, QueueStatus, TimeSlotStatus } from "@/app/generated/prisma";
+import { AppointmentStatus, QueueStatus, TimeSlotStatus } from "@prisma/client"
 import { createNotification } from "@/libs/notification";
 import { BOOKING_CONFIRMED_NOTIFICATION_DOCTOR, BOOKING_CONFIRMED_NOTIFICATION_PATIENT, MISSING_PARAMETERS, NEW_BOOKED_APPOINTMENT_CONFIRMED_HISTORY } from "@/utils/constants";
 import { addHours } from "date-fns";
 import { NextResponse } from "next/server";
+
+import { prisma } from "@/prisma";
 
 export async function POST(request: Request) {
 

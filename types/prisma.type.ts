@@ -1,4 +1,4 @@
-import { Appointment, Role, TimeSlot, User } from "@/app/generated/prisma";
+import { Appointment, Role, TimeSlot, User } from "@prisma/client"
 
 export type UserFullType = User & {
     role: Role

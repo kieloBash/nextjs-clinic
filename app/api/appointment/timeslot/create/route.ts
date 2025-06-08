@@ -1,4 +1,4 @@
-import { TimeSlotStatus } from "@/app/generated/prisma";
+import { TimeSlotStatus } from "@prisma/client"
 import { getDoctor } from "@/libs/user";
 import { prisma } from "@/prisma";
 import { NextResponse } from "next/server";

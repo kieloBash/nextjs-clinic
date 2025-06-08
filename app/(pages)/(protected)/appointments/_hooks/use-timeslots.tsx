@@ -6,7 +6,7 @@ import { endOfMonth, format, startOfMonth } from "date-fns";
 import { KEY_GET_DOCTOR_TIMESLOTS } from "./keys";
 import { FETCH_ALL_TIMESLOT } from "@/utils/api-endpoints";
 import { ApiResponse, FetchParams, IQueryProps } from "@/types/global.type";
-import { TimeSlotStatus } from "@/app/generated/prisma";
+import { TimeSlotStatus } from "@prisma/client"
 
 const ROUTE = FETCH_ALL_TIMESLOT;
 const KEY = KEY_GET_DOCTOR_TIMESLOTS;

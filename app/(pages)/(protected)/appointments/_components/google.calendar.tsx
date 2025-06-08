@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { differenceInMinutes, eachDayOfInterval, endOfWeek, format, isSameDay, parseISO, startOfWeek } from 'date-fns'
-import { AppointmentStatus, TimeSlot, TimeSlotStatus } from '@/app/generated/prisma'
+import { AppointmentStatus, TimeSlot, TimeSlotStatus } from "@prisma/client"
 import { FullAppointmentType } from '@/types/prisma.type'
 import { formatTimeToString, getDifferenceTimeSlot } from '@/utils/helpers/date'
 import SelectedAppointmentModal from './selected-appointment-modal'

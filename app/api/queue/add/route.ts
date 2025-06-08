@@ -1,8 +1,8 @@
-import { QueueStatus } from "@/app/generated/prisma";
 import { createNotification } from "@/libs/notification";
 import { getDoctor, getPatient } from "@/libs/user";
 import { prisma } from "@/prisma"; // Ensure you import this correctly
 import { MISSING_PARAMETERS, QUEUE_ADDED_NOTIFICATION_DOCTOR, QUEUE_ADDED_NOTIFICATION_PATIENT } from "@/utils/constants";
+import { QueueStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
