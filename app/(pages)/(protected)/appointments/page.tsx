@@ -6,7 +6,6 @@ import DoctorLayout from '@/components/globals/doctor-layout';
 
 const AppointmentsPage = () => {
     const user = useCurrentUser();
-    console.log(user)
 
     if (user) {
         if (user.role === "DOCTOR")

@@ -2,7 +2,7 @@
 
 import { FETCH_INTERVAL, FORMAT } from "@/utils/constants";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { endOfMonth, format, startOfMonth } from "date-fns";
+import { format, startOfWeek } from "date-fns";
 import { KEY_GET_DOCTOR_TIMESLOTS } from "./keys";
 import { FETCH_ALL_TIMESLOT } from "@/utils/api-endpoints";
 import { ApiResponse, FetchParams, IQueryProps } from "@/types/global.type";
@@ -14,6 +14,8 @@ const INTERVAL = FETCH_INTERVAL;
 
 const default_limit = 10;
 const default_filter = "all";
+const default_start_date = startOfWeek(new Date());
+const default_end_date = startOfWeek(new Date());
 
 const fetchData = async ({
     page = 1,
@@ -21,9 +23,8 @@ const fetchData = async ({
     filter = default_filter,
     searchTerm = "",
 
-    startDate = startOfMonth(new Date()),
-    endDate = endOfMonth(new Date()),
-
+    startDate = default_start_date,
+    endDate = default_end_date,
     doctorId,
     statusFilter
 }: FetchParams & { doctorId?: string, statusFilter: TimeSlotStatus | "ALL" }): Promise<ApiResponse<any>> => {
@@ -39,7 +40,7 @@ const fetchData = async ({
 type IProps = IQueryProps & { doctorId?: string, statusFilter?: TimeSlotStatus | "ALL" }
 
 const useDoctorTimeSlots = (
-    { doctorId, page = 1, limit = default_limit, filter = default_filter, searchTerm = "", select, startDate = startOfMonth(new Date()), endDate = endOfMonth(new Date()), statusFilter = "ALL" }: IProps
+    { doctorId, page = 1, limit = default_limit, filter = default_filter, searchTerm = "", select, startDate = default_start_date, endDate = default_end_date, statusFilter = "ALL" }: IProps
 ) => {
 
     const { data, error, isLoading, isFetching, isError } = useQuery<ApiResponse<any[]>>({

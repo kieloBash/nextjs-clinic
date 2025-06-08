@@ -21,7 +21,7 @@ export default function DoctorAppointmentsPage({ user }: { user: User }) {
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
     const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
 
-    const timeslots = useDoctorTimeSlots({ doctorId: user?.id, statusFilter: "OPEN" });
+    const timeslots = useDoctorTimeSlots({ doctorId: user?.id, statusFilter: "OPEN", startDate: weekStart, endDate: weekEnd });
     const appointments = useDoctorAppointments({ doctorId: user?.id });
 
     return (
