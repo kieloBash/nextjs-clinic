@@ -144,7 +144,6 @@ export default function DoctorQueue({ user }: { user: User }) {
         //TODO: add backend
     }
 
-    const nextThreePatients = patients.slice(0, 3)
     const nextThreeQueues = queue.slice(0, 3)
 
     return (
