@@ -1,20 +1,15 @@
-import { Prisma, QueueStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { prisma } from "@/prisma";
 import { MISSING_PARAMETERS } from "@/utils/constants";
 
-export async function PATCH(request: Request) {
-    const body = await request.json();
-    const { queueId, status } = body
+export async function DELETE(request: Request) {
+    const { searchParams } = new URL(request.url || "");
 
-    if (!queueId || !status) {
+    const queueId = searchParams.get("queueId") || "";
+
+    if (!queueId) {
         return new NextResponse(JSON.stringify({ message: MISSING_PARAMETERS }), {
-            status: 400,
-        });
-    }
-
-    if (!Object.keys(QueueStatus).includes(status.toString())) {
-        return new NextResponse(JSON.stringify({ message: "Invalid status" }), {
             status: 400,
         });
     }
@@ -27,12 +22,9 @@ export async function PATCH(request: Request) {
             });
         }
 
-        const newStatus = status as QueueStatus;
+        await prisma.queue.delete({ where: { id: existingQueue.id } })
 
-        const updatedQueue = await prisma.queue.update({ where: { id: existingQueue.id }, data: { status: newStatus } })
-
-        return new NextResponse(JSON.stringify({ message: "Updated queue", payload: updatedQueue }), { status: 200 })
-
+        return new NextResponse(JSON.stringify({ message: "Deleted queue", payload: existingQueue }), { status: 200 })
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
             return new NextResponse(

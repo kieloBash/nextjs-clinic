@@ -23,7 +23,7 @@ import { User } from "next-auth"
 import { FullQueueType } from "@/types/prisma.type"
 import { QueueStatus } from "@prisma/client"
 import axios from "axios"
-import { UPDATE_QUEUE_STATUS } from "@/utils/api-endpoints"
+import { REMOVE_QUEUE, UPDATE_QUEUE_STATUS } from "@/utils/api-endpoints"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { showToast } from "@/utils/helpers/show-toast"
 
@@ -138,10 +138,23 @@ export default function DoctorQueue({ user }: { user: User }) {
     }
 
 
-    const handleRemoveFromQueue = (queueId: string) => {
-        setQueue((prev) => prev.filter((p) => p.id !== queueId))
-        //TODO: add backend saving: delete queue by queueId
-    }
+    const handleRemoveFromQueue = async (queueId: string) => {
+        const queueToRemove = queue.find((p) => p.id === queueId);
+        if (!queueToRemove) return;
+
+        // Optimistic update
+        setQueue((prev) => prev.filter((p) => p.id !== queueId));
+
+        try {
+            const res = await axios.delete(`${REMOVE_QUEUE}?queueId=${queueId}`);
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
+        } catch (error: any) {
+            // Rollback on failure
+            setQueue((prev) => [...prev, queueToRemove]);
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        }
+    };
+
 
     const handleReturnSkippedToQueue = async (queueId: string) => {
         const skippedQueue = skippedQueues.find((p) => p.id === queueId);
@@ -166,11 +179,23 @@ export default function DoctorQueue({ user }: { user: User }) {
         }
     };
 
+    const handleRemoveSkipped = async (queueId: string) => {
+        const skippedToRemove = skippedQueues.find((p) => p.id === queueId);
+        if (!skippedToRemove) return;
 
-    const handleRemoveSkipped = (queueId: string) => {
-        setSkippedQueues((prev) => prev.filter((p) => p.id !== queueId))
-        //TODO: add backend saving: delete queue by queueId
-    }
+        // Optimistic update
+        setSkippedQueues((prev) => prev.filter((p) => p.id !== queueId));
+
+        try {
+            const res = await axios.delete(`${REMOVE_QUEUE}?queueId=${queueId}`);
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
+        } catch (error: any) {
+            // Rollback on failure
+            setSkippedQueues((prev) => [...prev, skippedToRemove]);
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        }
+    };
+
 
     const handleClearAllQueue = () => {
         setQueue([])
