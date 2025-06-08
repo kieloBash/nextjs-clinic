@@ -4,10 +4,10 @@ import { prisma } from "@/prisma";
 import { MISSING_PARAMETERS } from "@/utils/constants";
 
 export async function PATCH(request: Request) {
-    const { searchParams } = new URL(request.url || "");
+    const body = await request.json();
+    const { queueId, status } = body
 
-    const queueId = searchParams.get("queueId") || "";
-    const status = searchParams.get("status") || "";
+    console.log(queueId, status)
 
     if (!queueId || !status) {
         return new NextResponse(JSON.stringify({ message: MISSING_PARAMETERS }), {

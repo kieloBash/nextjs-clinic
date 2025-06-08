@@ -3,12 +3,12 @@
 import { FETCH_INTERVAL } from "@/utils/constants";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { KEY_GET_DOCTOR_QUEUES } from "./keys";
-import { FETCH_ALL_DOCTOR_APPOINTMENTS } from "@/utils/api-endpoints";
+import { FETCH_ALL_DOCTOR_QUEUES } from "@/utils/api-endpoints";
 import { ApiResponse, FetchParams, IQueryProps } from "@/types/global.type";
 import { TimeSlotStatus } from "@prisma/client"
 import { FullQueueType } from "@/types/prisma.type";
 
-const ROUTE = FETCH_ALL_DOCTOR_APPOINTMENTS;
+const ROUTE = FETCH_ALL_DOCTOR_QUEUES;
 const KEY = KEY_GET_DOCTOR_QUEUES;
 const INTERVAL = FETCH_INTERVAL;
 

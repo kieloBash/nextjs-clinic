@@ -22,6 +22,10 @@ import useDoctorQueues from "../_hooks/use-queues"
 import { User } from "next-auth"
 import { FullQueueType } from "@/types/prisma.type"
 import { QueueStatus } from "@prisma/client"
+import axios from "axios"
+import { UPDATE_QUEUE_STATUS } from "@/utils/api-endpoints"
+import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
+import { showToast } from "@/utils/helpers/show-toast"
 
 // Mock data - replace with your actual data fetching
 const mockPatients = [
@@ -86,9 +90,11 @@ export default function DoctorQueue({ user }: { user: User }) {
     const [skippedQueues, setSkippedQueues] = useState<FullQueueType[]>([]);
     const [currentQueue, setCurrentQueue] = useState<FullQueueType | null>(null);
 
+    console.log(queues)
+
     useEffect(() => {
         if (queues.payload) {
-            setQueue(queues.payload)
+            setQueue(queues.payload.filter((q) => q.status === QueueStatus.WAITING))
             setSkippedQueues(queues.payload.filter((q) => q.status === QueueStatus.SKIPPED))
         }
     }, [queues.payload])
@@ -109,28 +115,57 @@ export default function DoctorQueue({ user }: { user: User }) {
         //TODO: add backend confirming of appointments
     }
 
-    const handleSkipQueue = (queueId: string) => {
+    const handleSkipQueue = async (queueId: string) => {
         const queueToSkip = queue.find((p) => p.id === queueId)
         if (queueToSkip) {
+            // Optimistic update
             setSkippedQueues((prev) => [...prev, { ...queueToSkip, status: QueueStatus.SKIPPED }])
             setQueue((prev) => prev.filter((p) => p.id !== queueId))
-            //TODO: add backend saving
+
+            try {
+                const res = await axios.patch(UPDATE_QUEUE_STATUS, {
+                    queueId,
+                    status: QueueStatus.SKIPPED
+                })
+                showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
+            } catch (error: any) {
+                // Rollback the optimistic update
+                setSkippedQueues((prev) => prev.filter((p) => p.id !== queueId))
+                setQueue((prev) => [...prev, queueToSkip])
+                showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
+            }
         }
     }
+
 
     const handleRemoveFromQueue = (queueId: string) => {
         setQueue((prev) => prev.filter((p) => p.id !== queueId))
         //TODO: add backend saving: delete queue by queueId
     }
 
-    const handleReturnSkippedToQueue = (queueId: string) => {
-        const skippedQueue = skippedQueues.find((p) => p.id === queueId)
+    const handleReturnSkippedToQueue = async (queueId: string) => {
+        const skippedQueue = skippedQueues.find((p) => p.id === queueId);
         if (skippedQueue) {
-            setQueue((prev) => [...prev, { ...skippedQueue, status: QueueStatus.WAITING }])
-            setSkippedQueues((prev) => prev.filter((p) => p.id !== queueId))
-            //TODO: add backend saving: change status
+            // Optimistic update
+            const updatedQueue = { ...skippedQueue, status: QueueStatus.WAITING };
+            setQueue((prev) => [...prev, updatedQueue]);
+            setSkippedQueues((prev) => prev.filter((p) => p.id !== queueId));
+
+            try {
+                const res = await axios.patch(UPDATE_QUEUE_STATUS, {
+                    queueId,
+                    status: QueueStatus.SKIPPED
+                })
+                showToast("success", "Queue returned", res.data.message);
+            } catch (error: any) {
+                // Rollback on failure
+                setQueue((prev) => prev.filter((p) => p.id !== queueId));
+                setSkippedQueues((prev) => [...prev, skippedQueue]);
+                showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+            }
         }
-    }
+    };
+
 
     const handleRemoveSkipped = (queueId: string) => {
         setSkippedQueues((prev) => prev.filter((p) => p.id !== queueId))
@@ -262,6 +297,7 @@ export default function DoctorQueue({ user }: { user: User }) {
                     {queue.length > 0 ? (
                         <div className="space-y-3">
                             {queue.map((queue, index) => {
+                                console.log(queue)
                                 const patient = queue.patient;
 
                                 return (

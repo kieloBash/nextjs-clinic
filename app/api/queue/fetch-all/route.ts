@@ -40,6 +40,8 @@ export async function GET(request: Request) {
             ]
         })
 
+        console.log(queues)
+
         return new NextResponse(JSON.stringify({ message: "Fetched queues of doctor", payload: queues }), { status: 200 })
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
