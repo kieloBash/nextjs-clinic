@@ -11,9 +11,8 @@ const AppointmentsPage = () => {
     if (user) {
         if (user.role === "DOCTOR")
             return (
-                <DoctorLayout user={user}>
-                    <DoctorMainPage user={user} />
-                </DoctorLayout>)
+                <DoctorMainPage user={user} />
+            )
         else if (user.role === "PATIENT") {
             return;
         }

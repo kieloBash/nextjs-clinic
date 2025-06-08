@@ -13,14 +13,11 @@ const DashboardPage = () => {
     if (user) {
         if (user.role === "DOCTOR")
             return (
-                <DoctorLayout user={user}>
-                    <DoctorMainPage user={user} />
-                </DoctorLayout>)
+                <DoctorMainPage user={user} />
+            )
         else if (user.role === "PATIENT") {
             return (
-                <PatientLayout user={user}>
-                    <PatientMainPage user={user} />
-                </PatientLayout>
+                <PatientMainPage user={user} />
             )
         }
     }
