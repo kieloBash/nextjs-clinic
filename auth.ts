@@ -2,6 +2,7 @@ import NextAuth, { DefaultSession } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { checkUserExists } from "./libs/user";
 import authConfig from "./auth.config";
+import { PrismaClient } from "@prisma/client";
 
 export type ExtendedUser = DefaultSession["user"] & {
     role: string;
@@ -14,6 +15,8 @@ declare module "next-auth" {
         user: ExtendedUser;
     }
 }
+
+const prisma = new PrismaClient();
 
 const TOKEN_EXPIRES_IN = 60 * 60 * 24; // 24 hrs
 
