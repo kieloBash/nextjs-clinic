@@ -2,8 +2,6 @@ import NextAuth, { DefaultSession } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { checkUserExists } from "./libs/user";
 import authConfig from "./auth.config";
-import jwt from "jsonwebtoken";
-import { prisma } from "./prisma";
 
 export type ExtendedUser = DefaultSession["user"] & {
     role: string;
@@ -44,14 +42,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         async session({ session, token }) {
             console.log("Start session")
 
-            const now = Math.floor(Date.now() / 1000);
-            const expiry = token.expiresAt as any;
-
-            if (expiry && now > expiry) {
-                console.warn("Session has expired.");
-                (session.user.isExpired as any) = true;
-            }
-
             if (token.sub && session.user) {
                 session.user.id = token.sub;
             }
@@ -79,23 +69,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
             if (!existingUser) return token;
 
-            const payload = {
-                sub: existingUser.id,
-                name: existingUser.name,
-                email: existingUser.email,
-                role: existingUser.role.roleName,
-            };
-
-            const signedToken = jwt.sign(payload, process.env.AUTH_SECRET!, {
-                expiresIn: TOKEN_EXPIRES_IN,
-            });
-
             token.role = existingUser.role.roleName;
             token.name = existingUser.name;
             token.email = existingUser.email;
             token.picture = existingUser.image;
-            token.accessToken = signedToken;
-            token.expiresAt = Math.floor(Date.now() / 1000) + TOKEN_EXPIRES_IN;
 
             console.log("Token:", token);
             console.log("End jwt")
@@ -103,7 +80,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         },
     },
-    adapter: PrismaAdapter(prisma as any),
+    adapter: PrismaAdapter(prisma),
     session: { strategy: 'jwt', maxAge: TOKEN_EXPIRES_IN },
     secret: process.env.AUTH_SECRET,
     debug: process.env.NODE_ENV === 'development',
