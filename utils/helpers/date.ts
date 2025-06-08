@@ -8,7 +8,7 @@ export function parseDate(dateString: string) {
     return new Date(parsedDate);
 }
 
-import { TimeSlot } from "@/app/generated/prisma";
+import { TimeSlot } from "@prisma/client"
 import { setHours, setMinutes, setSeconds, format, differenceInMinutes } from "date-fns";
 
 export function mergeTimeWithDate(

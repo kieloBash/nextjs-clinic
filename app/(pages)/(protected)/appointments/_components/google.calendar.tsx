@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { differenceInMinutes, eachDayOfInterval, endOfWeek, format, isSameDay, parseISO, startOfWeek } from 'date-fns'
-import { AppointmentStatus, TimeSlot, TimeSlotStatus } from '@/app/generated/prisma'
+import { AppointmentStatus, TimeSlot, TimeSlotStatus } from "@prisma/client"
 import { FullAppointmentType } from '@/types/prisma.type'
 import { formatTimeToString, getDifferenceTimeSlot } from '@/utils/helpers/date'
 import SelectedAppointmentModal from './selected-appointment-modal'
@@ -22,8 +22,6 @@ interface IGoogleCalendarProps {
 }
 
 const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments = [], timeSlots = [] }: IGoogleCalendarProps) => {
-    console.log(appointments)
-
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
     const timeSlotsList = generateTimeSlots();
 
@@ -122,8 +120,6 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                 {weekDays.map((day) => {
                                     const dayAppointments = getAppointmentsForDay(day)
                                     const isToday = isSameDay(day, new Date())
-
-                                    console.log(day, dayAppointments.length)
 
                                     return (
                                         <div key={day.toISOString()} className="flex-1 min-w-32 border-r border-gray-200">

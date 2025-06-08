@@ -9,7 +9,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { UserIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Appointment } from '@/app/generated/prisma'
 import { FullAppointmentType } from '@/types/prisma.type'
 import { formatTimeToString, getDifferenceTimeSlot } from '@/utils/helpers/date'
 import { format } from 'date-fns'
