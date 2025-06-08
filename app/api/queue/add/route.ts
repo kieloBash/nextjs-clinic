@@ -47,7 +47,9 @@ export async function POST(request: Request) {
             where: {
                 doctorId,
                 patientId: patient.id,
-                status: QueueStatus.WAITING
+                status: {
+                    in: [QueueStatus.WAITING, QueueStatus.SKIPPED]
+                }
             },
         });
 

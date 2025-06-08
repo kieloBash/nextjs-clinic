@@ -23,7 +23,7 @@ import { User } from "next-auth"
 import { FullQueueType } from "@/types/prisma.type"
 import { QueueStatus } from "@prisma/client"
 import axios from "axios"
-import { REMOVE_QUEUE, UPDATE_QUEUE_STATUS } from "@/utils/api-endpoints"
+import { CONFIRM_QUEUE, REMOVE_QUEUE, UPDATE_QUEUE_STATUS } from "@/utils/api-endpoints"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { showToast } from "@/utils/helpers/show-toast"
 import AddToQueueModal from "./add-to-queue-modal"
@@ -89,7 +89,7 @@ export default function DoctorQueue({ user }: { user: User }) {
 
     const [queue, setQueue] = useState<FullQueueType[]>([]);
     const [skippedQueues, setSkippedQueues] = useState<FullQueueType[]>([]);
-    const [currentQueue, setCurrentQueue] = useState<FullQueueType | null>(null);
+    const [currentQueue, setCurrentQueue] = useState<FullQueueType | null | undefined>(null);
 
     console.log(queues)
 
@@ -97,18 +97,32 @@ export default function DoctorQueue({ user }: { user: User }) {
         if (queues.payload) {
             setQueue(queues.payload.filter((q) => q.status === QueueStatus.WAITING))
             setSkippedQueues(queues.payload.filter((q) => q.status === QueueStatus.SKIPPED))
+            setCurrentQueue(queues.payload.find((q) => q.status === QueueStatus.APPROVED))
         }
     }, [queues.payload])
 
-    const handleCallNext = () => {
-        if (queue.length > 0) {
-            const nextQueue = queue[0];
-            setCurrentQueue(nextQueue);
-            setQueue((prev) => prev.slice(1))
+    const handleCallNext = async () => {
+        if (queue.length === 0) return;
 
-            //TODO: add backend of confirming queue and creating an appointment
+        const nextQueue = queue[0];
+
+        // Optimistically update UI
+        setCurrentQueue(nextQueue);
+        setQueue((prev) => prev.slice(1));
+
+        try {
+            const res = await axios.post(CONFIRM_QUEUE, {
+                queueId: nextQueue.id,
+            });
+            // Optional: show success toast
+            showToast("success", "Queue confirmed", res.data.message);
+        } catch (error: any) {
+            // Rollback on failure
+            setCurrentQueue(null);
+            setQueue((prev) => [nextQueue, ...prev]); // Reinsert at the start
+            showToast("error", "Failed to confirm queue", error?.response?.data?.message || error.message);
         }
-    }
+    };
 
     const handleCompleteAppointment = () => {
         setCurrentPatient(null)
@@ -168,7 +182,7 @@ export default function DoctorQueue({ user }: { user: User }) {
             try {
                 const res = await axios.patch(UPDATE_QUEUE_STATUS, {
                     queueId,
-                    status: QueueStatus.SKIPPED
+                    status: QueueStatus.WAITING
                 })
                 showToast("success", "Queue returned", res.data.message);
             } catch (error: any) {
