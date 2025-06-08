@@ -26,6 +26,7 @@ import axios from "axios"
 import { REMOVE_QUEUE, UPDATE_QUEUE_STATUS } from "@/utils/api-endpoints"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { showToast } from "@/utils/helpers/show-toast"
+import AddToQueueModal from "./add-to-queue-modal"
 
 // Mock data - replace with your actual data fetching
 const mockPatients = [
@@ -204,6 +205,14 @@ export default function DoctorQueue({ user }: { user: User }) {
         //TODO: add backend
     }
 
+    const handleAddToQueue = (newQueue: FullQueueType & { rollback?: boolean }) => {
+        if (newQueue.rollback) {
+            setQueue((prev) => prev.filter((q) => q.id !== newQueue.id));
+        } else {
+            setQueue((prev) => [...prev, newQueue]);
+        }
+    };
+
     const nextThreeQueues = queue.slice(0, 3)
 
     return (
@@ -290,6 +299,7 @@ export default function DoctorQueue({ user }: { user: User }) {
                             Call Next Patient
                         </Button>
                     )}
+                    <AddToQueueModal onAddToQueue={handleAddToQueue} />
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="destructive" disabled={queue.length === 0 && skippedQueues.length === 0}>

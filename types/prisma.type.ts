@@ -13,5 +13,5 @@ export type FullAppointmentType = Appointment & {
 export type FullQueueType = Queue & {
     patient: UserFullType
     doctor: UserFullType
-    appointment: Appointment
+    appointment?: Appointment
 }
