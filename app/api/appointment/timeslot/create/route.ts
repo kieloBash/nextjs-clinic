@@ -83,6 +83,13 @@ export async function POST(request: Request) {
   const startTime = parseDate(startTimeRaw.toString());
   const endTime = parseDate(endTimeRaw.toString());
 
+  if (startTime.getHours() < 8) {
+    return new NextResponse(
+      JSON.stringify({ message: "Start time must be 8:00 AM or later." }),
+      { status: 400 }
+    );
+  }
+
   if (!isDateTodayOrFuture(date)) {
     return new NextResponse(
       JSON.stringify({ message: "Date must be today or in the future." }),
@@ -126,6 +133,7 @@ export async function POST(request: Request) {
   }
 
   try {
+
     const newTimeSlot = await prisma.timeSlot.create({
       data: {
         doctorId: existingDoctor.id,
@@ -135,6 +143,7 @@ export async function POST(request: Request) {
         endTime,
       },
     });
+
 
     return new NextResponse(
       JSON.stringify({ message: "Created time slot", payload: newTimeSlot }),

@@ -65,6 +65,8 @@ const CreateTimeSlotModal = () => {
                     'Content-Type': 'multipart/form-data'
                 }
             });
+
+            console.log(res.data.payload)
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
             setIsDialogOpen(false)
             form.reset()
