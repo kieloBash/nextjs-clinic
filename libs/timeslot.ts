@@ -6,4 +6,5 @@ export async function getTimeSlot({ timeSlotId }: { timeSlotId: string }) {
             id: timeSlotId,
         },
     });
+    
 }
