@@ -7,6 +7,7 @@ import { ThemeClientWrapper } from "@/components/providers/theme-client";
 import { SessionProvider } from "next-auth/react";
 import { auth } from "@/auth";
 import { APP_NAME } from "@/utils/constants";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,16 +37,18 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionProvider session={session}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <LoadingProvider>
-              {children}
-            </LoadingProvider>
-          </ThemeProvider>
+          <QueryProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="light"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <LoadingProvider>
+                {children}
+              </LoadingProvider>
+            </ThemeProvider>
+          </QueryProvider>
         </SessionProvider>
       </body>
     </html>

@@ -1,5 +1,5 @@
 import { prisma } from "@/prisma";
-import { UserFullType } from "@/types/user.type";
+import { UserFullType } from "@/types/prisma.type";
 
 
 export async function checkUserExists({
@@ -42,6 +42,17 @@ export async function getPatient({ patientId }: { patientId: string }) {
   return await prisma.user.findFirst({
     where: {
       id: patientId,
+      role: {
+        roleName: "PATIENT",
+      },
+    },
+  });
+}
+
+export async function getPatientByEmail({ email }: { email: string }) {
+  return await prisma.user.findFirst({
+    where: {
+      email,
       role: {
         roleName: "PATIENT",
       },

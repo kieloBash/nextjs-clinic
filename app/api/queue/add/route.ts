@@ -1,17 +1,17 @@
-import { QueueStatus } from "@/app/generated/prisma";
 import { createNotification } from "@/libs/notification";
-import { getDoctor, getPatient } from "@/libs/user";
+import { getDoctor, getPatientByEmail } from "@/libs/user";
 import { prisma } from "@/prisma"; // Ensure you import this correctly
 import { MISSING_PARAMETERS, QUEUE_ADDED_NOTIFICATION_DOCTOR, QUEUE_ADDED_NOTIFICATION_PATIENT } from "@/utils/constants";
+import { QueueStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { doctorId, patientId } = body;
+        const { doctorId, patientEmail } = body;
 
         // Validate required parameters
-        if (!doctorId || !patientId) {
+        if (!doctorId || !patientEmail) {
             return new NextResponse(
                 JSON.stringify({ message: MISSING_PARAMETERS }),
                 { status: 400 }
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         // Check if doctor and patient exist
         const [doctor, patient] = await Promise.all([
             getDoctor({ doctorId }),
-            getPatient({ patientId }),
+            getPatientByEmail({ email: patientEmail }),
         ]);
 
         if (!doctor) {
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
         if (!patient) {
             return new NextResponse(
-                JSON.stringify({ message: `Patient with ID ${patientId} not found.` }),
+                JSON.stringify({ message: `Patient with email ${patientEmail} not found.` }),
                 { status: 404 }
             );
         }
@@ -46,8 +46,10 @@ export async function POST(request: Request) {
         const alreadyQueued = await prisma.queue.findFirst({
             where: {
                 doctorId,
-                patientId,
-                status: QueueStatus.WAITING
+                patientId: patient.id,
+                status: {
+                    in: [QueueStatus.WAITING, QueueStatus.SKIPPED]
+                }
             },
         });
 
@@ -72,7 +74,7 @@ export async function POST(request: Request) {
         // Create the queue entry
         const newQueue = await prisma.queue.create({
             data: {
-                patientId,
+                patientId: patient.id,
                 doctorId,
                 status: QueueStatus.WAITING,
                 position: lastPosition + 1,

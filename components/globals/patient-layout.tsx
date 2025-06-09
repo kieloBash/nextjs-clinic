@@ -50,9 +50,9 @@ const PatientLayout = ({ children, user }: ILayout & { user: User }) => {
     const activeRoute = routes.find((r) => r.isActive);
 
     return (
-        <div className='relative w-screen min-h-screen bg-gray-50 flex'>
+        <div className='relative w-full min-h-screen bg-gray-50 flex'>
             <PatientSidebar routes={routes} />
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col relative">
                 <PatientHeader user={user} title={activeRoute?.title} />
                 {children}
             </div>

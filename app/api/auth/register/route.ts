@@ -11,11 +11,10 @@ export async function POST(request: Request) {
     const nameRaw = formData.get("name");
     const roleRaw = formData.get("role");
     const emailRaw = formData.get("email");
+    const phoneRaw = formData.get("phone");
     const passwordRaw = formData.get("password");
 
-    console.log(nameRaw, roleRaw, passwordRaw, roleRaw)
-
-    if (!nameRaw || !roleRaw || !emailRaw || !passwordRaw) {
+    if (!nameRaw || !roleRaw || !emailRaw || !passwordRaw || !phoneRaw) {
       return new NextResponse(
         JSON.stringify({ message: MISSING_PARAMETERS }),
         { status: 400 }
@@ -26,6 +25,7 @@ export async function POST(request: Request) {
     const name = nameRaw.toString();
     const email = emailRaw.toString().toLowerCase();
     const password = passwordRaw.toString();
+    const phone = phoneRaw.toString();
 
     const existingRole = await checkValidRole({ role });
     if (!existingRole) {
@@ -54,6 +54,7 @@ export async function POST(request: Request) {
         email,
         roleId: existingRole.id,
         hashedPassword,
+        phone
       },
     });
 

@@ -5,8 +5,7 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
+  provider      = "prisma-client-js"
 }
 
 enum AppointmentStatus {
@@ -25,6 +24,7 @@ enum InvoiceStatus {
 enum QueueStatus {
   WAITING
   APPROVED
+  SKIPPED
 }
 
 enum TimeSlotStatus {
