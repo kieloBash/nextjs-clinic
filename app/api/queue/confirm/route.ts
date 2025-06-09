@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         const hasCurrentQueue = await prisma.queue.findFirst({
             where: { doctorId: existingQueue.doctorId, status: QueueStatus.APPROVED },
         })
-
+ 
         if (!hasCurrentQueue) {
             return new NextResponse(
                 JSON.stringify({ message: `You have currently a patient in queue. Please complete the current appointment first to proceed.` }),

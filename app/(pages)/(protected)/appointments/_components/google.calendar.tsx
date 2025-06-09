@@ -47,8 +47,8 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
 
     const generateTimeSlotBlocks = (timeSlot: TimeSlot) => {
         const blocks = []
-        const [startHours, startMinutes] = formatTimeToString(timeSlot.startTime).split(":").map(Number)
-        const [endHours, endMinutes] = formatTimeToString(timeSlot.endTime).split(":").map(Number)
+        const [startHours, startMinutes] = formatTimeToString(new Date(timeSlot.startTime)).split(":").map(Number)
+        const [endHours, endMinutes] = formatTimeToString(new Date(timeSlot.endTime)).split(":").map(Number)
 
         const startTotalMinutes = startHours * 60 + startMinutes
         const endTotalMinutes = endHours * 60 + endMinutes
@@ -61,7 +61,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
 
             // Check if this time slot is already booked
             const isBooked = appointments.some(
-                (apt) => isSameDay(apt.date, timeSlot.date) && apt?.timeSlot && formatTimeToString(apt.timeSlot.startTime) === timeString,
+                (apt) => isSameDay(apt.date, timeSlot.date) && apt?.timeSlot && formatTimeToString(new Date(apt.timeSlot.startTime)) === timeString,
             )
 
             if (!isBooked) {
@@ -152,7 +152,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                 {dayAppointments.map((appointment) => {
                                                     if (!appointment?.timeSlot) return null;
 
-                                                    const { top, height } = getAppointmentPosition(formatTimeToString(appointment.timeSlot.startTime), differenceInMinutes(appointment.timeSlot.endTime, appointment.timeSlot.startTime))
+                                                    const { top, height } = getAppointmentPosition(formatTimeToString(new Date(appointment.timeSlot.startTime)), differenceInMinutes(appointment.timeSlot.endTime, appointment.timeSlot.startTime))
 
                                                     return (
                                                         <div
@@ -163,7 +163,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                         >
                                                             <div className="text-xs font-medium truncate">{appointment.patient.name}</div>
                                                             <div className="text-xs opacity-90 truncate">
-                                                                {formatTimeToString(appointment.timeSlot.startTime)} - {appointment.status}
+                                                                {formatTimeToString(new Date(appointment.timeSlot.startTime))} - {appointment.status}
                                                             </div>
                                                         </div>
                                                     )
