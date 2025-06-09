@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format, addDays, startOfWeek, endOfWeek, isSameDay } from "date-fns"
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Users2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
@@ -13,6 +13,7 @@ import CreateTimeSlotModal from "./timeslot-create-modal"
 import useDoctorTimeSlots from "../_hooks/use-timeslots"
 import useDoctorAppointments from "../_hooks/use-appointments"
 import { User } from "next-auth"
+import DoctorQueue from "./doctor-queue"
 
 export default function DoctorAppointmentsPage({ user }: { user: User }) {
     const [selectedDate, setSelectedDate] = useState(new Date())
@@ -54,12 +55,19 @@ export default function DoctorAppointmentsPage({ user }: { user: User }) {
                         <Calendar className="w-4 h-4 mr-2" />
                         Calendar View
                     </TabsTrigger>
+                    <TabsTrigger value="queue">
+                        <Users2Icon className="w-4 h-4 mr-2" />
+                        Queue View
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="calendar" className="space-y-4">
                     <GoogleCalendar currentDate={selectedDate}
                         timeSlots={timeslots?.payload ?? []}
                         appointments={appointments?.payload ?? []} />
+                </TabsContent>
+                <TabsContent value="queue" className="space-y-4">
+                    <DoctorQueue user={user}/>
                 </TabsContent>
             </Tabs>
         </div>
