@@ -134,6 +134,9 @@ export async function POST(request: Request) {
 
   try {
 
+    console.log(startTime)
+    console.log(endTime)
+
     const newTimeSlot = await prisma.timeSlot.create({
       data: {
         doctorId: existingDoctor.id,
@@ -143,6 +146,8 @@ export async function POST(request: Request) {
         endTime,
       },
     });
+
+    console.log(newTimeSlot)
 
 
     return new NextResponse(
