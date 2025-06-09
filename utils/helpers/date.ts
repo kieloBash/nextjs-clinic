@@ -23,9 +23,12 @@ export function mergeTimeWithDate(
     return returnFormatted ? format(result, formatStr) : result;
 }
 
-export function formatTimeToString(date: Date) {
-    return format(date, "HH:mm")
+export const formatTimeToString = (date: Date) => {
+    const hours = date.getUTCHours().toString().padStart(2, "0")
+    const minutes = date.getUTCMinutes().toString().padStart(2, "0")
+    return `${hours}:${minutes}`
 }
+
 
 export function getDifferenceTimeSlot(timeSlot: TimeSlot) {
     return differenceInMinutes(timeSlot.endTime, timeSlot.startTime)
