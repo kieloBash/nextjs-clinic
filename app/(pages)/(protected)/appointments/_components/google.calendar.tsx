@@ -5,7 +5,8 @@ import { AppointmentStatus, TimeSlot, TimeSlotStatus } from "@prisma/client"
 import { FullAppointmentType } from '@/types/prisma.type'
 import { formatTimeToString, getDifferenceTimeSlot } from '@/utils/helpers/date'
 import SelectedAppointmentModal from './selected-appointment-modal'
-import { TIME_ZONE } from '@/utils/constants'
+import { getAppointmentStatusDisplay, TIME_ZONE } from '@/utils/constants'
+import { Badge } from '@/components/ui/badge'
 
 const generateTimeSlots = () => {
     const slots = []
@@ -20,6 +21,30 @@ interface IGoogleCalendarProps {
     currentDate?: Date
     appointments?: FullAppointmentType[]
     timeSlots?: TimeSlot[]
+}
+
+function AppointmentLegend() {
+    const APPOINTMENT_STATUSES: AppointmentStatus[] = Object.values(AppointmentStatus)
+    return (
+        <div className="flex flex-wrap items-center justify-center gap-4 mt-4 p-4 bg-gray-50 rounded-lg">
+            {APPOINTMENT_STATUSES.map((status) => {
+                const { className, label } = getAppointmentStatusDisplay(status);
+
+                return (
+                    <div key={status} className="flex items-center space-x-2">
+                        <div className={`w-4 h-4 rounded ${className.split(" ")[0]}`}></div>
+                        <span className="text-sm">{label}</span>
+                    </div>
+                );
+            })}
+
+            {/* Optional: Add Available Time Slots as a special entry */}
+            <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-green-100 border border-green-300 border-dashed rounded"></div>
+                <span className="text-sm">Available Time Slots</span>
+            </div>
+        </div>
+    );
 }
 
 const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments = [], timeSlots = [] }: IGoogleCalendarProps) => {
@@ -85,20 +110,13 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
         return blocks
     }
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case AppointmentStatus.COMPLETED:
-                return "bg-blue-500 hover:bg-blue-600 text-white border-blue-600"
-            case AppointmentStatus.PENDING:
-                return "bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-600"
-            case AppointmentStatus.CANCELLED:
-                return "bg-red-500 hover:bg-red-600 text-white border-red-600"
-            default:
-                return "bg-gray-500 hover:bg-gray-600 text-white border-gray-600"
-        }
+    const getStatusColor = (status: any) => {
+        return getAppointmentStatusDisplay(status).className
     }
 
-    console.log(appointments)
+    const getStatusLabel = (status: any) => {
+        return getAppointmentStatusDisplay(status).label
+    }
 
     return (
         <>
@@ -168,11 +186,13 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                         hour: "2-digit",
                                                         minute: "2-digit",
                                                         second: "2-digit",
-                                                        hour12: false, // change to true for AM/PM format
-                                                        timeZone: TIME_ZONE, // optional: use your local time zone
+                                                        hour12: false,
+                                                        timeZone: TIME_ZONE,
                                                     });
 
                                                     const { top, height } = getAppointmentPosition(startTime, duration)
+
+                                                    const [hour, minute] = startTime.split(":")
 
                                                     return (
                                                         <div
@@ -182,8 +202,11 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                             onClick={() => setSelectedAppointment(appointment)}
                                                         >
                                                             <div className="text-xs font-medium truncate">{appointment.patient.name}</div>
-                                                            <div className="text-xs opacity-90 truncate">
-                                                                {appointment.timeSlot.startTime as any} - {appointment.status}
+                                                            <div className="text-xs font-medium opacity-90 truncate">
+                                                                {`${hour}:${minute}`}
+                                                            </div>
+                                                            <div className="truncate text-xs font-medium p-1 border rounded-full text-center w-full mt-2">
+                                                                {getStatusLabel(appointment.status)}
                                                             </div>
                                                         </div>
                                                     )
@@ -223,20 +246,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
             </Card>
 
             {/* Legend */}
-            <div className="flex items-center justify-center space-x-6 mt-4 p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                    <span className="text-sm">Confirmed Appointments</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-                    <span className="text-sm">Pending Appointments</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 bg-green-100 border border-green-300 border-dashed rounded"></div>
-                    <span className="text-sm">Available Time Slots</span>
-                </div>
-            </div>
+            <AppointmentLegend />
         </>
     )
 }

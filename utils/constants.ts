@@ -1,3 +1,5 @@
+import { AppointmentStatus } from "@prisma/client";
+
 export const PENDING_BOOKING_NOTIFICATION_PATIENT = "Your booked has been notified to the doctor, please wait for your appointment to be confirmed";
 export const PENDING_BOOKING_NOTIFICATION_DOCTOR = "You have a new booking! Please confirm!";
 
@@ -61,3 +63,28 @@ export const TIME_ZONE = process.env.NEXT_PUBLIC_TIME_ZONE ? process.env.NEXT_PU
 export const FETCH_INTERVAL = 60000 * 10;
 
 export const FORMAT = "yyyy-MM-dd";
+
+export const getAppointmentStatusDisplay = (status: AppointmentStatus) => {
+    const CLASSNAME = {
+        COMPLETED: "bg-blue-500 hover:bg-blue-600 text-white border-blue-600",
+        PENDING: "bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-600",
+        CANCELLED: "bg-red-500 hover:bg-red-600 text-white border-red-600",
+        PENDING_PAYMENT: "bg-green-500 hover:bg-green-600 text-white border-green-600",
+        CONFIRMED: "bg-violet-500 hover:bg-violet-600 text-white border-violet-600",
+        RESCHEDULED: "bg-orange-500 hover:bg-orange-600 text-white border-orange-600",
+    }
+
+    const LABEL = {
+        COMPLETED: "Completed",
+        PENDING: "Pending Approval",
+        CANCELLED: "Cancelled",
+        PENDING_PAYMENT: "Pending Payment",
+        CONFIRMED: "Confirmed",
+        RESCHEDULED: "Rescheduled",
+    }
+
+    const className = CLASSNAME[status];
+    const label = LABEL[status];
+
+    return { className, label }
+}
