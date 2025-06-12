@@ -163,6 +163,26 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
                     {/* <Button disabled={isUpdating} onClick={handleCompleteAppointment}>Complete</Button> */}
                 </DialogFooter>
             )
+        } else if (AppointmentStatus.CANCELLED === status) {
+            return (
+                <DialogFooter className="flex space-x-1">
+                    <div className="w-full p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold text-red-800">Information</h4>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                            {selectedAppointment?.updatedAt && (
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Date Cancelled:</span>
+                                    <span className="font-medium">
+                                        {format(new Date(selectedAppointment.updatedAt), "MMM d, yyyy 'at' h:mm a")}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </DialogFooter>
+            )
         }
     }
 
