@@ -18,10 +18,10 @@ import {
 } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { FullAppointmentType, FullQueueType } from "@/types/prisma.type"
+import { FullQueueType } from "@/types/prisma.type"
 import { AppointmentStatus } from "@prisma/client"
 import axios from "axios"
-import { COMPLETE_APPOINTMENT } from "@/utils/api-endpoints"
+import { COMPLETE_APPOINTMENT, COMPLETE_QUEUE } from "@/utils/api-endpoints"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { showToast } from "@/utils/helpers/show-toast"
 import { useQueryClient } from "@tanstack/react-query"
@@ -39,18 +39,18 @@ const completeAppointmentSchema = z.object({
 
 interface CompleteAppointmentModalProps {
     onClose: () => void
-    appointment: FullAppointmentType
+    queue: FullQueueType | null
 }
 
 export default function CompleteAppointmentModal({
     onClose,
-    appointment,
+    queue,
 }: CompleteAppointmentModalProps) {
     const [isOpen, setisOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const queryClient = useQueryClient();
 
-    const patient = useMemo(() => appointment?.patient, [appointment?.id])
+    const patient = useMemo(() => queue?.patient, [queue?.id])
 
     const form = useForm<z.infer<typeof completeAppointmentSchema>>({
         resolver: zodResolver(completeAppointmentSchema),
@@ -64,16 +64,16 @@ export default function CompleteAppointmentModal({
 
     const onSubmit = async (values: z.infer<typeof completeAppointmentSchema>) => {
         setIsSubmitting(true)
-        if (!appointment) return null;
+        if (!queue) return null;
 
         try {
             // backend
-            const body = { amount: values.paymentAmount, status: AppointmentStatus.PENDING_PAYMENT, appointmentId: appointment.id }
+            const body = { amount: values.paymentAmount, status: AppointmentStatus.PENDING_PAYMENT, queueId: queue.id }
+            console.log(body)
 
-            const res = await axios.post(COMPLETE_APPOINTMENT, body);
+            const res = await axios.post(COMPLETE_QUEUE, body);
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
             onClose()
-            setisOpen(false)
 
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
@@ -99,7 +99,7 @@ export default function CompleteAppointmentModal({
     return (
         <Dialog open={isOpen} onOpenChange={setisOpen}>
             <DialogTrigger asChild>
-                <Button className="">
+                <Button className="w-full">
                     Complete Appointment
                 </Button>
             </DialogTrigger>

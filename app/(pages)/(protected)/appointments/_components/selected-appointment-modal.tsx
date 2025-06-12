@@ -18,7 +18,8 @@ import { showToast } from '@/utils/helpers/show-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from '../_hooks/keys'
-import { COMPLETE_APPOINTMENT, CONFIRM_PAYMENT_APPOINTMENT } from '@/utils/api-endpoints'
+import { CONFIRM_PAYMENT_APPOINTMENT } from '@/utils/api-endpoints'
+import CompleteAppointmentModal from './complete-appointment-modal'
 
 interface IProps {
     selectedAppointment: FullAppointmentType
@@ -70,6 +71,9 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
     const handleConfirmAppointment = async () => { }
     const handleRescheduleAppointment = async () => { }
     const handleCancelAppointment = async () => { }
+    const handleCompleteAppointment = async () => {
+        clear()
+    }
 
     const getButtons = (status: AppointmentStatus) => {
 
@@ -85,8 +89,58 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
             )
         } else if (AppointmentStatus.PENDING_PAYMENT === status) {
             return (
+                <DialogFooter className="flex flex-col space-y-4">
+                    <div className="w-full p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold text-yellow-800">Payment Pending</h4>
+                            <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+                        </div>
+                        <div className="space-y-4 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Amount Due:</span>
+                                <span className="font-medium">₱{selectedAppointment?.invoice?.amount || '0.00'}</span>
+                            </div>
+                            <div className="flex justify-end w-full">
+                                <Button size={"sm"} disabled={isUpdating} onClick={handleConfirmPayment}>Confirm Payment</Button>
+                            </div>
+                        </div>
+                    </div>
+                </DialogFooter>
+            )
+        } else if (AppointmentStatus.COMPLETED === status) {
+            return (
+                <DialogFooter className="flex flex-col space-y-4">
+                    <div className="w-full p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold text-green-800">Payment Completed</h4>
+                            <Badge className="bg-green-100 text-green-800">Paid</Badge>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Amount Paid:</span>
+                                <span className="font-medium">₱{selectedAppointment?.invoice?.amount || '0.00'}</span>
+                            </div>
+                            {selectedAppointment?.invoice?.createdAt && (
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Payment Date:</span>
+                                    <span className="font-medium">
+                                        {format(new Date(selectedAppointment.invoice.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </DialogFooter>
+            )
+        } else if (AppointmentStatus.CONFIRMED === status) {
+            return (
                 <DialogFooter className="flex space-x-2">
-                    <Button disabled={isUpdating} onClick={handleConfirmPayment}>Confirm Payment</Button>
+                    <Button disabled={isUpdating} onClick={handleRescheduleAppointment} variant="outline">Reschedule</Button>
+                    <Button disabled={isUpdating} onClick={handleCancelAppointment} variant="outline" className="text-red-600 hover:text-red-700">
+                        Cancel Appointment
+                    </Button>
+                    <CompleteAppointmentModal appointment={selectedAppointment} onClose={handleCompleteAppointment} />
+                    {/* <Button disabled={isUpdating} onClick={handleCompleteAppointment}>Complete</Button> */}
                 </DialogFooter>
             )
         }

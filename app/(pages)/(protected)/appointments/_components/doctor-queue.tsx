@@ -27,7 +27,7 @@ import { CONFIRM_QUEUE, REMOVE_QUEUE, UPDATE_QUEUE_STATUS } from "@/utils/api-en
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { showToast } from "@/utils/helpers/show-toast"
 import AddToQueueModal from "./add-to-queue-modal"
-import CompleteAppointmentModal from "./complete-appointment-modal"
+import CompleteAppointmentModal from "./complete-appointment-modal-queue"
 import { useQueryClient } from "@tanstack/react-query"
 import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../_hooks/keys"
 
