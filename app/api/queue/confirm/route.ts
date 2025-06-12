@@ -5,6 +5,7 @@ import { addHours } from "date-fns";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/prisma";
+import { getTodayDateTimezone } from "@/utils/helpers/date";
 
 export async function POST(request: Request) {
 
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
             );
         }
 
-        const today = new Date();
+        const today = getTodayDateTimezone();
 
         const result = await prisma.$transaction(async (tx) => {
 
@@ -87,8 +88,6 @@ export async function POST(request: Request) {
 
             return { confirmedAppointment, timeSlot };
         })
-
-        console.log(result)
 
         return new NextResponse(
             JSON.stringify({

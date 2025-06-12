@@ -5,6 +5,7 @@ import { AppointmentStatus, TimeSlot, TimeSlotStatus } from "@prisma/client"
 import { FullAppointmentType } from '@/types/prisma.type'
 import { formatTimeToString, getDifferenceTimeSlot } from '@/utils/helpers/date'
 import SelectedAppointmentModal from './selected-appointment-modal'
+import { TIME_ZONE } from '@/utils/constants'
 
 const generateTimeSlots = () => {
     const slots = []
@@ -168,7 +169,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                         minute: "2-digit",
                                                         second: "2-digit",
                                                         hour12: false, // change to true for AM/PM format
-                                                        timeZone: "Asia/Manila", // optional: use your local time zone
+                                                        timeZone: TIME_ZONE, // optional: use your local time zone
                                                     });
 
                                                     const { top, height } = getAppointmentPosition(startTime, duration)
@@ -182,7 +183,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                         >
                                                             <div className="text-xs font-medium truncate">{appointment.patient.name}</div>
                                                             <div className="text-xs opacity-90 truncate">
-                                                                {formatTimeToString(appointment.timeSlot.startTime as any)} - {appointment.status}
+                                                                {appointment.timeSlot.startTime as any} - {appointment.status}
                                                             </div>
                                                         </div>
                                                     )

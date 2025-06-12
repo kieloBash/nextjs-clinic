@@ -57,6 +57,7 @@ export const getTodayDateTimezone = (date?: Date | string | null): Date => {
 };
 
 export const formatTimeToString = (dateString: string) => {
+
     const timePart = dateString.split("T")[1]; // "11:12:00.000Z"
     const [hour, minute] = timePart.split(":");
 
