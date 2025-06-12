@@ -44,7 +44,7 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor }
                         <div>
                             <label className="text-sm font-medium text-gray-600">Time</label>
                             <p>
-                                {formatTimeToString(selectedAppointment.timeSlot.startTime)} ({getDifferenceTimeSlot(selectedAppointment.timeSlot)} min)
+                                {formatTimeToString(selectedAppointment.timeSlot.startTime as any)} ({getDifferenceTimeSlot(selectedAppointment.timeSlot)} min)
                             </p>
                         </div>
                         {/* <div>
