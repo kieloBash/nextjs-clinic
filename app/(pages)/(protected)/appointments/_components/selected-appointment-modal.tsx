@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
     Dialog,
     DialogContent,
@@ -12,13 +12,30 @@ import { Badge } from '@/components/ui/badge'
 import { FullAppointmentType } from '@/types/prisma.type'
 import { formatTimeToString, getDifferenceTimeSlot } from '@/utils/helpers/date'
 import { format } from 'date-fns'
+import { TIME_ZONE } from '@/utils/constants'
 
 interface IProps {
     selectedAppointment: FullAppointmentType
     clear: () => void
     getStatusColor: (e: string) => string
+    getStatusLabel: (e: string) => string
 }
-const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor }: IProps) => {
+const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, getStatusLabel }: IProps) => {
+
+    const startTime = useMemo(() => {
+        return new Date(selectedAppointment.timeSlot.startTime).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
+            timeZone: TIME_ZONE,
+        });
+    }, [selectedAppointment])
+
+    const [hour, minute] = useMemo(() => {
+        return startTime.split(":")
+    }, [selectedAppointment, startTime])
+
     return (
         <Dialog open={!!selectedAppointment} onOpenChange={clear}>
             <DialogContent>
@@ -32,7 +49,7 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor }
                         </div>
                         <div>
                             <h3 className="font-semibold text-lg">{selectedAppointment.patient.name}</h3>
-                            <Badge className={getStatusColor(selectedAppointment.status)}>{selectedAppointment.status}</Badge>
+                            <Badge className={getStatusColor(selectedAppointment.status)}>{getStatusLabel(selectedAppointment.status)}</Badge>
                         </div>
                     </div>
 
@@ -44,13 +61,9 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor }
                         <div>
                             <label className="text-sm font-medium text-gray-600">Time</label>
                             <p>
-                                {formatTimeToString(selectedAppointment.timeSlot.startTime as any)} ({getDifferenceTimeSlot(selectedAppointment.timeSlot)} min)
+                                {`${hour}:${minute}`} ({getDifferenceTimeSlot(selectedAppointment.timeSlot)} est.)
                             </p>
                         </div>
-                        {/* <div>
-                            <label className="text-sm font-medium text-gray-600">Type</label>
-                            <p>{selectedAppointment.type}</p>
-                        </div> */}
                         <div>
                             <label className="text-sm font-medium text-gray-600">Phone</label>
                             <p>{selectedAppointment.patient.phone}</p>

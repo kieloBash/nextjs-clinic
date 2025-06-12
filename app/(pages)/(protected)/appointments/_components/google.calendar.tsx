@@ -123,7 +123,8 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
             {selectedAppointment && <SelectedAppointmentModal
                 selectedAppointment={selectedAppointment}
                 clear={() => setSelectedAppointment(null)}
-                getStatusColor={getStatusColor} />
+                getStatusColor={getStatusColor}
+                getStatusLabel={getStatusLabel} />
             }
             <Card className="overflow-hidden">
                 <CardContent className="p-0">
