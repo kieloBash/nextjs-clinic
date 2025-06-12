@@ -1,3 +1,5 @@
+import { toZonedTime } from "date-fns-tz";
+
 export function parseDate(dateString: string) {
     const parsedDate = Date.parse(dateString.toString());
 
@@ -24,11 +26,11 @@ export function mergeTimeWithDate(
     return returnFormatted ? format(result, formatStr) : result;
 }
 
-export const getTodayDateTimezone = () => {
-    return new Date().toLocaleTimeString("en-US", {
-        timeZone: TIME_ZONE,
-    });
-}
+export const getTodayDateTimezone = (date?: Date | string | null): Date => {
+    const rawDate = date ? new Date(date) : new Date();
+    const zonedDate = toZonedTime(rawDate, TIME_ZONE); // Adjust to timezone
+    return zonedDate;
+};
 
 export const formatTimeToString = (date: Date) => {
     return new Date(date).toLocaleTimeString("en-US", {
