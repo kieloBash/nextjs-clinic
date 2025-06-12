@@ -212,10 +212,10 @@ export default function SelectedTimeSlotModal({
                         </div>
 
                         <DialogFooter className="gap-2">
-                            <Button variant="outline" onClick={() => setIsEditing(true)}>
+                            {/* <Button variant="outline" onClick={() => setIsEditing(true)}>
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
-                            </Button>
+                            </Button> */}
                             <AlertDialog open={openDelete} onOpenChange={setOpenDelete}>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive">
