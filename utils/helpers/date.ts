@@ -32,6 +32,16 @@ export function parseDate(dateString: string): Date {
     return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
 }
 
+export function getHourInTimeZone(date: Date): number {
+    const formatter = new Intl.DateTimeFormat("en-PH", {
+        timeZone: TIME_ZONE,
+        hour: "numeric",
+        hour12: false,
+    });
+
+    return Number(formatter.format(date));
+}
+
 
 
 import { TimeSlot } from "@prisma/client"
@@ -62,6 +72,14 @@ export const formatTimeToString = (dateString: string) => {
     const [hour, minute] = timePart.split(":");
 
     return `${hour}:${minute}`;
+};
+
+export const getTimeOfDate = (dateString: string) => {
+
+    const timePart = dateString.split("T")[1]; // "11:12:00.000Z"
+    const [hour, minute] = timePart.split(":");
+
+    return { hour: parseInt(hour), minute: parseInt(minute) };
 };
 
 // export const formatTimeToString = (date: Date) => {

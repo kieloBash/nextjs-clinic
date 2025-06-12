@@ -2,7 +2,7 @@ import { TimeSlotStatus } from "@prisma/client"
 import { getDoctor } from "@/libs/user";
 import { prisma } from "@/prisma";
 import { NextResponse } from "next/server";
-import { parseDate } from "@/utils/helpers/date";
+import { getHourInTimeZone, getTimeOfDate, parseDate } from "@/utils/helpers/date";
 import { MISSING_PARAMETERS } from "@/utils/constants";
 import { isBefore, isAfter, startOfDay, differenceInMinutes, addHours } from "date-fns";
 
@@ -85,7 +85,9 @@ export async function POST(request: Request) {
   const startTime = parseDate(startTimeRaw.toString());
   const endTime = parseDate(endTimeRaw.toString());
 
-  if (startTime.getHours() < 8) {
+  const startTimeHours = getTimeOfDate(startTimeRaw.toString());
+
+  if (startTimeHours.hour < 8) {
     return new NextResponse(
       JSON.stringify({ message: "Start time must be 8:00 AM or later." }),
       { status: 400 }
