@@ -20,6 +20,7 @@ import axios from 'axios'
 import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from '../_hooks/keys'
 import { CANCEL_PAYMENT_APPOINTMENT, CONFIRM_PAYMENT_APPOINTMENT } from '@/utils/api-endpoints'
 import CompleteAppointmentModal from './complete-appointment-modal'
+import RescheduleAppointmentModal from './reschedule-appointment-modal'
 
 interface IProps {
     selectedAppointment: FullAppointmentType
@@ -30,6 +31,8 @@ interface IProps {
 
 const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, getStatusLabel }: IProps) => {
     const [isUpdating, setisUpdating] = useState(false);
+    const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false)
+
     const queryClient = useQueryClient();
 
     const startTime = useMemo(() => {
@@ -69,7 +72,7 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
         }
     }
     const handleConfirmAppointment = async () => { }
-    const handleRescheduleAppointment = async () => { }
+    const handleRescheduleAppointment = async () => { setIsRescheduleModalOpen(true) }
     const handleCancelAppointment = async () => {
         try {
             setisUpdating(true)
@@ -228,6 +231,11 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
 
                 {getButtons(selectedAppointment.status)}
             </DialogContent>
+            <RescheduleAppointmentModal
+                isOpen={isRescheduleModalOpen}
+                onClose={() => setIsRescheduleModalOpen(false)}
+                appointment={selectedAppointment}
+            />
         </Dialog>
     )
 }
