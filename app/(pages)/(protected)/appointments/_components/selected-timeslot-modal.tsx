@@ -33,6 +33,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import type { TimeSlot, TimeSlotStatus } from "@prisma/client"
 import { formatTimeToStringPeriod } from "@/utils/helpers/date"
+import axios from "axios"
+import { DELETE_TIMESLOT } from "@/utils/api-endpoints"
+import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
+import { showToast } from "@/utils/helpers/show-toast"
+import { useQueryClient } from "@tanstack/react-query"
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_TIMESLOTS } from "../_hooks/keys"
 
 const editTimeSlotSchema = z
     .object({
@@ -54,19 +60,20 @@ const editTimeSlotSchema = z
 interface SelectedTimeSlotModalProps {
     selectedTimeSlot: TimeSlot | null
     onClose: () => void
-    onEdit: (timeSlotId: string, data: z.infer<typeof editTimeSlotSchema>) => Promise<void>
-    onDelete: (timeSlotId: string) => Promise<void>
+    clear: () => void
 }
 
 export default function SelectedTimeSlotModal({
     selectedTimeSlot,
     onClose,
-    onEdit,
-    onDelete,
+    clear
 }: SelectedTimeSlotModalProps) {
     const [isEditing, setIsEditing] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [openDelete, setOpenDelete] = useState(false)
+
+    const queryClient = useQueryClient();
 
     const form = useForm<z.infer<typeof editTimeSlotSchema>>({
         resolver: zodResolver(editTimeSlotSchema),
@@ -96,6 +103,17 @@ export default function SelectedTimeSlotModal({
         }
     })
 
+    const onEdit = async (timeSlotId: string, data: z.infer<typeof editTimeSlotSchema>) => {
+        console.log("Editing time slot:", timeSlotId, data)
+        // Here you would typically send this data to your backend
+        // Example API call:
+        // await axios.patch(`/api/timeslots/${timeSlotId}`, data)
+
+        // For now, just show success message
+        alert(`Time slot updated successfully!`)
+        clear()
+    }
+
     const onSubmit = async (values: z.infer<typeof editTimeSlotSchema>) => {
         if (!selectedTimeSlot) return
 
@@ -116,12 +134,20 @@ export default function SelectedTimeSlotModal({
 
         setIsDeleting(true)
         try {
-            await onDelete(selectedTimeSlot.id)
+            const res = await axios.delete(DELETE_TIMESLOT + `/${selectedTimeSlot.id}`)
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
+            ]);
+
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
             onClose()
-        } catch (error) {
-            console.error("Error deleting time slot:", error)
+
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
         } finally {
-            setIsDeleting(false)
+            setIsDeleting(false);
+            setOpenDelete(false);
         }
     }
 
@@ -136,7 +162,6 @@ export default function SelectedTimeSlotModal({
     const formatTime = (time: string) => {
         return formatTimeToStringPeriod(time);
     }
-
 
     return (
         <Dialog open={!!selectedTimeSlot} onOpenChange={handleClose}>
@@ -191,7 +216,7 @@ export default function SelectedTimeSlotModal({
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
                             </Button>
-                            <AlertDialog>
+                            <AlertDialog open={openDelete} onOpenChange={setOpenDelete}>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive">
                                         <Trash2 className="w-4 h-4 mr-2" />
@@ -208,9 +233,9 @@ export default function SelectedTimeSlotModal({
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+                                        <Button type="button" onClick={handleDelete} disabled={isDeleting}>
                                             {isDeleting ? "Deleting..." : "Delete"}
-                                        </AlertDialogAction>
+                                        </Button>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>

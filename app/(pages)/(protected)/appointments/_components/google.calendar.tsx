@@ -8,6 +8,7 @@ import SelectedAppointmentModal from './selected-appointment-modal'
 import { getAppointmentStatusDisplay, TIME_ZONE } from '@/utils/constants'
 import { Badge } from '@/components/ui/badge'
 import SelectedTimeSlotModal from './selected-timeslot-modal'
+import axios from 'axios'
 
 const generateTimeSlots = () => {
     const slots = []
@@ -112,28 +113,6 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
         return blocks
     }
 
-    const handleEditTimeSlot = async (timeSlotId: string, data: any) => {
-        console.log("Editing time slot:", timeSlotId, data)
-        // Here you would typically send this data to your backend
-        // Example API call:
-        // await axios.patch(`/api/timeslots/${timeSlotId}`, data)
-
-        // For now, just show success message
-        alert(`Time slot updated successfully!`)
-        setSelectedTimeSlot(null)
-    }
-
-    const handleDeleteTimeSlot = async (timeSlotId: string) => {
-        console.log("Deleting time slot:", timeSlotId)
-        // Here you would typically send delete request to your backend
-        // Example API call:
-        // await axios.delete(`/api/timeslots/${timeSlotId}`)
-
-        // For now, just show success message
-        alert(`Time slot deleted successfully!`)
-        setSelectedTimeSlot(null)
-    }
-
     const getStatusColor = (status: any) => {
         return getAppointmentStatusDisplay(status).className
     }
@@ -154,8 +133,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                 <SelectedTimeSlotModal
                     selectedTimeSlot={selectedTimeSlot}
                     onClose={() => setSelectedTimeSlot(null)}
-                    onEdit={handleEditTimeSlot}
-                    onDelete={handleDeleteTimeSlot}
+                    clear={() => setSelectedTimeSlot(null)}
                 />
             )}
             <Card className="overflow-hidden">
