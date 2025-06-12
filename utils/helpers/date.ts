@@ -1,46 +1,38 @@
 import { toZonedTime } from "date-fns-tz";
 
 export function parseDate(dateString: string): Date {
-    // Validate input
     if (!dateString) {
         throw new Error("Invalid input Date");
     }
 
-    // Convert dateString from Asia/Manila to UTC-equivalent Date
-    const formatter = new Intl.DateTimeFormat("en-US", {
-        timeZone: TIME_ZONE,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-    });
+    const [datePart, timePart] = dateString.split("T");
 
-    const date = new Date(dateString);
-    const parts = formatter.formatToParts(date);
-
-    const year = parts.find(p => p.type === "year")?.value;
-    const month = parts.find(p => p.type === "month")?.value;
-    const day = parts.find(p => p.type === "day")?.value;
-    const hour = parts.find(p => p.type === "hour")?.value;
-    const minute = parts.find(p => p.type === "minute")?.value;
-    const second = parts.find(p => p.type === "second")?.value;
-
-    if (!year || !month || !day || !hour || !minute || !second) {
-        throw new Error("Invalid parsed parts");
+    if (!datePart) {
+        throw new Error("Invalid date format");
     }
 
-    // Create a string like "2025-06-12T13:30:00" from Asia/Manila's view
-    const manilaDateString = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+    const [year, month, day] = datePart.split("-").map(Number);
 
-    // Parse as local date and shift to UTC by subtracting local offset
-    const manilaDate = new Date(manilaDateString);
-    const utcDate = new Date(manilaDate.getTime() - (manilaDate.getTimezoneOffset() * 60000));
+    if ([year, month, day].some((v) => Number.isNaN(v))) {
+        throw new Error("Invalid date components");
+    }
 
-    return utcDate;
+    // Default time if time part is missing
+    let hour = 0, minute = 0, second = 0;
+
+    if (timePart) {
+        const timeComponents = timePart.split(":").map(Number);
+        [hour, minute, second] = [
+            timeComponents[0] ?? 0,
+            timeComponents[1] ?? 0,
+            timeComponents[2] ?? 0,
+        ];
+    }
+
+    return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
 }
+
+
 
 import { TimeSlot } from "@prisma/client"
 import { setHours, setMinutes, setSeconds, format, differenceInMinutes } from "date-fns";
