@@ -80,6 +80,8 @@ export async function POST(request: Request) {
 
   const status = statusRaw.toString() as TimeSlotStatus;
   const date = parseDate(dateRaw.toString());
+
+  console.log("RAW:", startTimeRaw.toString(), endTimeRaw.toString())
   const startTime = parseDate(startTimeRaw.toString());
   const endTime = parseDate(endTimeRaw.toString());
 
