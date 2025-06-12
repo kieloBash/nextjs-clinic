@@ -74,6 +74,19 @@ export const formatTimeToString = (dateString: string) => {
     return `${hour}:${minute}`;
 };
 
+export const formatTimeToStringPeriod = (dateString: string) => {
+    const timePart = dateString.split("T")[1]; // e.g., "11:12:00.000Z"
+    if (!timePart) return "";
+
+    const [hourStr, minute] = timePart.split(":");
+    let hour = parseInt(hourStr, 10);
+
+    const period = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12; // convert to 12-hour format
+
+    return `${hour}:${minute} ${period}`;
+};
+
 export const getTimeOfDate = (dateString: string) => {
 
     const timePart = dateString.split("T")[1]; // "11:12:00.000Z"

@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { differenceInMinutes, eachDayOfInterval, endOfWeek, format, isSameDay, parseISO, startOfWeek } from 'date-fns'
-import { AppointmentStatus, TimeSlot, TimeSlotStatus } from "@prisma/client"
+import { Appointment, AppointmentStatus, TimeSlot, TimeSlotStatus } from "@prisma/client"
 import { FullAppointmentType } from '@/types/prisma.type'
 import { formatTimeToString, getDifferenceTimeSlot } from '@/utils/helpers/date'
 import SelectedAppointmentModal from './selected-appointment-modal'
 import { getAppointmentStatusDisplay, TIME_ZONE } from '@/utils/constants'
 import { Badge } from '@/components/ui/badge'
+import SelectedTimeSlotModal from './selected-timeslot-modal'
 
 const generateTimeSlots = () => {
     const slots = []
@@ -48,7 +49,8 @@ function AppointmentLegend() {
 }
 
 const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments = [], timeSlots = [] }: IGoogleCalendarProps) => {
-    const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
+    const [selectedAppointment, setSelectedAppointment] = useState<FullAppointmentType | null>(null)
+    const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null)
     const timeSlotsList = generateTimeSlots();
 
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
@@ -110,6 +112,28 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
         return blocks
     }
 
+    const handleEditTimeSlot = async (timeSlotId: string, data: any) => {
+        console.log("Editing time slot:", timeSlotId, data)
+        // Here you would typically send this data to your backend
+        // Example API call:
+        // await axios.patch(`/api/timeslots/${timeSlotId}`, data)
+
+        // For now, just show success message
+        alert(`Time slot updated successfully!`)
+        setSelectedTimeSlot(null)
+    }
+
+    const handleDeleteTimeSlot = async (timeSlotId: string) => {
+        console.log("Deleting time slot:", timeSlotId)
+        // Here you would typically send delete request to your backend
+        // Example API call:
+        // await axios.delete(`/api/timeslots/${timeSlotId}`)
+
+        // For now, just show success message
+        alert(`Time slot deleted successfully!`)
+        setSelectedTimeSlot(null)
+    }
+
     const getStatusColor = (status: any) => {
         return getAppointmentStatusDisplay(status).className
     }
@@ -126,6 +150,14 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                 getStatusColor={getStatusColor}
                 getStatusLabel={getStatusLabel} />
             }
+            {selectedTimeSlot && (
+                <SelectedTimeSlotModal
+                    selectedTimeSlot={selectedTimeSlot}
+                    onClose={() => setSelectedTimeSlot(null)}
+                    onEdit={handleEditTimeSlot}
+                    onDelete={handleDeleteTimeSlot}
+                />
+            )}
             <Card className="overflow-hidden">
                 <CardContent className="p-0">
                     <div className="flex">
@@ -181,8 +213,6 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                 {getTimeSlotsForDay(day).map((timeSlot: TimeSlot) => {
                                                     const availableBlocks = generateTimeSlotBlocks(timeSlot)
 
-                                                    console.log(availableBlocks)
-
                                                     return availableBlocks.map((block) => {
                                                         const { top, height } = getAppointmentPosition(block.time, block.duration)
                                                         return (
@@ -190,7 +220,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                                 key={block.id}
                                                                 className="absolute left-1 right-1 rounded-md p-1 cursor-pointer transition-colors bg-green-100 hover:bg-green-200 border border-green-300 border-dashed"
                                                                 style={{ top: `${top}px`, height: `${height}px` }}
-                                                                onClick={() => console.log("Available slot clicked:", block)}
+                                                                onClick={() => setSelectedTimeSlot(timeSlot)}
                                                             >
                                                                 <div className="text-xs font-medium text-green-700">Available</div>
                                                                 <div className="text-xs text-green-600">
