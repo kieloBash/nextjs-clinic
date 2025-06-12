@@ -15,6 +15,9 @@ export const BOOKING_CANCELLED_NOTIFICATION_DOCTOR = "You have cancelled the app
 export const BOOKING_RESCHEDULED_NOTIFICATION_PATIENT = "Your appointment has been rescheduled. Please check the updated time.";
 export const BOOKING_RESCHEDULED_NOTIFICATION_DOCTOR = "You have successfully rescheduled the appointment.";
 
+export const BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR = "A notification prompting the patient to pay their bill has been sent!";
+export const BOOKING_WAITING_PAYMENT_NOTIFICATION_PATIENT = "You have an awaiting payment!";
+
 export const BOOKING_PATIENT_ADDED_FROM_QUEUE = "Patient added from the queue!";
 
 export const NEW_BOOKED_APPOINTMENT_CONFIRMED_HISTORY = (patientName: string, doctorName: string) => {
@@ -33,6 +36,10 @@ export const NEW_BOOKED_APPOINTMENT_RESCHEDULED_HISTORY = (patientName: string, 
     return `Rescheduled appointment for ${patientName} with doctor ${doctorName}`;
 };
 
+export const NEW_BOOKED_APPOINTMENT_WAITING_FOR_PAYMENT_HISTORY = (amount: number, patientName: string, doctorName: string) => {
+    return `Waiting payment amount of ${amount} for ${patientName} with doctor ${doctorName}`;
+};
+
 export const NEW_BOOKED_APPOINTMENT_HISTORY = (patientName: string, doctorName: string) => {
     return `Booked appointment for ${patientName} to doctor ${doctorName}`
 }
@@ -49,6 +56,7 @@ export const HAS_SESSION = "User is logged in!";
 export const CREATED_PROMPT_SUCCESS = "Created Successfully!";
 export const WELCOME_PROMPT = "Welcome back, great to see you again!";
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ? process.env.NEXT_PUBLIC_APP_NAME : "ClinicApp"
+export const TIME_ZONE = process.env.NEXT_PUBLIC_TIME_ZONE ? process.env.NEXT_PUBLIC_TIME_ZONE : "Asia/Manila"
 
 export const FETCH_INTERVAL = 60000 * 10;
 

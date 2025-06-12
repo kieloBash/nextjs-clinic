@@ -18,8 +18,14 @@ import {
 } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { FullQueueType } from "@/types/prisma.type"
+import { AppointmentStatus } from "@prisma/client"
+import axios from "axios"
+import { COMPLETE_APPOINTMENT } from "@/utils/api-endpoints"
+import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
+import { showToast } from "@/utils/helpers/show-toast"
+import { useQueryClient } from "@tanstack/react-query"
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES } from "../_hooks/keys"
 
 const completeAppointmentSchema = z.object({
     paymentAmount: z
@@ -42,6 +48,8 @@ export default function CompleteAppointmentModal({
 }: CompleteAppointmentModalProps) {
     const [isOpen, setisOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const queryClient = useQueryClient();
+
     const patient = useMemo(() => queue?.patient, [queue?.id])
 
     const form = useForm<z.infer<typeof completeAppointmentSchema>>({
@@ -56,13 +64,23 @@ export default function CompleteAppointmentModal({
 
     const onSubmit = async (values: z.infer<typeof completeAppointmentSchema>) => {
         setIsSubmitting(true)
+        if (!queue) return null;
+
         try {
             // backend
-            console.log(values)
+            const body = { amount: values.paymentAmount, status: AppointmentStatus.PENDING_PAYMENT, queueId: queue.id }
+            console.log(body)
+
+            const res = await axios.post(COMPLETE_APPOINTMENT, body);
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
             form.reset()
             onClose()
-        } catch (error) {
-            console.error("Error completing appointment:", error)
+
+            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_APPOINTMENTS] });
+            form.reset();
+
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
         } finally {
             setIsSubmitting(false)
         }

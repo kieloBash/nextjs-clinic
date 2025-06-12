@@ -47,6 +47,25 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
 
     const generateTimeSlotBlocks = (timeSlot: TimeSlot) => {
         const blocks = []
+
+        const startTime = new Date(timeSlot.startTime).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false, // change to true for AM/PM format
+            timeZone: "Asia/Manila", // optional: use your local time zone
+        })
+
+        const endTime = new Date(timeSlot.endTime).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false, // change to true for AM/PM format
+            timeZone: "Asia/Manila", // optional: use your local time zone
+        })
+        console.log(startTime, endTime)
+
+
         const [startHours, startMinutes] = formatTimeToString(new Date(timeSlot.startTime)).split(":").map(Number)
         const [endHours, endMinutes] = formatTimeToString(new Date(timeSlot.endTime)).split(":").map(Number)
 
@@ -89,6 +108,8 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                 return "bg-gray-500 hover:bg-gray-600 text-white border-gray-600"
         }
     }
+
+    console.log(appointments)
 
     return (
         <>
@@ -152,7 +173,17 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                 {dayAppointments.map((appointment) => {
                                                     if (!appointment?.timeSlot) return null;
 
-                                                    const { top, height } = getAppointmentPosition(formatTimeToString(new Date(appointment.timeSlot.startTime)), differenceInMinutes(appointment.timeSlot.endTime, appointment.timeSlot.startTime))
+                                                    const duration = differenceInMinutes(appointment.timeSlot.endTime, appointment.timeSlot.startTime)
+
+                                                    const startTime = new Date(appointment.timeSlot.startTime).toLocaleTimeString("en-US", {
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                        second: "2-digit",
+                                                        hour12: false, // change to true for AM/PM format
+                                                        timeZone: "Asia/Manila", // optional: use your local time zone
+                                                    });
+
+                                                    const { top, height } = getAppointmentPosition(startTime, duration)
 
                                                     return (
                                                         <div
@@ -172,6 +203,8 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                 {/* Available Time Slots */}
                                                 {getTimeSlotsForDay(day).map((timeSlot: TimeSlot) => {
                                                     const availableBlocks = generateTimeSlotBlocks(timeSlot)
+
+                                                    console.log(availableBlocks)
 
                                                     return availableBlocks.map((block) => {
                                                         const { top, height } = getAppointmentPosition(block.time, block.duration)
