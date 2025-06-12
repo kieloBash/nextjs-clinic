@@ -17,7 +17,7 @@ import { AppointmentStatus } from '@prisma/client'
 import { showToast } from '@/utils/helpers/show-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES } from '../_hooks/keys'
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from '../_hooks/keys'
 import { COMPLETE_APPOINTMENT, CONFIRM_PAYMENT_APPOINTMENT } from '@/utils/api-endpoints'
 
 interface IProps {
@@ -53,7 +53,12 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
             const res = await axios.post(CONFIRM_PAYMENT_APPOINTMENT, body);
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
 
-            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_APPOINTMENTS], exact: false });
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
+            ]);
+
             clear()
 
         } catch (error: any) {

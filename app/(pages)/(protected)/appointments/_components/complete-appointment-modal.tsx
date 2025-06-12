@@ -25,7 +25,7 @@ import { COMPLETE_APPOINTMENT } from "@/utils/api-endpoints"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { showToast } from "@/utils/helpers/show-toast"
 import { useQueryClient } from "@tanstack/react-query"
-import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES } from "../_hooks/keys"
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../_hooks/keys"
 
 const completeAppointmentSchema = z.object({
     paymentAmount: z
@@ -73,11 +73,13 @@ export default function CompleteAppointmentModal({
 
             const res = await axios.post(COMPLETE_APPOINTMENT, body);
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
-            form.reset()
             onClose()
 
-            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_APPOINTMENTS], exact: false });
-            form.reset();
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
+            ]);
 
         } catch (error: any) {
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);

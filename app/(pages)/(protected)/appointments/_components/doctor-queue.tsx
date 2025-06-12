@@ -28,9 +28,12 @@ import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { showToast } from "@/utils/helpers/show-toast"
 import AddToQueueModal from "./add-to-queue-modal"
 import CompleteAppointmentModal from "./complete-appointment-modal"
+import { useQueryClient } from "@tanstack/react-query"
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../_hooks/keys"
 
 export default function DoctorQueue({ user }: { user: User }) {
     const queues = useDoctorQueues({ doctorId: user?.id });
+    const queryClient = useQueryClient();
 
     const [queue, setQueue] = useState<FullQueueType[]>([]);
     const [skippedQueues, setSkippedQueues] = useState<FullQueueType[]>([]);
@@ -59,6 +62,13 @@ export default function DoctorQueue({ user }: { user: User }) {
             });
             // Optional: show success toast
             showToast("success", "Queue confirmed", res.data.message);
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
+            ]);
+
         } catch (error: any) {
             // Rollback on failure
             setCurrentQueue(null);

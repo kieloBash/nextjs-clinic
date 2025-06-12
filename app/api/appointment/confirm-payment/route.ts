@@ -4,11 +4,8 @@ import { prisma } from "@/prisma";
 import {
     BOOKING_COMPLETED_NOTIFICATION_DOCTOR,
     BOOKING_COMPLETED_NOTIFICATION_PATIENT,
-    BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR,
-    BOOKING_WAITING_PAYMENT_NOTIFICATION_PATIENT,
     MISSING_PARAMETERS,
     NEW_BOOKED_APPOINTMENT_COMPLETED_HISTORY,
-    NEW_BOOKED_APPOINTMENT_WAITING_FOR_PAYMENT_HISTORY,
 } from "@/utils/constants";
 import { createNotification } from "@/libs/notification";
 
@@ -21,6 +18,7 @@ export async function POST(request: Request) {
         if (!appointmentId) {
             return NextResponse.json({ message: MISSING_PARAMETERS }, { status: 400 });
         }
+        
 
         const [existingAppointment, existingQueue] = await Promise.all([
             prisma.appointment.findFirst({
@@ -38,6 +36,8 @@ export async function POST(request: Request) {
                 },
             })
         ])
+
+        console.log(existingAppointment, existingQueue)
 
         if (!existingAppointment || !existingQueue) {
             return NextResponse.json(

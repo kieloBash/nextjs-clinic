@@ -22,10 +22,9 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: MISSING_PARAMETERS }, { status: 400 });
         }
 
-        if (![AppointmentStatus.PENDING_PAYMENT, AppointmentStatus.COMPLETED].includes(status)) {
+        if (![AppointmentStatus.PENDING_PAYMENT].includes(status)) {
             return NextResponse.json({ message: "Invalid status!" }, { status: 400 });
         }
-
 
         // Fetch queue with related info
         const queue = await prisma.queue.findFirst({
@@ -43,127 +42,77 @@ export async function POST(request: Request) {
             );
         }
 
-        // PENDING_PAYMENT FLOW
-        if (status === AppointmentStatus.PENDING_PAYMENT) {
-            const amount = parseInt(amountString)
-            if (status === AppointmentStatus.PENDING_PAYMENT && typeof amount !== "number") {
-                return NextResponse.json({ message: "Missing or invalid amount!" }, { status: 400 });
-            }
-
-            const result = await prisma.$transaction(async (tx) => {
-                if (!queue.appointmentId) return null;
-
-                const [updatedAppointment, invoice, updatedQueue] = await Promise.all([
-                    tx.appointment.update({
-                        where: { id: queue.appointmentId },
-                        data: { status },
-                    }),
-                    tx.invoice.create({
-                        data: {
-                            amount,
-                            status: InvoiceStatus.PENDING,
-                            createdBy: queue.doctorId,
-                            patientId: queue.patientId,
-                            appointmentId: queue.appointmentId,
-                        },
-                    }),
-                    tx.queue.update({
-                        where: { id: queue.id },
-                        data: { status: QueueStatus.COMPLETED },
-                    }),
-                ]);
-
-                await Promise.all([
-                    tx.appointmentHistory.createMany({
-                        data: [
-                            {
-                                appointmentId: updatedAppointment.id,
-                                description: BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR,
-                            },
-                            {
-                                appointmentId: updatedAppointment.id,
-                                description: NEW_BOOKED_APPOINTMENT_WAITING_FOR_PAYMENT_HISTORY(
-                                    amount,
-                                    queue.patient.name,
-                                    queue.doctor.name
-                                ),
-                                newStatus: AppointmentStatus.PENDING_PAYMENT,
-                            },
-                        ],
-                    }),
-                    createNotification({
-                        tx,
-                        userId: queue.patientId,
-                        message: BOOKING_WAITING_PAYMENT_NOTIFICATION_PATIENT,
-                    }),
-                    createNotification({
-                        tx,
-                        userId: queue.doctorId,
-                        message: BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR,
-                    }),
-                ]);
-
-                return { updatedAppointment, invoice, updatedQueue };
-            });
-
-            return NextResponse.json(
-                {
-                    message: "Successfully created invoice for appointment!",
-                    data: result,
-                },
-                { status: 201 }
-            );
+        const amount = parseInt(amountString)
+        if (status === AppointmentStatus.PENDING_PAYMENT && typeof amount !== "number") {
+            return NextResponse.json({ message: "Missing or invalid amount!" }, { status: 400 });
         }
 
-        // COMPLETED FLOW
         const result = await prisma.$transaction(async (tx) => {
             if (!queue.appointmentId) return null;
 
-            const [updatedAppointment, updatedInvoice] = await Promise.all([
+            const [updatedAppointment, invoice, updatedQueue] = await Promise.all([
                 tx.appointment.update({
                     where: { id: queue.appointmentId },
-                    data: { status: AppointmentStatus.COMPLETED },
+                    data: { status },
                 }),
-                tx.invoice.update({
-                    where: { appointmentId: queue.appointmentId },
-                    data: { status: InvoiceStatus.PAID },
+                tx.invoice.create({
+                    data: {
+                        amount,
+                        status: InvoiceStatus.PENDING,
+                        createdBy: queue.doctorId,
+                        patientId: queue.patientId,
+                        appointmentId: queue.appointmentId,
+                    },
+                }),
+                tx.queue.update({
+                    where: { id: queue.id },
+                    data: { status: QueueStatus.COMPLETED },
                 }),
             ]);
-
-            await tx.queue.delete({ where: { id: queue.id } });
 
             await Promise.all([
                 tx.appointmentHistory.createMany({
                     data: [
                         {
                             appointmentId: updatedAppointment.id,
-                            description: NEW_BOOKED_APPOINTMENT_COMPLETED_HISTORY(
+                            description: BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR,
+                        },
+                        {
+                            appointmentId: updatedAppointment.id,
+                            description: NEW_BOOKED_APPOINTMENT_WAITING_FOR_PAYMENT_HISTORY(
+                                amount,
                                 queue.patient.name,
                                 queue.doctor.name
                             ),
-                            newStatus: AppointmentStatus.COMPLETED,
+                            newStatus: AppointmentStatus.PENDING_PAYMENT,
                         },
                     ],
                 }),
                 createNotification({
                     tx,
                     userId: queue.patientId,
-                    message: BOOKING_COMPLETED_NOTIFICATION_PATIENT,
+                    message: BOOKING_WAITING_PAYMENT_NOTIFICATION_PATIENT,
                 }),
                 createNotification({
                     tx,
                     userId: queue.doctorId,
-                    message: BOOKING_COMPLETED_NOTIFICATION_DOCTOR,
+                    message: BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR,
                 }),
             ]);
 
-            return { updatedAppointment, updatedInvoice };
+            return { updatedAppointment, invoice, updatedQueue };
         });
 
         return NextResponse.json(
-            { message: "Appointment marked as completed.", data: result },
-            { status: 200 }
+            {
+                message: "Successfully created invoice for appointment!",
+                data: result,
+            },
+            { status: 201 }
         );
+
+
+
     } catch (error) {
         console.error("Error updating appointment status:", error);
 
