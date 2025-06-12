@@ -1,13 +1,45 @@
 import { toZonedTime } from "date-fns-tz";
 
-export function parseDate(dateString: string) {
-    const parsedDate = Date.parse(dateString.toString());
-
-    if (isNaN(parsedDate)) {
+export function parseDate(dateString: string): Date {
+    // Validate input
+    if (!dateString) {
         throw new Error("Invalid input Date");
     }
 
-    return new Date(parsedDate);
+    // Convert dateString from Asia/Manila to UTC-equivalent Date
+    const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: TIME_ZONE,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+    });
+
+    const date = new Date(dateString);
+    const parts = formatter.formatToParts(date);
+
+    const year = parts.find(p => p.type === "year")?.value;
+    const month = parts.find(p => p.type === "month")?.value;
+    const day = parts.find(p => p.type === "day")?.value;
+    const hour = parts.find(p => p.type === "hour")?.value;
+    const minute = parts.find(p => p.type === "minute")?.value;
+    const second = parts.find(p => p.type === "second")?.value;
+
+    if (!year || !month || !day || !hour || !minute || !second) {
+        throw new Error("Invalid parsed parts");
+    }
+
+    // Create a string like "2025-06-12T13:30:00" from Asia/Manila's view
+    const manilaDateString = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+
+    // Parse as local date and shift to UTC by subtracting local offset
+    const manilaDate = new Date(manilaDateString);
+    const utcDate = new Date(manilaDate.getTime() - (manilaDate.getTimezoneOffset() * 60000));
+
+    return utcDate;
 }
 
 import { TimeSlot } from "@prisma/client"
@@ -32,19 +64,26 @@ export const getTodayDateTimezone = (date?: Date | string | null): Date => {
     return zonedDate;
 };
 
-export const formatTimeToString = (date: Date) => {
-    return new Date(date).toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false, // change to true for AM/PM format
-        timeZone: "Asia/Manila", // optional: use your local time zone
-    });
+export const formatTimeToString = (dateString: string) => {
+    const timePart = dateString.split("T")[1]; // "11:12:00.000Z"
+    const [hour, minute] = timePart.split(":");
 
-    const hours = date.getUTCHours().toString().padStart(2, "0")
-    const minutes = date.getUTCMinutes().toString().padStart(2, "0")
-    return `${hours}:${minutes}`
-}
+    return `${hour}:${minute}`;
+};
+
+// export const formatTimeToString = (date: Date) => {
+//     return new Date(date).toLocaleTimeString("en-US", {
+//         hour: "2-digit",
+//         minute: "2-digit",
+//         second: "2-digit",
+//         hour12: false, // change to true for AM/PM format
+//         timeZone: "Asia/Manila", // optional: use your local time zone
+//     });
+
+//     const hours = date.getUTCHours().toString().padStart(2, "0")
+//     const minutes = date.getUTCMinutes().toString().padStart(2, "0")
+//     return `${hours}:${minutes}`
+// }
 
 
 export function getDifferenceTimeSlot(timeSlot: TimeSlot) {

@@ -48,26 +48,11 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
     const generateTimeSlotBlocks = (timeSlot: TimeSlot) => {
         const blocks = []
 
-        const startTime = new Date(timeSlot.startTime).toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: false, // change to true for AM/PM format
-            timeZone: "Asia/Manila", // optional: use your local time zone
-        })
+        const tStart: any = timeSlot.startTime
+        const tEnd: any = timeSlot.endTime
 
-        const endTime = new Date(timeSlot.endTime).toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: false, // change to true for AM/PM format
-            timeZone: "Asia/Manila", // optional: use your local time zone
-        })
-        console.log(startTime, endTime)
-
-
-        const [startHours, startMinutes] = formatTimeToString(new Date(timeSlot.startTime)).split(":").map(Number)
-        const [endHours, endMinutes] = formatTimeToString(new Date(timeSlot.endTime)).split(":").map(Number)
+        const [startHours, startMinutes] = formatTimeToString(tStart).split(":").map(Number)
+        const [endHours, endMinutes] = formatTimeToString(tEnd).split(":").map(Number)
 
         const startTotalMinutes = startHours * 60 + startMinutes
         const endTotalMinutes = endHours * 60 + endMinutes
@@ -78,9 +63,12 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
             const minutes = time % 60
             const timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
 
-            // Check if this time slot is already booked
             const isBooked = appointments.some(
-                (apt) => isSameDay(apt.date, timeSlot.date) && apt?.timeSlot && formatTimeToString(new Date(apt.timeSlot.startTime)) === timeString,
+                (apt) => {
+                    const t2Start: any = apt.timeSlot.startTime
+                    return isSameDay(apt.date, timeSlot.date) && apt?.timeSlot &&
+                        formatTimeToString(t2Start) === timeString
+                }
             )
 
             if (!isBooked) {
@@ -194,7 +182,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                         >
                                                             <div className="text-xs font-medium truncate">{appointment.patient.name}</div>
                                                             <div className="text-xs opacity-90 truncate">
-                                                                {formatTimeToString(new Date(appointment.timeSlot.startTime))} - {appointment.status}
+                                                                {formatTimeToString(appointment.timeSlot.startTime as any)} - {appointment.status}
                                                             </div>
                                                         </div>
                                                     )
