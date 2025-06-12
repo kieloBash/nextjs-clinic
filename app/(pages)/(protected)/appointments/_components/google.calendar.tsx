@@ -177,6 +177,30 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                     />
                                                 ))}
 
+                                                {/* Available Time Slots */}
+                                                {getTimeSlotsForDay(day).map((timeSlot: TimeSlot) => {
+                                                    const availableBlocks = generateTimeSlotBlocks(timeSlot)
+
+                                                    console.log(availableBlocks)
+
+                                                    return availableBlocks.map((block) => {
+                                                        const { top, height } = getAppointmentPosition(block.time, block.duration)
+                                                        return (
+                                                            <div
+                                                                key={block.id}
+                                                                className="absolute left-1 right-1 rounded-md p-1 cursor-pointer transition-colors bg-green-100 hover:bg-green-200 border border-green-300 border-dashed"
+                                                                style={{ top: `${top}px`, height: `${height}px` }}
+                                                                onClick={() => console.log("Available slot clicked:", block)}
+                                                            >
+                                                                <div className="text-xs font-medium text-green-700">Available</div>
+                                                                <div className="text-xs text-green-600">
+                                                                    {block.time} ({block.duration}min)
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    })
+                                                })}
+
                                                 {/* Time Slots and Appointments */}
                                                 {dayAppointments.map((appointment) => {
                                                     if (!appointment?.timeSlot) return null;
@@ -213,29 +237,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                     )
                                                 })}
 
-                                                {/* Available Time Slots */}
-                                                {getTimeSlotsForDay(day).map((timeSlot: TimeSlot) => {
-                                                    const availableBlocks = generateTimeSlotBlocks(timeSlot)
 
-                                                    console.log(availableBlocks)
-
-                                                    return availableBlocks.map((block) => {
-                                                        const { top, height } = getAppointmentPosition(block.time, block.duration)
-                                                        return (
-                                                            <div
-                                                                key={block.id}
-                                                                className="absolute left-1 right-1 rounded-md p-1 cursor-pointer transition-colors bg-green-100 hover:bg-green-200 border border-green-300 border-dashed"
-                                                                style={{ top: `${top}px`, height: `${height}px` }}
-                                                                onClick={() => console.log("Available slot clicked:", block)}
-                                                            >
-                                                                <div className="text-xs font-medium text-green-700">Available</div>
-                                                                <div className="text-xs text-green-600">
-                                                                    {block.time} ({block.duration}min)
-                                                                </div>
-                                                            </div>
-                                                        )
-                                                    })
-                                                })}
                                             </div>
                                         </div>
                                     )

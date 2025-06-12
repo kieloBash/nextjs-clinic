@@ -16,8 +16,6 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const { status, amount: amountString, queueId } = body;
-        
-        const amount = parseInt(amountString)
 
         // Validate input
         if (!status || !queueId) {
@@ -28,9 +26,6 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: "Invalid status!" }, { status: 400 });
         }
 
-        if (status === AppointmentStatus.PENDING_PAYMENT && typeof amount !== "number") {
-            return NextResponse.json({ message: "Missing or invalid amount!" }, { status: 400 });
-        }
 
         // Fetch queue with related info
         const queue = await prisma.queue.findFirst({
@@ -50,6 +45,11 @@ export async function POST(request: Request) {
 
         // PENDING_PAYMENT FLOW
         if (status === AppointmentStatus.PENDING_PAYMENT) {
+            const amount = parseInt(amountString)
+            if (status === AppointmentStatus.PENDING_PAYMENT && typeof amount !== "number") {
+                return NextResponse.json({ message: "Missing or invalid amount!" }, { status: 400 });
+            }
+
             const result = await prisma.$transaction(async (tx) => {
                 if (!queue.appointmentId) return null;
 

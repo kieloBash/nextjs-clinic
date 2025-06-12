@@ -76,7 +76,7 @@ export default function CompleteAppointmentModal({
             form.reset()
             onClose()
 
-            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_APPOINTMENTS] });
+            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_APPOINTMENTS], exact: false });
             form.reset();
 
         } catch (error: any) {

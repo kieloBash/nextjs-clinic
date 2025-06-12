@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
     Dialog,
     DialogContent,
@@ -10,9 +10,15 @@ import { Button } from '@/components/ui/button'
 import { UserIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { FullAppointmentType } from '@/types/prisma.type'
-import { formatTimeToString, getDifferenceTimeSlot } from '@/utils/helpers/date'
+import { getDifferenceTimeSlot } from '@/utils/helpers/date'
 import { format } from 'date-fns'
-import { TIME_ZONE } from '@/utils/constants'
+import { CREATED_PROMPT_SUCCESS, TIME_ZONE } from '@/utils/constants'
+import { AppointmentStatus } from '@prisma/client'
+import { showToast } from '@/utils/helpers/show-toast'
+import { useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES } from '../_hooks/keys'
+import { COMPLETE_APPOINTMENT, CONFIRM_PAYMENT_APPOINTMENT } from '@/utils/api-endpoints'
 
 interface IProps {
     selectedAppointment: FullAppointmentType
@@ -20,7 +26,10 @@ interface IProps {
     getStatusColor: (e: string) => string
     getStatusLabel: (e: string) => string
 }
+
 const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, getStatusLabel }: IProps) => {
+    const [isUpdating, setisUpdating] = useState(false);
+    const queryClient = useQueryClient();
 
     const startTime = useMemo(() => {
         return new Date(selectedAppointment.timeSlot.startTime).toLocaleTimeString("en-US", {
@@ -35,6 +44,48 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
     const [hour, minute] = useMemo(() => {
         return startTime.split(":")
     }, [selectedAppointment, startTime])
+
+
+    const handleConfirmPayment = async () => {
+        try {
+            setisUpdating(true)
+            const body = { appointmentId: selectedAppointment.id }
+            const res = await axios.post(CONFIRM_PAYMENT_APPOINTMENT, body);
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
+
+            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_APPOINTMENTS], exact: false });
+            clear()
+
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setisUpdating(false)
+        }
+    }
+    const handleConfirmAppointment = async () => { }
+    const handleRescheduleAppointment = async () => { }
+    const handleCancelAppointment = async () => { }
+
+    const getButtons = (status: AppointmentStatus) => {
+
+        if (AppointmentStatus.PENDING === status) {
+            return (
+                <DialogFooter className="flex space-x-2">
+                    <Button disabled={isUpdating} onClick={handleRescheduleAppointment} variant="outline">Reschedule</Button>
+                    <Button disabled={isUpdating} onClick={handleCancelAppointment} variant="outline" className="text-red-600 hover:text-red-700">
+                        Cancel Appointment
+                    </Button>
+                    <Button disabled={isUpdating} onClick={handleConfirmAppointment}>Confirm</Button>
+                </DialogFooter>
+            )
+        } else if (AppointmentStatus.PENDING_PAYMENT === status) {
+            return (
+                <DialogFooter className="flex space-x-2">
+                    <Button disabled={isUpdating} onClick={handleConfirmPayment}>Confirm Payment</Button>
+                </DialogFooter>
+            )
+        }
+    }
 
     return (
         <Dialog open={!!selectedAppointment} onOpenChange={clear}>
@@ -76,13 +127,7 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
                     </div>
                 </div>
 
-                <DialogFooter className="flex space-x-2">
-                    <Button variant="outline">Reschedule</Button>
-                    <Button variant="outline" className="text-red-600 hover:text-red-700">
-                        Cancel Appointment
-                    </Button>
-                    <Button>Confirm</Button>
-                </DialogFooter>
+                {getButtons(selectedAppointment.status)}
             </DialogContent>
         </Dialog>
     )

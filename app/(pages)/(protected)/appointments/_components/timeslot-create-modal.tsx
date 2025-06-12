@@ -72,7 +72,7 @@ const CreateTimeSlotModal = () => {
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
             setIsDialogOpen(false)
             form.reset()
-            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS] })
+            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false })
         } catch (error: any) {
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
         } finally {
