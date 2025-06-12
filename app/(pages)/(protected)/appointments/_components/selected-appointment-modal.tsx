@@ -18,7 +18,7 @@ import { showToast } from '@/utils/helpers/show-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from '../_hooks/keys'
-import { CONFIRM_PAYMENT_APPOINTMENT } from '@/utils/api-endpoints'
+import { CANCEL_PAYMENT_APPOINTMENT, CONFIRM_PAYMENT_APPOINTMENT } from '@/utils/api-endpoints'
 import CompleteAppointmentModal from './complete-appointment-modal'
 
 interface IProps {
@@ -70,7 +70,27 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
     }
     const handleConfirmAppointment = async () => { }
     const handleRescheduleAppointment = async () => { }
-    const handleCancelAppointment = async () => { }
+    const handleCancelAppointment = async () => {
+        try {
+            setisUpdating(true)
+            const body = { appointmentId: selectedAppointment.id }
+            const res = await axios.post(CANCEL_PAYMENT_APPOINTMENT, body);
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
+            ]);
+
+            clear()
+
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setisUpdating(false)
+        }
+    }
     const handleCompleteAppointment = async () => {
         clear()
     }
@@ -134,7 +154,7 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
             )
         } else if (AppointmentStatus.CONFIRMED === status) {
             return (
-                <DialogFooter className="flex space-x-2">
+                <DialogFooter className="flex space-x-1">
                     <Button disabled={isUpdating} onClick={handleRescheduleAppointment} variant="outline">Reschedule</Button>
                     <Button disabled={isUpdating} onClick={handleCancelAppointment} variant="outline" className="text-red-600 hover:text-red-700">
                         Cancel Appointment
