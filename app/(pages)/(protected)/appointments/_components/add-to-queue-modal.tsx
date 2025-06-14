@@ -31,6 +31,7 @@ import { ADD_QUEUE } from "@/utils/api-endpoints"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { FullQueueType } from "@/types/prisma.type"
 import { QueueStatus } from "@prisma/client"
+import { useLoading } from "@/components/providers/loading-provider"
 
 // Form schema
 const addToQueueSchema = z.object({
@@ -45,6 +46,7 @@ export default function AddToQueueModal({ onAddToQueue }: AddToQueueModalProps) 
     const [open, setOpen] = useState(false)
     const user = useCurrentUser();
     const queryClient = useQueryClient();
+    const { isLoading, setIsLoading } = useLoading();
 
     const form = useForm<z.infer<typeof addToQueueSchema>>({
         resolver: zodResolver(addToQueueSchema),
@@ -76,6 +78,7 @@ export default function AddToQueueModal({ onAddToQueue }: AddToQueueModalProps) 
         // setOpen(false);
 
         try {
+            setIsLoading(true);
             const res = await axios.post(ADD_QUEUE, {
                 patientEmail: values.patientEmail,
                 doctorId: user.id
@@ -93,6 +96,8 @@ export default function AddToQueueModal({ onAddToQueue }: AddToQueueModalProps) 
             onAddToQueue?.({ ...optimisticQueue, rollback: true } as any); // Let the parent decide how to remove it
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
             setOpen(true);
+        } finally {
+            setIsLoading(false)
         }
     };
 

@@ -5,7 +5,7 @@ import { DoctorSidebar } from './doctor-sidebar'
 import { DoctorHeader } from './doctor-header'
 import { User } from 'next-auth'
 import { usePathname } from 'next/navigation'
-import { Calendar, Home, MessageSquare, Settings, Users } from 'lucide-react'
+import { Calendar, HandCoinsIcon, Home, MessageSquare, Settings } from 'lucide-react'
 
 
 const DoctorLayout = ({ children, user }: ILayout & { user: User }) => {
@@ -27,10 +27,10 @@ const DoctorLayout = ({ children, user }: ILayout & { user: User }) => {
                 isActive: pathname.includes("/appointments"),
             },
             {
-                title: "Patients",
-                url: "/patients",
-                icon: Users,
-                isActive: pathname.includes("/patients"),
+                title: "Billing",
+                url: "/billing",
+                icon: HandCoinsIcon,
+                isActive: pathname.includes("/billing"),
             },
             {
                 title: "Notifications",

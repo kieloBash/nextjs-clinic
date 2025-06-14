@@ -2,7 +2,7 @@
 
 import { Loader2, Heart } from "lucide-react"
 
-export default function SimpleLoadingPage() {
+export default function SimpleLoadingPage({ message }: { message?: string }) {
     return (
         <div className="w-full h-full bg-gradient-to-b from-emerald-50 to-white flex items-center justify-center">
             <div className="text-center">
@@ -16,7 +16,7 @@ export default function SimpleLoadingPage() {
 
                 {/* Loading Text */}
                 <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading HealthCare</h2>
-                <p className="text-gray-600 mb-6">Please wait while we prepare your experience</p>
+                <p className="text-gray-600 mb-6">{message ? message : "Please wait while we prepare your experience"}</p>
             </div>
         </div>
     )

@@ -18,7 +18,7 @@ export async function POST(request: Request) {
         if (!appointmentId) {
             return NextResponse.json({ message: MISSING_PARAMETERS }, { status: 400 });
         }
-        
+
 
         const [existingAppointment, existingQueue] = await Promise.all([
             prisma.appointment.findFirst({
@@ -39,9 +39,9 @@ export async function POST(request: Request) {
 
         console.log(existingAppointment, existingQueue)
 
-        if (!existingAppointment || !existingQueue) {
+        if (!existingAppointment) {
             return NextResponse.json(
-                { message: "Appointment and/or queue not found." },
+                { message: "Appointment not found." },
                 { status: 404 }
             );
         }
@@ -61,9 +61,12 @@ export async function POST(request: Request) {
                 }),
             ]);
 
-            await tx.queue.delete({
-                where: { id: existingQueue.id }
-            });
+            if (existingQueue) {
+                await tx.queue.delete({
+                    where: { id: existingQueue.id }
+                });
+            }
+
 
             await Promise.all([
                 tx.appointmentHistory.createMany({
@@ -71,8 +74,8 @@ export async function POST(request: Request) {
                         {
                             appointmentId: updatedAppointment.id,
                             description: NEW_BOOKED_APPOINTMENT_COMPLETED_HISTORY(
-                                existingQueue.patient.name,
-                                existingQueue.doctor.name
+                                existingAppointment.patient.name,
+                                existingAppointment.doctor.name
                             ),
                             newStatus: AppointmentStatus.COMPLETED,
                         },
@@ -80,12 +83,12 @@ export async function POST(request: Request) {
                 }),
                 createNotification({
                     tx,
-                    userId: existingQueue.patientId,
+                    userId: existingAppointment.patientId,
                     message: BOOKING_COMPLETED_NOTIFICATION_PATIENT,
                 }),
                 createNotification({
                     tx,
-                    userId: existingQueue.doctorId,
+                    userId: existingAppointment.doctorId,
                     message: BOOKING_COMPLETED_NOTIFICATION_DOCTOR,
                 }),
             ]);

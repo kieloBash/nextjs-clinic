@@ -13,3 +13,5 @@ export const COMPLETE_QUEUE = "/api/queue/complete"
 export const CONFIRM_PAYMENT_APPOINTMENT = "/api/appointment/confirm-payment"
 export const CANCEL_PAYMENT_APPOINTMENT = "/api/appointment/cancel"
 export const RESCHEDULE_APPOINTMENT = "/api/appointment/reschedule"
+
+export const FETCH_ALL_DOCTOR_INVOICES = "/api/invoice/doctor/fetch-all"

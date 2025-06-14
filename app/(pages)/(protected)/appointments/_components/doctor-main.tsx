@@ -14,6 +14,8 @@ import useDoctorTimeSlots from "../_hooks/use-timeslots"
 import useDoctorAppointments from "../_hooks/use-appointments"
 import { User } from "next-auth"
 import DoctorQueue from "./doctor-queue"
+import MainLoadingPage from "@/components/globals/main-loading"
+import useDoctorQueues from "../_hooks/use-queues"
 
 export default function DoctorAppointmentsPage({ user }: { user: User }) {
     const [selectedDate, setSelectedDate] = useState(new Date())
@@ -24,7 +26,11 @@ export default function DoctorAppointmentsPage({ user }: { user: User }) {
 
     const timeslots = useDoctorTimeSlots({ doctorId: user?.id, statusFilter: "OPEN", startDate: weekStart, endDate: weekEnd });
     const appointments = useDoctorAppointments({ doctorId: user?.id, startDate: weekStart, endDate: weekEnd });
+    const queues = useDoctorQueues({ doctorId: user?.id });
 
+    if (timeslots.isLoading || appointments.isLoading || queues.isLoading) {
+        return <MainLoadingPage />
+    }
 
     return (
         <div className="container mx-auto px-6 py-4 space-y-6">
