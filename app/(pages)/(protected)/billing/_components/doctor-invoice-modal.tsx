@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { FullInvoiceType } from "@/types/prisma.type"
+import { getInvoiceDisplayId } from "../helper"
+import { InvoiceStatus } from "@prisma/client"
 
 interface InvoiceDetailsModalProps {
     isOpen: boolean
@@ -76,8 +78,8 @@ export function InvoiceDetailsModal({ isOpen, onClose, invoice, onMarkAsPaid }: 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <p className="text-sm text-muted-foreground">Invoice Number</p>
-                                <p className="font-mono font-medium">
-                                    {`INV-${invoice.id.slice(-8).toUpperCase()}`}
+                                <p className="font-mono font-medium text-xs">
+                                    <code>{getInvoiceDisplayId(invoice.id)}</code>
                                 </p>
                             </div>
                             <div>
@@ -128,22 +130,17 @@ export function InvoiceDetailsModal({ isOpen, onClose, invoice, onMarkAsPaid }: 
                         </h3>
                         <div className="p-4 border rounded-lg space-y-3">
                             <div className="grid grid-cols-2 gap-4">
-                                {/* <div>
-                                    <p className="text-sm text-muted-foreground">Service</p>
-                                    <p className="font-medium">{invoice.appointment.service}</p>
-                                </div> */}
+
                                 <div>
                                     <p className="text-sm text-muted-foreground">Date & Time</p>
                                     <p className="font-medium">{format(invoice.appointment.date, "MMM dd, yyyy 'at' h:mm a")}</p>
                                 </div>
                             </div>
 
-                            {/* {invoice.appointment.duration && (
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Duration</p>
-                                    <p className="font-medium">{invoice.appointment.duration} minutes</p>
-                                </div>
-                            )} */}
+                            <div>
+                                <p className="text-sm text-muted-foreground">Duration</p>
+                                <p className="font-medium"> minutes</p>
+                            </div>
 
                             <div>
                                 <p className="text-sm text-muted-foreground">Appointment ID</p>
@@ -193,7 +190,7 @@ export function InvoiceDetailsModal({ isOpen, onClose, invoice, onMarkAsPaid }: 
                         <Button variant="outline" onClick={onClose}>
                             Close
                         </Button>
-                        {invoice.status.toLowerCase() === "pending" && onMarkAsPaid && (
+                        {invoice.status.toLowerCase() === InvoiceStatus.PENDING && onMarkAsPaid && (
                             <Button onClick={handleMarkAsPaid} className="bg-green-600 hover:bg-green-700">
                                 <CheckCircle className="w-4 h-4 mr-2" />
                                 Mark as Paid

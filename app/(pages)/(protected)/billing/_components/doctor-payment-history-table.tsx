@@ -12,9 +12,11 @@ import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { FullInvoiceType } from '@/types/prisma.type'
 import { InvoiceDetailsModal } from './doctor-invoice-modal'
+import { InvoiceStatus } from '@prisma/client'
+import { getInvoiceDisplayId } from '../helper'
 
 interface IProps {
-    data: any[]
+    data: FullInvoiceType[]
     searchTerm: string
     statusFilter: string
     selectedInvoice: FullInvoiceType | null
@@ -30,26 +32,25 @@ const DoctorPaymentHistoryTable = (
     const filteredPayments = useMemo(() => {
         return data.filter((payment) => {
             const matchesSearch =
-                payment.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                payment.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                payment.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
+                payment.patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                payment.id.toLowerCase().includes(searchTerm.toLowerCase())
 
             const matchesStatus = statusFilter === "all" || payment.status === statusFilter
 
             return matchesSearch && matchesStatus
         })
-    }, [searchTerm, statusFilter])
+    }, [searchTerm, statusFilter, data])
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case "paid":
+            case InvoiceStatus.PAID:
                 return (
                     <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
                         <CheckCircle className="w-3 h-3 mr-1" />
                         Paid
                     </Badge>
                 )
-            case "pending":
+            case InvoiceStatus.PENDING:
                 return (
                     <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
                         <Clock className="w-3 h-3 mr-1" />
@@ -68,38 +69,8 @@ const DoctorPaymentHistoryTable = (
         }
     }
 
-    const handleViewDetails = (payment: any) => {
-        const invoiceData = {
-            id: payment.id,
-            patientId: payment.patientId || "patient-id",
-            appointmentId: payment.appointmentId || "appointment-id",
-            createdBy: "doctor-id",
-            amount: payment.amount,
-            status: payment.status.toUpperCase(),
-            createdAt: payment.date,
-            updatedAt: payment.date,
-            invoiceNumber: payment.invoiceNumber,
-            paymentMethod: payment.paymentMethod,
-            patient: {
-                id: payment.patientId || "patient-id",
-                name: payment.patientName,
-                email: payment.patientEmail,
-                avatar: payment.patientAvatar,
-            },
-            creator: {
-                id: "doctor-id",
-                name: "Dr. Smith",
-                email: "doctor@clinic.com",
-            },
-            appointment: {
-                id: payment.appointmentId || "appointment-id",
-                date: payment.date,
-                service: payment.service,
-                duration: 30,
-                notes: "Regular consultation",
-            },
-        }
-        onSelectedInvoiceChange(invoiceData as any)
+    const handleViewDetails = (invoiceData: FullInvoiceType) => {
+        onSelectedInvoiceChange(invoiceData)
         onInvoiceOpen(true)
     }
 
@@ -122,7 +93,7 @@ const DoctorPaymentHistoryTable = (
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input
-                            placeholder="Search patients, services, or invoice numbers..."
+                            placeholder="Search patients, or invoice numbers..."
                             value={searchTerm}
                             onChange={(e) => onSearchChange(e.target.value)}
                             className="pl-10"
@@ -135,9 +106,8 @@ const DoctorPaymentHistoryTable = (
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Status</SelectItem>
-                            <SelectItem value="paid">Paid</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="overdue">Overdue</SelectItem>
+                            <SelectItem value={InvoiceStatus.PAID}>Paid</SelectItem>
+                            <SelectItem value={InvoiceStatus.PENDING}>Pending</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -148,10 +118,10 @@ const DoctorPaymentHistoryTable = (
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Patient</TableHead>
-                                <TableHead>Service</TableHead>
+                                {/* <TableHead>Service</TableHead> */}
                                 <TableHead>Amount</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead>Payment Method</TableHead>
+                                {/* <TableHead>Payment Method</TableHead> */}
                                 <TableHead>Date</TableHead>
                                 <TableHead>Invoice</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
@@ -163,27 +133,27 @@ const DoctorPaymentHistoryTable = (
                                     <TableCell>
                                         <div className="flex items-center space-x-3">
                                             <Avatar className="h-8 w-8">
-                                                <AvatarImage src={payment.patientAvatar || "/placeholder.svg"} />
+                                                <AvatarImage src={payment.patient.image || "/placeholder.svg"} />
                                                 <AvatarFallback>
-                                                    {payment.patientName
+                                                    {payment.patient.name
                                                         .split(" ")
                                                         .map((n: any) => n[0])
                                                         .join("")}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <div className="font-medium">{payment.patientName}</div>
-                                                <div className="text-sm text-muted-foreground">{payment.patientEmail}</div>
+                                                <div className="font-medium">{payment.patient.name}</div>
+                                                <div className="text-sm text-muted-foreground">{payment.patient.email}</div>
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell>{payment.service}</TableCell>
+                                    {/* <TableCell>{"SERVICE"}</TableCell> */}
                                     <TableCell className="font-medium">${payment.amount.toFixed(2)}</TableCell>
                                     <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                                    <TableCell>{payment.paymentMethod}</TableCell>
-                                    <TableCell>{format(payment.date, "MMM dd, yyyy")}</TableCell>
+                                    {/* <TableCell>{"METHOD"}</TableCell> */}
+                                    <TableCell>{format(payment.createdAt, "MMM dd, yyyy")}</TableCell>
                                     <TableCell>
-                                        <code className="text-sm bg-muted px-2 py-1 rounded">{payment.invoiceNumber}</code>
+                                        <code className="text-sm bg-muted px-2 py-1 rounded">{getInvoiceDisplayId(payment.id)}</code>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
@@ -197,7 +167,7 @@ const DoctorPaymentHistoryTable = (
                                                     <Eye className="mr-2 h-4 w-4" />
                                                     View Details
                                                 </DropdownMenuItem>
-                                                {payment.status === "pending" && (
+                                                {payment.status === InvoiceStatus.PENDING && (
                                                     <DropdownMenuItem>
                                                         <CheckCircle className="mr-2 h-4 w-4" />
                                                         Mark as Paid

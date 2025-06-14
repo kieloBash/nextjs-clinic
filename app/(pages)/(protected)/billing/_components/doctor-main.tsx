@@ -6,6 +6,7 @@ import type { User } from "next-auth"
 import DoctorSummaryCards from "./doctor-summary-cards"
 import DoctorPaymentHistoryTable from "./doctor-payment-history-table"
 import { FullInvoiceType } from "@/types/prisma.type"
+import useDoctorInvoices from "../_hooks/doctor/use-invoices"
 
 // Mock payment data
 const mockPayments = [
@@ -90,6 +91,9 @@ const DoctorBillingPage = ({ user }: { user: User }) => {
     const [selectedInvoice, setSelectedInvoice] = useState<FullInvoiceType | null>(null)
     const [isSelectedInvoiceOpen, setIsSelectedInvoiceOpen] = useState(false)
 
+    const data = useDoctorInvoices({ doctorId: user.id });
+    console.log(data)
+
     return (
         <div className="container mx-auto p-6 space-y-6">
             {/* Header */}
@@ -101,11 +105,11 @@ const DoctorBillingPage = ({ user }: { user: User }) => {
             </div>
 
             {/* Summary Cards */}
-            <DoctorSummaryCards data={mockPayments} />
+            <DoctorSummaryCards data={data?.payload ?? []} />
 
             {/* Filters and Search */}
             <DoctorPaymentHistoryTable
-                data={mockPayments}
+                data={data?.payload ?? []}
                 searchTerm={searchTerm}
                 statusFilter={statusFilter}
                 selectedInvoice={selectedInvoice}
