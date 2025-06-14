@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { differenceInMinutes, eachDayOfInterval, endOfWeek, format, isSameDay, parseISO, startOfWeek } from 'date-fns'
 import { Appointment, AppointmentStatus, TimeSlot, TimeSlotStatus } from "@prisma/client"
 import { FullAppointmentType } from '@/types/prisma.type'
-import { formatTimeToString, getDifferenceTimeSlot, getTimeOfDate, getTimeOfDateString } from '@/utils/helpers/date'
+import { formatDateBaseOnTimeZone_Date, formatDateBaseOnTimeZone_String, formatTimeToString, getDifferenceTimeSlot, getTimeOfDate, getTimeOfDateString } from '@/utils/helpers/date'
 import SelectedAppointmentModal from './selected-appointment-modal'
 import { getAppointmentStatusDisplay, TIME_ZONE } from '@/utils/constants'
 import { Badge } from '@/components/ui/badge'
@@ -213,30 +213,16 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
 
                                                 {/* Time Slots and Appointments */}
                                                 {dayAppointments.map((appointment) => {
-                                                    console.log(appointment)
                                                     if (!appointment?.timeSlot) return null;
-                                                    console.log(appointment.timeSlot)
 
                                                     const duration = differenceInMinutes(appointment.timeSlot.endTime, appointment.timeSlot.startTime)
-                                                    console.log(duration)
 
-                                                    console.log(appointment.status, " RAW: ", appointment.timeSlot.startTime)
-                                                    const startTime = new Date(appointment.timeSlot.startTime).toLocaleTimeString("en-US", {
-                                                        hour: "2-digit",
-                                                        minute: "2-digit",
-                                                        second: "2-digit",
-                                                        hour12: false,
-                                                        timeZone: TIME_ZONE,
-                                                    });
-                                                    console.log("PARSED: ", startTime)
-                                                    const t = getTimeOfDateString(appointment.timeSlot.startTime as any);
-                                                    console.log("PARSED_2: ", t)
-                                                    // console.log(appointment.timeSlot)
-                                                    // const formattedStartTime = `${t.hour}:${t.minute}`;
-                                                    const formattedStartTime = startTime;
+                                                    const formattedStart = formatDateBaseOnTimeZone_Date(appointment.timeSlot.startTime);
+
+                                                    const formattedStartTime = formattedStart.time;
+                                                    const displayTime = formattedStart.displayTime;
+
                                                     const { top, height } = getAppointmentPosition(formattedStartTime, duration)
-
-                                                    const [hour, minute] = startTime.split(":")
 
                                                     return (
                                                         <div
@@ -247,7 +233,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                         >
                                                             <div className="text-xs font-medium truncate">{appointment.patient.name}</div>
                                                             <div className="text-xs font-medium opacity-90 truncate">
-                                                                {`${hour}:${minute}`}
+                                                                {displayTime}
                                                             </div>
                                                             <div className="truncate text-xs font-medium p-1 border rounded-full text-center w-full mt-2">
                                                                 {getStatusLabel(appointment.status)}

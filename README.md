@@ -13,3 +13,6 @@ npm run seed
 #then
 npm run dev
 ```
+
+backend - UTC
+frontend - Timezone

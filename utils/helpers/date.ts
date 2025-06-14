@@ -76,16 +76,42 @@ export function formatDateBaseOnTimeZone_String(
     return formatter.format(date);
 }
 
-export function formatDateBaseOnTimeZone_Date(input: Date | string): Date {
+export function formatDateBaseOnTimeZone_Date(input: Date | string) {
     const date = typeof input === "string" ? new Date(input) : input;
 
     // Get the timestamp adjusted to Manila time
     const utc = date.getTime();
     const manilaOffsetMs = 8 * 60 * 60 * 1000; // UTC+8
-    return new Date(utc + manilaOffsetMs);
+
+    const resultDate = new Date(utc + manilaOffsetMs);
+    const isoString = resultDate.toISOString();
+    const { hour, minute } = splitHourMinuteFromISO(isoString);
+    const time = `${hour}:${minute}`
+    const displayTime = formatTo12HourTime(time);
+
+    return { resultDate, hour, minute, time, displayTime };
 }
 
+export function splitHourMinuteFromISO(isoString: string): { hour: number; minute: number } {
+    const timePart = isoString.split("T")[1]; // "12:13:05.000Z"
+    const [hourStr, minuteStr] = timePart.split(":"); // ["12", "13", "05.000Z"]
 
+    return {
+        hour: parseInt(hourStr, 10),
+        minute: parseInt(minuteStr, 10),
+    };
+}
+
+export function formatTo12HourTime(time: string): string {
+    const [hourStr, minuteStr] = time.split(":");
+    let hour = parseInt(hourStr, 10);
+    const minute = minuteStr.padStart(2, "0");
+
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12; // Convert 0 -> 12, 13 -> 1, etc.
+
+    return `${hour}:${minute} ${ampm}`;
+}
 
 
 

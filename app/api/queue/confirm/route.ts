@@ -52,67 +52,59 @@ export async function POST(request: Request) {
         console.log("UTC RAW TODAY:", d)
         const today = parseDate(d.toISOString());
         console.log("UTC PARSED TODAY:", today)
+
         const timezoned = formatDateBaseOnTimeZone_String(today);
         const timezoneDate = formatDateBaseOnTimeZone_Date(today);
         console.log(TIME_ZONE + " PARSED TODAY STRING:", timezoned)
         console.log(TIME_ZONE + " PARSED TODAY DATE:", timezoneDate)
 
+        const result = await prisma.$transaction(async (tx) => {
+
+            const timeSlot = await tx.timeSlot.create({
+                data: {
+                    doctorId: existingQueue.doctorId,
+                    status: TimeSlotStatus.CLOSED,
+                    date: today,
+                    startTime: today,
+                    endTime: addHours(today, 1),
+                }
+            })
+
+            const confirmedAppointment = await tx.appointment.create({
+                data: {
+                    patientId: existingQueue.patientId,
+                    doctorId: existingQueue.doctorId,
+                    timeSlotId: timeSlot.id,
+                    date: timeSlot.date,
+                    status: AppointmentStatus.CONFIRMED,
+                },
+            });
+
+            await tx.queue.update({ where: { id: queueId }, data: { status: QueueStatus.APPROVED, appointmentId: confirmedAppointment.id } });
+
+            await Promise.all([
+                await tx.appointmentHistory.create({
+                    data: {
+                        appointmentId: confirmedAppointment.id,
+                        description: NEW_BOOKED_APPOINTMENT_CONFIRMED_HISTORY(existingQueue.patient.name, existingQueue.doctor.name),
+                        newStatus: AppointmentStatus.PENDING
+                    }
+                }),
+                await createNotification({ tx, userId: existingQueue.patientId, message: BOOKING_CONFIRMED_NOTIFICATION_PATIENT }),
+                await createNotification({ tx, userId: existingQueue.doctorId, message: BOOKING_CONFIRMED_NOTIFICATION_DOCTOR })
+            ])
+
+
+            return { confirmedAppointment, timeSlot };
+        })
 
         return new NextResponse(
             JSON.stringify({
                 message: "Successfully confirmed queue and added to appointments.",
-                data: "{ ...result }",
+                data: { ...result },
             }),
-            { status: 400 }
+            { status: 200 }
         );
-
-        // const result = await prisma.$transaction(async (tx) => {
-
-        //     const timeSlot = await tx.timeSlot.create({
-        //         data: {
-        //             doctorId: existingQueue.doctorId,
-        //             status: TimeSlotStatus.CLOSED,
-        //             date: today,
-        //             startTime: today,
-        //             endTime: addHours(today, 1),
-        //         }
-        //     })
-
-        //     const confirmedAppointment = await tx.appointment.create({
-        //         data: {
-        //             patientId: existingQueue.patientId,
-        //             doctorId: existingQueue.doctorId,
-        //             timeSlotId: timeSlot.id,
-        //             date: timeSlot.date,
-        //             status: AppointmentStatus.CONFIRMED,
-        //         },
-        //     });
-
-        //     await tx.queue.update({ where: { id: queueId }, data: { status: QueueStatus.APPROVED, appointmentId: confirmedAppointment.id } });
-
-        //     await Promise.all([
-        //         await tx.appointmentHistory.create({
-        //             data: {
-        //                 appointmentId: confirmedAppointment.id,
-        //                 description: NEW_BOOKED_APPOINTMENT_CONFIRMED_HISTORY(existingQueue.patient.name, existingQueue.doctor.name),
-        //                 newStatus: AppointmentStatus.PENDING
-        //             }
-        //         }),
-        //         await createNotification({ tx, userId: existingQueue.patientId, message: BOOKING_CONFIRMED_NOTIFICATION_PATIENT }),
-        //         await createNotification({ tx, userId: existingQueue.doctorId, message: BOOKING_CONFIRMED_NOTIFICATION_DOCTOR })
-        //     ])
-
-
-        //     return { confirmedAppointment, timeSlot };
-        // })
-
-        // return new NextResponse(
-        //     JSON.stringify({
-        //         message: "Successfully confirmed queue and added to appointments.",
-        //         data: { ...result },
-        //     }),
-        //     { status: 200 }
-        // );
     } catch (error: any) {
         console.error("Queue confirmation error:", error);
 
