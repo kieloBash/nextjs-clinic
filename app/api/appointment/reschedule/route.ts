@@ -4,7 +4,7 @@ import { prisma } from "@/prisma";
 import { BOOKING_RESCHEDULED_NOTIFICATION_DOCTOR, BOOKING_RESCHEDULED_NOTIFICATION_PATIENT, MISSING_PARAMETERS, NEW_BOOKED_APPOINTMENT_CANCELLED_HISTORY, NEW_BOOKED_APPOINTMENT_RESCHEDULED_HISTORY } from "@/utils/constants";
 import { createNotification } from "@/libs/notification";
 import { timeslotValid } from "@/utils/helpers/timeslot";
-import { parseDate } from "@/utils/helpers/date";
+import { parseDate, timeSlotFormatterUTC } from "@/utils/helpers/date";
 
 
 export async function POST(request: Request) {
@@ -33,15 +33,16 @@ export async function POST(request: Request) {
 
     console.log("EXISTING APPOINTMENT: ", existingAppointment)
 
-    try {
-        console.log("RAW DETAILS -- DATE:", dateRaw.toString(), " START:", startTimeRaw.toString(), " END:", endTimeRaw.toString())
-        const date = parseDate(dateRaw.toString());
-        const startTime = parseDate(startTimeRaw.toString());
-        const endTime = parseDate(endTimeRaw.toString());
-        console.log("PARSED DETAILS -- DATE:", date, " START:", startTime, " END:", endTime)
 
-        const checker = await timeslotValid(date, startTimeRaw.toString(), endTimeRaw.toString(), existingAppointment.doctorId)
-        if (checker) { // if found an invalid
+
+    try {
+        const { date, start, end } = timeSlotFormatterUTC({ isoDate: dateRaw.toString(), isoStart: startTimeRaw.toString(), isoEnd: endTimeRaw.toString() });
+
+        console.log({ date, start, end })
+        console.log(date, start.toISOString(), end.toISOString(), existingAppointment.doctorId)
+
+        const checker = await timeslotValid(date, start.toISOString(), end.toISOString(), existingAppointment.doctorId)
+        if (checker) {
             return checker;
         }
 
@@ -66,8 +67,8 @@ export async function POST(request: Request) {
                     doctorId: existingAppointment.doctorId,
                     status: TimeSlotStatus.CLOSED,
                     date,
-                    startTime,
-                    endTime,
+                    startTime: start,
+                    endTime: end,
                 },
             });
 

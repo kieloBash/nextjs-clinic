@@ -233,7 +233,10 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
             </DialogContent>
             <RescheduleAppointmentModal
                 isOpen={isRescheduleModalOpen}
-                onClose={() => setIsRescheduleModalOpen(false)}
+                onClose={() => {
+                    setIsRescheduleModalOpen(false)
+                    clear();
+                }}
                 appointment={selectedAppointment}
             />
         </Dialog>
