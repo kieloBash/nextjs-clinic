@@ -50,7 +50,7 @@ export async function timeslotValid(date: Date, startTimeRaw: string, endTimeRaw
 
     const { resultDate: startTime } = formatDateBaseOnTimeZone_Date(startTimeRaw)
     const { resultDate: endTime } = formatDateBaseOnTimeZone_Date(endTimeRaw)
-    const startTimeHours = getTimeOfDate(startTime.toString());
+    const startTimeHours = getTimeOfDate(startTime.toISOString());
 
     if (startTimeHours.hour < 8) {
         return new NextResponse(
