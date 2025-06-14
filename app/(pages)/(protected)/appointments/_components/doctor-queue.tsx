@@ -31,10 +31,12 @@ import CompleteAppointmentModal from "./complete-appointment-modal-queue"
 import { useQueryClient } from "@tanstack/react-query"
 import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../_hooks/keys"
 import MainLoadingPage from "@/components/globals/main-loading"
+import { useLoading } from "@/components/providers/loading-provider"
 
 export default function DoctorQueue({ user }: { user: User }) {
     const queues = useDoctorQueues({ doctorId: user?.id });
     const queryClient = useQueryClient();
+    const { isLoading, setIsLoading } = useLoading();
 
     const [queue, setQueue] = useState<FullQueueType[]>([]);
     const [skippedQueues, setSkippedQueues] = useState<FullQueueType[]>([]);
@@ -58,6 +60,7 @@ export default function DoctorQueue({ user }: { user: User }) {
         setQueue((prev) => prev.slice(1));
 
         try {
+            setIsLoading(true)
             const res = await axios.post(CONFIRM_QUEUE, {
                 queueId: nextQueue.id,
             });
@@ -75,6 +78,8 @@ export default function DoctorQueue({ user }: { user: User }) {
             setCurrentQueue(null);
             setQueue((prev) => [nextQueue, ...prev]); // Reinsert at the start
             showToast("error", "Failed to confirm queue", error?.response?.data?.message || error.message);
+        } finally {
+            setIsLoading(false)
         }
     };
 
@@ -90,6 +95,7 @@ export default function DoctorQueue({ user }: { user: User }) {
             setQueue((prev) => prev.filter((p) => p.id !== queueId))
 
             try {
+                setIsLoading(true)
                 const res = await axios.patch(UPDATE_QUEUE_STATUS, {
                     queueId,
                     status: QueueStatus.SKIPPED
@@ -100,6 +106,8 @@ export default function DoctorQueue({ user }: { user: User }) {
                 setSkippedQueues((prev) => prev.filter((p) => p.id !== queueId))
                 setQueue((prev) => [...prev, queueToSkip])
                 showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
+            } finally {
+                setIsLoading(false)
             }
         }
     }
@@ -113,12 +121,15 @@ export default function DoctorQueue({ user }: { user: User }) {
         setQueue((prev) => prev.filter((p) => p.id !== queueId));
 
         try {
+            setIsLoading(true)
             const res = await axios.delete(`${REMOVE_QUEUE}?queueId=${queueId}`);
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
         } catch (error: any) {
             // Rollback on failure
             setQueue((prev) => [...prev, queueToRemove]);
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setIsLoading(false)
         }
     };
 
@@ -132,6 +143,7 @@ export default function DoctorQueue({ user }: { user: User }) {
             setSkippedQueues((prev) => prev.filter((p) => p.id !== queueId));
 
             try {
+                setIsLoading(true)
                 const res = await axios.patch(UPDATE_QUEUE_STATUS, {
                     queueId,
                     status: QueueStatus.WAITING
@@ -142,6 +154,8 @@ export default function DoctorQueue({ user }: { user: User }) {
                 setQueue((prev) => prev.filter((p) => p.id !== queueId));
                 setSkippedQueues((prev) => [...prev, skippedQueue]);
                 showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+            } finally {
+                setIsLoading(false)
             }
         }
     };
@@ -154,12 +168,15 @@ export default function DoctorQueue({ user }: { user: User }) {
         setSkippedQueues((prev) => prev.filter((p) => p.id !== queueId));
 
         try {
+            setIsLoading(true)
             const res = await axios.delete(`${REMOVE_QUEUE}?queueId=${queueId}`);
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
         } catch (error: any) {
             // Rollback on failure
             setSkippedQueues((prev) => [...prev, skippedToRemove]);
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setIsLoading(false)
         }
     };
 
@@ -267,7 +284,7 @@ export default function DoctorQueue({ user }: { user: User }) {
                         </Button>
                     )}
                     <AddToQueueModal onAddToQueue={handleAddToQueue} />
-                    <AlertDialog>
+                    {/* <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="destructive" disabled={queue.length === 0 && skippedQueues.length === 0}>
                                 <Trash2 className="w-4 h-4 mr-2" />
@@ -286,7 +303,7 @@ export default function DoctorQueue({ user }: { user: User }) {
                                 <AlertDialogAction onClick={handleClearAllQueue}>Clear All</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
-                    </AlertDialog>
+                    </AlertDialog> */}
                 </div>
             </div>
 

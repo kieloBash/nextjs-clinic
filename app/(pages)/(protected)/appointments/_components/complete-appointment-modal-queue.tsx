@@ -27,6 +27,7 @@ import { showToast } from "@/utils/helpers/show-toast"
 import { useQueryClient } from "@tanstack/react-query"
 import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../_hooks/keys"
 import { KEY_GET_INVOICES } from "../../billing/_hooks/keys"
+import { useLoading } from "@/components/providers/loading-provider"
 
 const completeAppointmentSchema = z.object({
     paymentAmount: z
@@ -50,6 +51,7 @@ export default function CompleteAppointmentModal({
     const [isOpen, setisOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const queryClient = useQueryClient();
+    const { isLoading, setIsLoading } = useLoading();
 
     const patient = useMemo(() => queue?.patient, [queue?.id])
 
@@ -69,6 +71,7 @@ export default function CompleteAppointmentModal({
 
         try {
             // backend
+            setIsLoading(true)
             const body = { amount: values.paymentAmount, status: AppointmentStatus.PENDING_PAYMENT, queueId: queue.id }
             console.log(body)
 
@@ -86,6 +89,7 @@ export default function CompleteAppointmentModal({
         } catch (error: any) {
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
         } finally {
+            setIsLoading(false)
             setIsSubmitting(false)
         }
     }
