@@ -7,82 +7,8 @@ import DoctorSummaryCards from "./doctor-summary-cards"
 import DoctorPaymentHistoryTable from "./doctor-payment-history-table"
 import { FullInvoiceType } from "@/types/prisma.type"
 import useDoctorInvoices from "../_hooks/doctor/use-invoices"
-
-// Mock payment data
-const mockPayments = [
-    {
-        id: "PAY-001",
-        patientName: "Sarah Johnson",
-        patientEmail: "sarah.johnson@email.com",
-        patientAvatar: "/placeholder.svg?height=32&width=32",
-        service: "General Consultation",
-        amount: 150.0,
-        status: "paid",
-        paymentMethod: "Credit Card",
-        date: new Date("2024-01-15"),
-        invoiceNumber: "INV-2024-001",
-    },
-    {
-        id: "PAY-002",
-        patientName: "Michael Chen",
-        patientEmail: "michael.chen@email.com",
-        patientAvatar: "/placeholder.svg?height=32&width=32",
-        service: "Follow-up Appointment",
-        amount: 100.0,
-        status: "pending",
-        paymentMethod: "Insurance",
-        date: new Date("2024-01-14"),
-        invoiceNumber: "INV-2024-002",
-    },
-    {
-        id: "PAY-003",
-        patientName: "Emily Rodriguez",
-        patientEmail: "emily.rodriguez@email.com",
-        patientAvatar: "/placeholder.svg?height=32&width=32",
-        service: "Specialist Consultation",
-        amount: 250.0,
-        status: "overdue",
-        paymentMethod: "Cash",
-        date: new Date("2024-01-10"),
-        invoiceNumber: "INV-2024-003",
-    },
-    {
-        id: "PAY-004",
-        patientName: "David Wilson",
-        patientEmail: "david.wilson@email.com",
-        patientAvatar: "/placeholder.svg?height=32&width=32",
-        service: "Routine Checkup",
-        amount: 120.0,
-        status: "paid",
-        paymentMethod: "Debit Card",
-        date: new Date("2024-01-12"),
-        invoiceNumber: "INV-2024-004",
-    },
-    {
-        id: "PAY-005",
-        patientName: "Lisa Thompson",
-        patientEmail: "lisa.thompson@email.com",
-        patientAvatar: "/placeholder.svg?height=32&width=32",
-        service: "Emergency Visit",
-        amount: 300.0,
-        status: "paid",
-        paymentMethod: "Insurance",
-        date: new Date("2024-01-13"),
-        invoiceNumber: "INV-2024-005",
-    },
-    {
-        id: "PAY-006",
-        patientName: "Robert Brown",
-        patientEmail: "robert.brown@email.com",
-        patientAvatar: "/placeholder.svg?height=32&width=32",
-        service: "Physical Therapy",
-        amount: 80.0,
-        status: "pending",
-        paymentMethod: "Cash",
-        date: new Date("2024-01-11"),
-        invoiceNumber: "INV-2024-006",
-    },
-]
+import SimpleLoadingPage from "@/components/globals/loading-simple"
+import MainLoadingPage from "@/components/globals/main-loading"
 
 const DoctorBillingPage = ({ user }: { user: User }) => {
     const [searchTerm, setSearchTerm] = useState("")
@@ -92,7 +18,10 @@ const DoctorBillingPage = ({ user }: { user: User }) => {
     const [isSelectedInvoiceOpen, setIsSelectedInvoiceOpen] = useState(false)
 
     const data = useDoctorInvoices({ doctorId: user.id });
-    console.log(data)
+
+    if (data.isLoading) {
+        return <MainLoadingPage/>
+    }
 
     return (
         <div className="container mx-auto p-6 space-y-6">
