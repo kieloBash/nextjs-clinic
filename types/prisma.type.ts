@@ -16,3 +16,10 @@ export type FullQueueType = Queue & {
     doctor: UserFullType
     appointment?: Appointment
 }
+
+
+export type FullInvoiceType = Invoice & {
+    patient: UserFullType
+    creator: UserFullType
+    appointment: Appointment
+}
