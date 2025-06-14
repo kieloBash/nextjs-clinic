@@ -111,7 +111,7 @@ export function InvoiceDetailsModal({ isOpen, onClose, invoice }: InvoiceDetails
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Amount</p>
-                                <p className="text-2xl font-bold text-primary">₱{invoice.amount.toFixed(2)}</p>
+                                <p className="text-2xl font-bold text-primary">₱{invoice.amount.toLocaleString()}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Created Date</p>
@@ -194,7 +194,7 @@ export function InvoiceDetailsModal({ isOpen, onClose, invoice }: InvoiceDetails
 
                             <div className="flex justify-between items-center text-lg font-semibold">
                                 <span>Total Amount:</span>
-                                <span className="text-primary">${invoice.amount.toFixed(2)}</span>
+                                <span className="text-primary">₱{invoice.amount.toLocaleString()}</span>
                             </div>
                         </div>
                     </div>

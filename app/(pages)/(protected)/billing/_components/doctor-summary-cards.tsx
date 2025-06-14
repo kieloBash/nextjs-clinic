@@ -26,7 +26,7 @@ const DoctorSummaryCards = ({ data }: { data: FullInvoiceType[] }) => {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">₱{summaryStats.totalRevenue.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">₱{summaryStats.totalRevenue.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">From paid invoices</p>
                 </CardContent>
             </Card>
@@ -37,7 +37,7 @@ const DoctorSummaryCards = ({ data }: { data: FullInvoiceType[] }) => {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">₱{summaryStats.pendingAmount.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">₱{summaryStats.pendingAmount.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">Awaiting payment</p>
                 </CardContent>
             </Card>

@@ -148,7 +148,7 @@ const DoctorPaymentHistoryTable = (
                                         </div>
                                     </TableCell>
                                     {/* <TableCell>{"SERVICE"}</TableCell> */}
-                                    <TableCell className="font-medium">₱{payment.amount.toFixed(2)}</TableCell>
+                                    <TableCell className="font-medium">₱{payment.amount.toLocaleString()}</TableCell>
                                     <TableCell>{getStatusBadge(payment.status)}</TableCell>
                                     {/* <TableCell>{"METHOD"}</TableCell> */}
                                     <TableCell>{format(payment.createdAt, "MMM dd, yyyy")}</TableCell>
