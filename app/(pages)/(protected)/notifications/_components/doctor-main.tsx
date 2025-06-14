@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
+import useNotifications from "../_hooks/use-notifications"
 
 // Mock notification data based on your Prisma schema
 const mockNotifications = [
@@ -78,12 +79,15 @@ const mockNotifications = [
 const DoctorMainPage = ({ user }: { user: User }) => {
     const [searchTerm, setSearchTerm] = useState("")
 
+    const data = useNotifications({ userId: user.id });
+    console.log(data)
+
     // Filter notifications based on search
     const filteredNotifications = useMemo(() => {
-        return mockNotifications.filter((notification) =>
+        return data?.payload?.filter((notification) =>
             notification.message.toLowerCase().includes(searchTerm.toLowerCase()),
-        )
-    }, [searchTerm])
+        ) ?? []
+    }, [searchTerm, data])
 
     // Group notifications by date
     const groupedNotifications = useMemo(() => {
@@ -140,7 +144,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                     </h1>
                     <p className="text-muted-foreground">Stay updated with your practice activities</p>
                 </div>
-                {mockNotifications.length > 0 && (
+                {data?.payload && data?.payload?.length > 0 && (
                     <Button variant="outline" onClick={handleClearAll}>
                         Clear All
                     </Button>
@@ -154,7 +158,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                     <Bell className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{mockNotifications.length}</div>
+                    <div className="text-2xl font-bold">{data?.payload?.length}</div>
                     <p className="text-xs text-muted-foreground">All notifications</p>
                 </CardContent>
             </Card>

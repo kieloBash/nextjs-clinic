@@ -15,3 +15,4 @@ export const CANCEL_PAYMENT_APPOINTMENT = "/api/appointment/cancel"
 export const RESCHEDULE_APPOINTMENT = "/api/appointment/reschedule"
 
 export const FETCH_ALL_DOCTOR_INVOICES = "/api/invoice/doctor/fetch-all"
+export const FETCH_ALL_NOTIFICATIONS = "/api/notification/fetch-all"
