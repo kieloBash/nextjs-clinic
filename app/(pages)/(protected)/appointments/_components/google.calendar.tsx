@@ -12,7 +12,7 @@ import axios from 'axios'
 
 const generateTimeSlots = () => {
     const slots = []
-    for (let hour = 0; hour < 24; hour++) {
+    for (let hour = 8; hour < 24; hour++) {
         slots.push(`${hour.toString().padStart(2, "0")}:00`)
         slots.push(`${hour.toString().padStart(2, "0")}:30`)
     }
@@ -77,11 +77,8 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
     const generateTimeSlotBlocks = (timeSlot: TimeSlot) => {
         const blocks = []
 
-        const tStart: any = timeSlot.startTime
-        const tEnd: any = timeSlot.endTime
-
-        const [startHours, startMinutes] = formatTimeToString(tStart).split(":").map(Number)
-        const [endHours, endMinutes] = formatTimeToString(tEnd).split(":").map(Number)
+        const { hour: startHours, minute: startMinutes, displayTime } = formatDateBaseOnTimeZone_Date(timeSlot.startTime);
+        const { hour: endHours, minute: endMinutes } = formatDateBaseOnTimeZone_Date(timeSlot.endTime);
 
         const startTotalMinutes = startHours * 60 + startMinutes
         const endTotalMinutes = endHours * 60 + endMinutes
@@ -106,6 +103,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                     time: timeString,
                     duration: duration,
                     available: true,
+                    displayTime
                 })
             }
         }
@@ -204,7 +202,7 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                             >
                                                                 <div className="text-xs font-medium text-green-700">Available</div>
                                                                 <div className="text-xs text-green-600">
-                                                                    {block.time} ({block.duration}min)
+                                                                    {block.displayTime} ({block.duration}min)
                                                                 </div>
                                                             </div>
                                                         )

@@ -42,8 +42,31 @@ export function getHourInTimeZone(date: Date): number {
     return Number(formatter.format(date));
 }
 
-export function nowUTC(): Date {
-    const now = new Date();
+function getUtcTimeDateMerged({ isoDateString, parsedUtcDate }: { isoDateString: string, parsedUtcDate: Date }) {
+    const utc = nowUTC(new Date(isoDateString));
+    const parsedUtc: Date = parseDate(utc.toISOString());
+    const splitUtc = splitHourMinuteFromISO(parsedUtc.toISOString());
+    const utcTime = `${splitUtc.hour}:${splitUtc.minute}`
+    const finalParsed = parseDate(mergeTimeWithDate(utcTime, parsedUtcDate) as string);
+
+    return finalParsed;
+}
+
+export function timeSlotFormatterUTC(given: { isoDate: string, isoStart: string, isoEnd: string }) {
+    // Date of the timeslot
+    const utcDate = nowUTC(new Date(given.isoDate));
+    const parsedUtcDate: Date = parseDate(utcDate.toISOString());
+
+    const finalParsedStart = getUtcTimeDateMerged({ isoDateString: given.isoStart, parsedUtcDate })
+    const finalParsedEnd = getUtcTimeDateMerged({ isoDateString: given.isoEnd, parsedUtcDate })
+
+    const result = { date: parsedUtcDate, start: finalParsedStart, end: finalParsedEnd }
+
+    return result;
+}
+
+export function nowUTC(givenDate?: Date): Date {
+    const now = givenDate ? givenDate : new Date();
     return new Date(Date.UTC(
         now.getUTCFullYear(),
         now.getUTCMonth(),

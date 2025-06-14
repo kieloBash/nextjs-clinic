@@ -1,7 +1,7 @@
 import { isBefore, isAfter, startOfDay, differenceInMinutes, addHours } from "date-fns";
 import { prisma } from "@/prisma";
 import { NextResponse } from "next/server";
-import { getTimeOfDate, parseDate } from "./date";
+import { formatDateBaseOnTimeZone_Date, getTimeOfDate, parseDate } from "./date";
 
 function isDateTodayOrFuture(date: Date): boolean {
     return !isBefore(date, startOfDay(new Date()));
@@ -47,11 +47,10 @@ async function hasOverlappingTimeSlot(doctorId: string, start: Date, end: Date):
 export async function timeslotValid(date: Date, startTimeRaw: string, endTimeRaw: string, doctorId: string) {
 
     console.log("START timeslotValid")
-    console.log("RAW DETAILS -- DATE:", date, " START:", startTimeRaw.toString(), " END:", endTimeRaw.toString())
-    const startTime = parseDate(startTimeRaw.toString());
-    const endTime = parseDate(endTimeRaw.toString());
-    const startTimeHours = getTimeOfDate(startTimeRaw.toString());
 
+    const { resultDate: startTime } = formatDateBaseOnTimeZone_Date(startTimeRaw)
+    const { resultDate: endTime } = formatDateBaseOnTimeZone_Date(endTimeRaw)
+    const startTimeHours = getTimeOfDate(startTime.toString());
 
     if (startTimeHours.hour < 8) {
         return new NextResponse(
