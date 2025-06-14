@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import type { TimeSlot, TimeSlotStatus } from "@prisma/client"
-import { formatTimeToStringPeriod } from "@/utils/helpers/date"
+import { formatDateBaseOnTimeZone_Date, formatTimeToStringPeriod } from "@/utils/helpers/date"
 import axios from "axios"
 import { DELETE_TIMESLOT } from "@/utils/api-endpoints"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
@@ -159,9 +159,11 @@ export default function SelectedTimeSlotModal({
 
     if (!selectedTimeSlot) return null
 
-    const formatTime = (time: string) => {
-        return formatTimeToStringPeriod(time);
-    }
+    const { start, end } = useMemo(() => {
+        const start = formatDateBaseOnTimeZone_Date(selectedTimeSlot?.startTime)
+        const end = formatDateBaseOnTimeZone_Date(selectedTimeSlot?.endTime)
+        return { start, end }
+    }, [selectedTimeSlot])
 
     return (
         <Dialog open={!!selectedTimeSlot} onOpenChange={handleClose}>
@@ -202,11 +204,11 @@ export default function SelectedTimeSlotModal({
                                 </div>
                                 <div>
                                     <span className="text-muted-foreground">Start Time:</span>
-                                    <p className="font-medium">{formatTime(selectedTimeSlot.startTime as any)}</p>
+                                    <p className="font-medium">{start.displayTime}</p>
                                 </div>
                                 <div>
                                     <span className="text-muted-foreground">End Time:</span>
-                                    <p className="font-medium">{formatTime(selectedTimeSlot.endTime as any)}</p>
+                                    <p className="font-medium">{end.displayTime}</p>
                                 </div>
                             </div>
                         </div>
