@@ -72,8 +72,8 @@ export default function AddToQueueModal({ onAddToQueue }: AddToQueueModalProps) 
         };
 
         // Optimistically add to UI
-        onAddToQueue?.(optimisticQueue);
-        setOpen(false);
+        // onAddToQueue?.(optimisticQueue);
+        // setOpen(false);
 
         try {
             const res = await axios.post(ADD_QUEUE, {
@@ -84,9 +84,9 @@ export default function AddToQueueModal({ onAddToQueue }: AddToQueueModalProps) 
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
 
             // Refresh queue list (or update the optimistic item with real data if needed)
-            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES] });
+            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false });
             form.reset();
-
+            setOpen(false);
 
         } catch (error: any) {
             // Rollback optimistic update

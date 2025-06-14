@@ -22,9 +22,9 @@ import axios from 'axios'
 import { CREATED_PROMPT_SUCCESS } from '@/utils/constants'
 import { showToast } from '@/utils/helpers/show-toast'
 import { CREATE_TIMESLOT } from '@/utils/api-endpoints'
-import { mergeTimeWithDate } from '@/utils/helpers/date'
+import { getTodayDateTimezone, mergeTimeWithDate } from '@/utils/helpers/date'
 import { useQueryClient } from '@tanstack/react-query'
-import { KEY_GET_DOCTOR_TIMESLOTS } from '../_hooks/keys'
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from '../_hooks/keys'
 
 const timeSlotSchema = z.object({
     date: z.string().min(1, "Date is required"),
@@ -42,7 +42,7 @@ const CreateTimeSlotModal = () => {
     const form = useForm<z.infer<typeof timeSlotSchema>>({
         resolver: zodResolver(timeSlotSchema),
         defaultValues: {
-            date: format(new Date(), "yyyy-MM-dd"),
+            date: format(getTodayDateTimezone(), "yyyy-MM-dd"),
             startTime: "",
             endTime: "",
         },
@@ -50,11 +50,13 @@ const CreateTimeSlotModal = () => {
 
     async function onSubmitTimeSlot(values: z.infer<typeof timeSlotSchema>) {
         if (!user || !user?.id) return null;
+        const startTime = mergeTimeWithDate(values.startTime, getTodayDateTimezone(new Date(values.date)));
+        const endTime = mergeTimeWithDate(values.endTime, getTodayDateTimezone(new Date(values.date)));
 
         const formData = new FormData();
         formData.append("date", values.date);
-        formData.append("startTime", mergeTimeWithDate(values.startTime, new Date(values.date)) as any);
-        formData.append("endTime", mergeTimeWithDate(values.endTime, new Date(values.date)) as any);
+        formData.append("startTime", startTime as string);
+        formData.append("endTime", endTime as string);
         formData.append("status", "OPEN");
         formData.append("doctorId", user.id);
 
@@ -70,7 +72,9 @@ const CreateTimeSlotModal = () => {
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
             setIsDialogOpen(false)
             form.reset()
-            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS] })
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
+            ]);
         } catch (error: any) {
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
         } finally {

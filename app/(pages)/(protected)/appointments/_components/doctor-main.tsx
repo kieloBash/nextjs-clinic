@@ -23,7 +23,8 @@ export default function DoctorAppointmentsPage({ user }: { user: User }) {
     const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
 
     const timeslots = useDoctorTimeSlots({ doctorId: user?.id, statusFilter: "OPEN", startDate: weekStart, endDate: weekEnd });
-    const appointments = useDoctorAppointments({ doctorId: user?.id });
+    const appointments = useDoctorAppointments({ doctorId: user?.id, startDate: weekStart, endDate: weekEnd });
+
 
     return (
         <div className="container mx-auto px-6 py-4 space-y-6">
@@ -67,7 +68,7 @@ export default function DoctorAppointmentsPage({ user }: { user: User }) {
                         appointments={appointments?.payload ?? []} />
                 </TabsContent>
                 <TabsContent value="queue" className="space-y-4">
-                    <DoctorQueue user={user}/>
+                    <DoctorQueue user={user} />
                 </TabsContent>
             </Tabs>
         </div>

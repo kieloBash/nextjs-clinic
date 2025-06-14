@@ -27,71 +27,17 @@ import { CONFIRM_QUEUE, REMOVE_QUEUE, UPDATE_QUEUE_STATUS } from "@/utils/api-en
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { showToast } from "@/utils/helpers/show-toast"
 import AddToQueueModal from "./add-to-queue-modal"
-
-// Mock data - replace with your actual data fetching
-const mockPatients = [
-    {
-        id: "1",
-        name: "John Smith",
-        appointmentTime: "09:00 AM",
-        waitTime: "5 min",
-        status: "waiting",
-        phone: "(555) 123-4567",
-    },
-    {
-        id: "2",
-        name: "Sarah Johnson",
-        appointmentTime: "09:15 AM",
-        waitTime: "20 min",
-        status: "waiting",
-        phone: "(555) 234-5678",
-    },
-    {
-        id: "3",
-        name: "Michael Brown",
-        appointmentTime: "09:30 AM",
-        waitTime: "35 min",
-        status: "waiting",
-        phone: "(555) 345-6789",
-    },
-    {
-        id: "4",
-        name: "Emily Davis",
-        appointmentTime: "09:45 AM",
-        waitTime: "50 min",
-        status: "waiting",
-        phone: "(555) 456-7890",
-    },
-    {
-        id: "5",
-        name: "David Wilson",
-        appointmentTime: "10:00 AM",
-        waitTime: "65 min",
-        status: "waiting",
-        phone: "(555) 567-8901",
-    },
-]
-
-interface Patient {
-    id: string
-    name: string
-    appointmentTime: string
-    waitTime: string
-    status: string
-    phone: string
-}
+import CompleteAppointmentModal from "./complete-appointment-modal-queue"
+import { useQueryClient } from "@tanstack/react-query"
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../_hooks/keys"
 
 export default function DoctorQueue({ user }: { user: User }) {
     const queues = useDoctorQueues({ doctorId: user?.id });
-    const [patients, setPatients] = useState<Patient[]>(mockPatients)
-    const [skippedPatients, setSkippedPatients] = useState<Patient[]>([])
-    const [currentPatient, setCurrentPatient] = useState<Patient | null>(null)
+    const queryClient = useQueryClient();
 
     const [queue, setQueue] = useState<FullQueueType[]>([]);
     const [skippedQueues, setSkippedQueues] = useState<FullQueueType[]>([]);
     const [currentQueue, setCurrentQueue] = useState<FullQueueType | null | undefined>(null);
-
-    console.log(queues)
 
     useEffect(() => {
         if (queues.payload) {
@@ -116,6 +62,13 @@ export default function DoctorQueue({ user }: { user: User }) {
             });
             // Optional: show success toast
             showToast("success", "Queue confirmed", res.data.message);
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
+            ]);
+
         } catch (error: any) {
             // Rollback on failure
             setCurrentQueue(null);
@@ -125,9 +78,7 @@ export default function DoctorQueue({ user }: { user: User }) {
     };
 
     const handleCompleteAppointment = () => {
-        setCurrentPatient(null)
-
-        //TODO: add backend confirming of appointments
+        setCurrentQueue(null)
     }
 
     const handleSkipQueue = async (queueId: string) => {
@@ -249,9 +200,10 @@ export default function DoctorQueue({ user }: { user: User }) {
                                     <p className="text-sm text-muted-foreground">Email: {currentQueue.patient.email}</p>
                                     <p className="text-sm text-muted-foreground">Phone: {currentQueue.patient.phone}</p>
                                 </div>
-                                <Button onClick={handleCompleteAppointment} className="w-full">
+                                {/* <Button onClick={handleCompleteAppointment} className="w-full">
                                     Complete Appointment
-                                </Button>
+                                </Button> */}
+                                <CompleteAppointmentModal queue={currentQueue} onClose={handleCompleteAppointment} />
                             </div>
                         ) : (
                             <div className="text-center py-8">

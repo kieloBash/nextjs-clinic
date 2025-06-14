@@ -1,14 +1,13 @@
-import { AppointmentStatus, InvoiceStatus, Prisma, QueueStatus } from "@prisma/client";
+import { AppointmentStatus, Prisma, QueueStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { prisma } from "@/prisma";
-import { BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR, BOOKING_WAITING_PAYMENT_NOTIFICATION_PATIENT, MISSING_PARAMETERS, NEW_BOOKED_APPOINTMENT_WAITING_FOR_PAYMENT_HISTORY } from "@/utils/constants";
+import { BOOKING_CANCELLED_NOTIFICATION_DOCTOR, BOOKING_CANCELLED_NOTIFICATION_PATIENT, MISSING_PARAMETERS, NEW_BOOKED_APPOINTMENT_CANCELLED_HISTORY } from "@/utils/constants";
 import { createNotification } from "@/libs/notification";
+
 
 export async function POST(request: Request) {
     const body = await request.json();
-    const { appointmentId, amount: amountString, } = body
-
-    console.log(appointmentId)
+    const { appointmentId } = body
 
     if (!appointmentId) {
         return NextResponse.json({ message: MISSING_PARAMETERS }, { status: 400 });
@@ -30,79 +29,60 @@ export async function POST(request: Request) {
     }
 
     try {
-
-        const amount = parseInt(amountString)
-        if (typeof amount !== "number") {
-            return NextResponse.json({ message: "Missing or invalid amount!" }, { status: 400 });
-        }
-
         const existingQueue = await prisma.queue.findFirst({
             where: { appointmentId: existingAppointment.id },
         })
 
         if (existingQueue) {
-            await prisma.queue.update({ where: { id: existingQueue.id }, data: { status: QueueStatus.COMPLETED } })
+            await prisma.queue.delete({ where: { id: existingQueue.id } })
         }
 
         const result = await prisma.$transaction(async (tx) => {
-
-            const [updatedAppointment, invoice] = await Promise.all([
-                tx.appointment.update({
-                    where: { id: existingAppointment.id },
-                    data: { status: AppointmentStatus.PENDING_PAYMENT },
-                }),
-                tx.invoice.create({
-                    data: {
-                        amount,
-                        status: InvoiceStatus.PENDING,
-                        createdBy: existingAppointment.doctorId,
-                        patientId: existingAppointment.patientId,
-                        appointmentId: existingAppointment.id,
-                    },
-                }),
-            ]);
+            const updatedAppointment = await tx.appointment.update({
+                where: { id: existingAppointment.id },
+                data: { status: AppointmentStatus.CANCELLED },
+            })
 
             await Promise.all([
                 tx.appointmentHistory.createMany({
                     data: [
                         {
                             appointmentId: updatedAppointment.id,
-                            description: BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR,
+                            description: BOOKING_CANCELLED_NOTIFICATION_DOCTOR,
                         },
                         {
                             appointmentId: updatedAppointment.id,
-                            description: NEW_BOOKED_APPOINTMENT_WAITING_FOR_PAYMENT_HISTORY(
-                                amount,
+                            description: NEW_BOOKED_APPOINTMENT_CANCELLED_HISTORY(
                                 existingAppointment.patient.name,
                                 existingAppointment.doctor.name
                             ),
-                            newStatus: AppointmentStatus.PENDING_PAYMENT,
+                            newStatus: AppointmentStatus.CANCELLED,
                         },
                     ],
                 }),
                 createNotification({
                     tx,
                     userId: existingAppointment.patientId,
-                    message: BOOKING_WAITING_PAYMENT_NOTIFICATION_PATIENT,
+                    message: BOOKING_CANCELLED_NOTIFICATION_PATIENT,
                 }),
                 createNotification({
                     tx,
                     userId: existingAppointment.doctorId,
-                    message: BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR,
+                    message: BOOKING_CANCELLED_NOTIFICATION_DOCTOR,
                 }),
             ]);
 
-            return { updatedAppointment, invoice };
+            return { updatedAppointment }
         });
 
         return NextResponse.json(
             {
-                message: "Successfully created invoice for appointment!",
+                message: "Successfully cancelled appointment!",
                 data: result,
             },
             { status: 201 }
         );
-        
+
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
             return new NextResponse(
