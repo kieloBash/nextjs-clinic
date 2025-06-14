@@ -42,15 +42,24 @@ export function getHourInTimeZone(date: Date): number {
     return Number(formatter.format(date));
 }
 
-function getUtcTimeDateMerged({ isoDateString, parsedUtcDate }: { isoDateString: string, parsedUtcDate: Date }) {
-    const utc = nowUTC(new Date(isoDateString));
-    const parsedUtc: Date = parseDate(utc.toISOString());
-    const splitUtc = splitHourMinuteFromISO(parsedUtc.toISOString());
-    const utcTime = `${splitUtc.hour}:${splitUtc.minute}`
-    const finalParsed = parseDate(mergeTimeWithDate(utcTime, parsedUtcDate) as string);
+// Assumes isoDateString like "2025-06-14T18:29:00" (Asia/Manila time)
+export function getUtcTimeDateMerged({ isoDateString, parsedUtcDate }: { isoDateString: string, parsedUtcDate: Date }): Date {
+    const [, time] = isoDateString.split("T");
+    const [hour, minute] = time.split(":").map(Number);
 
-    return finalParsed;
+    // Apply Manila offset (UTC+8) → subtract 8 hours to get UTC
+    const utcHour = hour - 8;
+
+    return new Date(Date.UTC(
+        parsedUtcDate.getUTCFullYear(),
+        parsedUtcDate.getUTCMonth(),
+        parsedUtcDate.getUTCDate(),
+        utcHour,
+        minute
+    ));
 }
+
+
 
 export function timeSlotFormatterUTC(given: { isoDate: string, isoStart: string, isoEnd: string }) {
     // Date of the timeslot
@@ -75,6 +84,7 @@ export function timeSlotFormatterUTC(given: { isoDate: string, isoStart: string,
 
 export function nowUTC(givenDate?: Date): Date {
     const now = givenDate ? givenDate : new Date();
+
     return new Date(Date.UTC(
         now.getUTCFullYear(),
         now.getUTCMonth(),
