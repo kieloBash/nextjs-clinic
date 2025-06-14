@@ -81,12 +81,12 @@ export async function timeslotValid(date: Date, startTimeRaw: string, endTimeRaw
         );
     }
 
-    if (!isAtLeastOneHourFromNow(startTime)) {
-        return new NextResponse(
-            JSON.stringify({ message: "Start time must be at least 1 hour from now." }),
-            { status: 400 }
-        );
-    }
+    // if (!isAtLeastOneHourFromNow(startTime)) {
+    //     return new NextResponse(
+    //         JSON.stringify({ message: "Start time must be at least 1 hour from now." }),
+    //         { status: 400 }
+    //     );
+    // }
 
     if (!isMaximumDurationMet(startTime, endTime)) {
         return new NextResponse(

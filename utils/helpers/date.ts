@@ -60,7 +60,6 @@ export function getUtcTimeDateMerged({ isoDateString, parsedUtcDate }: { isoDate
 }
 
 
-
 export function timeSlotFormatterUTC(given: { isoDate: string, isoStart: string, isoEnd: string }) {
     // Date of the timeslot
     console.log("START timeSlotFormatterUTC")
