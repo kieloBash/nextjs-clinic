@@ -84,7 +84,7 @@ export function InvoiceDetailsModal({ isOpen, onClose, invoice, onMarkAsPaid }: 
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Amount</p>
-                                <p className="text-2xl font-bold text-primary">${invoice.amount.toFixed(2)}</p>
+                                <p className="text-2xl font-bold text-primary">₱{invoice.amount.toFixed(2)}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Created Date</p>

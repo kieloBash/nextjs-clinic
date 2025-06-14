@@ -51,13 +51,13 @@ export async function GET(request: Request) {
             ...statusFilter && statusFilter !== "ALL" && {
                 status: statusFilter
             },
-            ...(startDateParam &&
-                endDateParam && {
-                createdAt: {
-                    gte: startOfDay(new Date(startDateParam)),
-                    lte: endOfDay(new Date(endDateParam)),
-                },
-            }),
+            // ...(startDateParam &&
+            //     endDateParam && {
+            //     createdAt: {
+            //         gte: startOfDay(new Date(startDateParam)),
+            //         lte: endOfDay(new Date(endDateParam)),
+            //     },
+            // }),
         }
 
         const invoices = await prisma.invoice.findMany({

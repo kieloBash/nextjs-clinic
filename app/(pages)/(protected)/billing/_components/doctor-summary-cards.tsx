@@ -1,16 +1,17 @@
 import React, { useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertTriangle, Clock, DollarSign } from 'lucide-react'
+import { InvoiceStatus } from '@prisma/client'
 
 const DoctorSummaryCards = ({ data }: { data: any[] }) => {
 
     const summaryStats = useMemo(() => {
         const totalRevenue = data
-            .filter((p) => p.status === "paid")
+            .filter((p) => p.status === InvoiceStatus.PAID)
             .reduce((sum, payment) => sum + payment.amount, 0)
 
         const pendingAmount = data
-            .filter((p) => p.status === "pending")
+            .filter((p) => p.status === InvoiceStatus.PENDING)
             .reduce((sum, payment) => sum + payment.amount, 0)
 
         const overdueAmount = data
@@ -28,7 +29,7 @@ const DoctorSummaryCards = ({ data }: { data: any[] }) => {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">${summaryStats.totalRevenue.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">₱{summaryStats.totalRevenue.toFixed(2)}</div>
                     <p className="text-xs text-muted-foreground">From paid invoices</p>
                 </CardContent>
             </Card>
@@ -39,7 +40,7 @@ const DoctorSummaryCards = ({ data }: { data: any[] }) => {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">${summaryStats.pendingAmount.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">₱{summaryStats.pendingAmount.toFixed(2)}</div>
                     <p className="text-xs text-muted-foreground">Awaiting payment</p>
                 </CardContent>
             </Card>
