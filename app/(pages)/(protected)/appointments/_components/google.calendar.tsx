@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { differenceInMinutes, eachDayOfInterval, endOfWeek, format, isSameDay, parseISO, startOfWeek } from 'date-fns'
 import { Appointment, AppointmentStatus, TimeSlot, TimeSlotStatus } from "@prisma/client"
 import { FullAppointmentType } from '@/types/prisma.type'
-import { formatTimeToString, getDifferenceTimeSlot } from '@/utils/helpers/date'
+import { formatTimeToString, getDifferenceTimeSlot, getTimeOfDate, getTimeOfDateString } from '@/utils/helpers/date'
 import SelectedAppointmentModal from './selected-appointment-modal'
 import { getAppointmentStatusDisplay, TIME_ZONE } from '@/utils/constants'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +12,7 @@ import axios from 'axios'
 
 const generateTimeSlots = () => {
     const slots = []
-    for (let hour = 8; hour < 24; hour++) {
+    for (let hour = 0; hour < 24; hour++) {
         slots.push(`${hour.toString().padStart(2, "0")}:00`)
         slots.push(`${hour.toString().padStart(2, "0")}:30`)
     }
@@ -160,6 +160,8 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                     const dayAppointments = getAppointmentsForDay(day)
                                     const isToday = isSameDay(day, new Date())
 
+                                    console.log(dayAppointments)
+
                                     return (
                                         <div key={day.toISOString()} className="flex-1 min-w-32 border-r border-gray-200">
                                             {/* Day Header */}
@@ -211,10 +213,14 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
 
                                                 {/* Time Slots and Appointments */}
                                                 {dayAppointments.map((appointment) => {
+                                                    console.log(appointment)
                                                     if (!appointment?.timeSlot) return null;
+                                                    console.log(appointment.timeSlot)
 
                                                     const duration = differenceInMinutes(appointment.timeSlot.endTime, appointment.timeSlot.startTime)
+                                                    console.log(duration)
 
+                                                    console.log(appointment.status, " RAW: ", appointment.timeSlot.startTime)
                                                     const startTime = new Date(appointment.timeSlot.startTime).toLocaleTimeString("en-US", {
                                                         hour: "2-digit",
                                                         minute: "2-digit",
@@ -222,8 +228,13 @@ const GoogleCalendar = ({ currentDate: selectedDate = new Date(), appointments =
                                                         hour12: false,
                                                         timeZone: TIME_ZONE,
                                                     });
-
-                                                    const { top, height } = getAppointmentPosition(startTime, duration)
+                                                    console.log("PARSED: ", startTime)
+                                                    const t = getTimeOfDateString(appointment.timeSlot.startTime as any);
+                                                    console.log("PARSED_2: ", t)
+                                                    // console.log(appointment.timeSlot)
+                                                    // const formattedStartTime = `${t.hour}:${t.minute}`;
+                                                    const formattedStartTime = startTime;
+                                                    const { top, height } = getAppointmentPosition(formattedStartTime, duration)
 
                                                     const [hour, minute] = startTime.split(":")
 

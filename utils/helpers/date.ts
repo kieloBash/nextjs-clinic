@@ -21,7 +21,7 @@ export function parseDate(dateString: string): Date {
     let hour = 0, minute = 0, second = 0;
 
     if (timePart) {
-        const timeComponents = timePart.split(":").map(Number);
+        const timeComponents = timePart.replace("Z", "").split(":").map(Number);
         [hour, minute, second] = [
             timeComponents[0] ?? 0,
             timeComponents[1] ?? 0,
@@ -41,6 +41,20 @@ export function getHourInTimeZone(date: Date): number {
 
     return Number(formatter.format(date));
 }
+
+export function nowUTC(): Date {
+    const now = new Date();
+    return new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        now.getUTCHours(),
+        now.getUTCMinutes(),
+        now.getUTCSeconds(),
+        now.getUTCMilliseconds()
+    ));
+}
+
 
 
 
@@ -95,19 +109,22 @@ export const getTimeOfDate = (dateString: string) => {
     return { hour: parseInt(hour), minute: parseInt(minute) };
 };
 
-// export const formatTimeToString = (date: Date) => {
-//     return new Date(date).toLocaleTimeString("en-US", {
-//         hour: "2-digit",
-//         minute: "2-digit",
-//         second: "2-digit",
-//         hour12: false, // change to true for AM/PM format
-//         timeZone: "Asia/Manila", // optional: use your local time zone
-//     });
+export const getTimeOfDateString = (dateString: string) => {
 
-//     const hours = date.getUTCHours().toString().padStart(2, "0")
-//     const minutes = date.getUTCMinutes().toString().padStart(2, "0")
-//     return `${hours}:${minutes}`
-// }
+    const timePart = dateString.split("T")[1]; // "11:12:00.000Z"
+    const [hour, minute] = timePart.split(":");
+
+    return { hour: (hour), minute: (minute) };
+};
+
+export function replaceTimeInDate(dateStr: string, timeStr: string): string {
+    const date = new Date(dateStr);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+
+    date.setUTCHours(hours, minutes, 0, 0); // Set time in UTC
+    return date.toISOString();
+}
+
 
 
 export function getDifferenceTimeSlot(timeSlot: TimeSlot) {

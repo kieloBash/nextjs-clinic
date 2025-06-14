@@ -25,6 +25,9 @@ import { showToast } from "@/utils/helpers/show-toast"
 import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../_hooks/keys"
 import { useQueryClient } from "@tanstack/react-query"
 import { FormInput } from "@/components/forms/input"
+import axios from "axios"
+import { RESCHEDULE_APPOINTMENT } from "@/utils/api-endpoints"
+import { getTodayDateTimezone, mergeTimeWithDate } from "@/utils/helpers/date"
 
 const rescheduleSchema = z
     .object({
@@ -76,25 +79,27 @@ export default function RescheduleAppointmentModal({
         resolver: zodResolver(rescheduleSchema),
         defaultValues: {
             date: new Date(appointment.date),
-            startTime: new Date(appointment.timeSlot.startTime).toTimeString().slice(0, 5),
-            endTime: new Date(appointment.timeSlot.endTime).toTimeString().slice(0, 5),
+            startTime: "",
+            endTime: "",
         },
     })
 
     const onSubmit = async (values: z.infer<typeof rescheduleSchema>) => {
         setIsSubmitting(true)
         try {
-            // Here you would typically send this data to your backend
-            // Example API call:
-            // const body = {
-            //     appointmentId: selectedAppointment.id,
-            //     date: data.date,
-            //     startTime: data.startTime,
-            //     endTime: data.endTime
-            // };
-            // const res = await axios.patch(RESCHEDULE_APPOINTMENT, body);
 
-            showToast("success", "Appointment rescheduled", "The appointment has been successfully rescheduled.")
+            const startTime = mergeTimeWithDate(values.startTime, getTodayDateTimezone(new Date(values.date)));
+            const endTime = mergeTimeWithDate(values.endTime, getTodayDateTimezone(new Date(values.date)));
+
+            const body = {
+                appointmentId: appointment.id,
+                date: values.date,
+                startTime,
+                endTime
+            };
+            const res = await axios.post(RESCHEDULE_APPOINTMENT, body);
+
+            showToast("success", "Appointment rescheduled", res.data.message)
 
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
@@ -114,12 +119,12 @@ export default function RescheduleAppointmentModal({
     const handleClose = () => {
         form.reset({
             date: new Date(appointment.date),
-            startTime: new Date(appointment.timeSlot.startTime).toTimeString().slice(0, 5),
-            endTime: new Date(appointment.timeSlot.endTime).toTimeString().slice(0, 5),
+            startTime: "",
+            endTime: "",
         })
         onClose()
     }
- 
+
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[500px]">

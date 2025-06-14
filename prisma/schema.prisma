@@ -27,6 +27,7 @@ enum QueueStatus {
   APPROVED
   SKIPPED
   COMPLETED
+  CANCELLED
 }
 
 enum TimeSlotStatus {

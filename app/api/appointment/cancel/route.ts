@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         }
 
         const result = await prisma.$transaction(async (tx) => {
-            const updatedAppointment = await prisma.appointment.update({
+            const updatedAppointment = await tx.appointment.update({
                 where: { id: existingAppointment.id },
                 data: { status: AppointmentStatus.CANCELLED },
             })
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
                                 existingAppointment.patient.name,
                                 existingAppointment.doctor.name
                             ),
-                            newStatus: AppointmentStatus.PENDING_PAYMENT,
+                            newStatus: AppointmentStatus.CANCELLED,
                         },
                     ],
                 }),

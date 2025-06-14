@@ -1,11 +1,11 @@
 import { AppointmentStatus, QueueStatus, TimeSlotStatus } from "@prisma/client"
 import { createNotification } from "@/libs/notification";
 import { BOOKING_CONFIRMED_NOTIFICATION_DOCTOR, BOOKING_CONFIRMED_NOTIFICATION_PATIENT, MISSING_PARAMETERS, NEW_BOOKED_APPOINTMENT_CONFIRMED_HISTORY } from "@/utils/constants";
-import { addHours } from "date-fns";
+import { addHours, startOfDay } from "date-fns";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/prisma";
-import { getTodayDateTimezone } from "@/utils/helpers/date";
+import { getTodayDateTimezone, nowUTC, parseDate } from "@/utils/helpers/date";
 
 export async function POST(request: Request) {
 
@@ -47,7 +47,19 @@ export async function POST(request: Request) {
             );
         }
 
-        const today = getTodayDateTimezone();
+        const d = nowUTC()
+
+        console.log("UTC RAW TODAY:", d)
+        const today = parseDate(d.toISOString());
+        console.log("UTC PARSED TODAY:", today)
+
+        return new NextResponse(
+            JSON.stringify({
+                message: "Successfully confirmed queue and added to appointments.",
+                data: "{ ...result }",
+            }),
+            { status: 400 }
+        );
 
         const result = await prisma.$transaction(async (tx) => {
 
