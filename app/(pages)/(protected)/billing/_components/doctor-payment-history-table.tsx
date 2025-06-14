@@ -167,12 +167,6 @@ const DoctorPaymentHistoryTable = (
                                                     <Eye className="mr-2 h-4 w-4" />
                                                     View Details
                                                 </DropdownMenuItem>
-                                                {payment.status === InvoiceStatus.PENDING && (
-                                                    <DropdownMenuItem>
-                                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                                        Mark as Paid
-                                                    </DropdownMenuItem>
-                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>

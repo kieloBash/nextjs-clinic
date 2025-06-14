@@ -2,8 +2,9 @@ import React, { useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertTriangle, Clock, DollarSign } from 'lucide-react'
 import { InvoiceStatus } from '@prisma/client'
+import { FullInvoiceType } from '@/types/prisma.type'
 
-const DoctorSummaryCards = ({ data }: { data: any[] }) => {
+const DoctorSummaryCards = ({ data }: { data: FullInvoiceType[] }) => {
 
     const summaryStats = useMemo(() => {
         const totalRevenue = data
@@ -14,12 +15,8 @@ const DoctorSummaryCards = ({ data }: { data: any[] }) => {
             .filter((p) => p.status === InvoiceStatus.PENDING)
             .reduce((sum, payment) => sum + payment.amount, 0)
 
-        const overdueAmount = data
-            .filter((p) => p.status === "overdue")
-            .reduce((sum, payment) => sum + payment.amount, 0)
-
-        return { totalRevenue, pendingAmount, overdueAmount }
-    }, [])
+        return { totalRevenue, pendingAmount }
+    }, [data])
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -26,6 +26,7 @@ import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { showToast } from "@/utils/helpers/show-toast"
 import { useQueryClient } from "@tanstack/react-query"
 import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../_hooks/keys"
+import { KEY_GET_INVOICES } from "../../billing/_hooks/keys"
 
 const completeAppointmentSchema = z.object({
     paymentAmount: z
@@ -79,6 +80,7 @@ export default function CompleteAppointmentModal({
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_INVOICES], exact: false }),
             ]);
 
         } catch (error: any) {

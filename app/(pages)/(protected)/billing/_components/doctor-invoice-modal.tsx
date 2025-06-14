@@ -11,6 +11,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { FullInvoiceType } from "@/types/prisma.type"
 import { getInvoiceDisplayId } from "../helper"
 import { InvoiceStatus } from "@prisma/client"
+import { useLoading } from "@/components/providers/loading-provider"
+import { showToast } from "@/utils/helpers/show-toast"
+import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
+import { useQueryClient } from "@tanstack/react-query"
+import axios from "axios"
+import { CONFIRM_PAYMENT_APPOINTMENT } from "@/utils/api-endpoints"
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../../appointments/_hooks/keys"
+import { KEY_GET_INVOICES } from "../_hooks/keys"
 
 interface InvoiceDetailsModalProps {
     isOpen: boolean
@@ -19,7 +27,10 @@ interface InvoiceDetailsModalProps {
     onMarkAsPaid?: (invoiceId: string) => void
 }
 
-export function InvoiceDetailsModal({ isOpen, onClose, invoice, onMarkAsPaid }: InvoiceDetailsModalProps) {
+export function InvoiceDetailsModal({ isOpen, onClose, invoice }: InvoiceDetailsModalProps) {
+    const { isLoading, setIsLoading } = useLoading()
+    const queryClient = useQueryClient();
+
     const getStatusBadge = (status: string) => {
         switch (status.toLowerCase()) {
             case "paid":
@@ -55,10 +66,26 @@ export function InvoiceDetailsModal({ isOpen, onClose, invoice, onMarkAsPaid }: 
         }
     }
 
-    const handleMarkAsPaid = () => {
-        if (onMarkAsPaid) {
-            onMarkAsPaid(invoice.id)
+    const handleConfirmPayment = async () => {
+        try {
+            setIsLoading(true)
+            const body = { appointmentId: invoice.appointment.id }
+            const res = await axios.post(CONFIRM_PAYMENT_APPOINTMENT, body);
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_INVOICES], exact: false }),
+            ]);
+
             onClose()
+
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -187,11 +214,11 @@ export function InvoiceDetailsModal({ isOpen, onClose, invoice, onMarkAsPaid }: 
 
                     {/* Action Buttons */}
                     <div className="flex justify-end space-x-3 pt-4 border-t">
-                        <Button variant="outline" onClick={onClose}>
+                        <Button disabled={isLoading} variant="outline" onClick={onClose}>
                             Close
                         </Button>
-                        {invoice.status.toLowerCase() === InvoiceStatus.PENDING && onMarkAsPaid && (
-                            <Button onClick={handleMarkAsPaid} className="bg-green-600 hover:bg-green-700">
+                        {invoice.status === InvoiceStatus.PENDING && (
+                            <Button disabled={isLoading} onClick={handleConfirmPayment} className="bg-green-600 hover:bg-green-700">
                                 <CheckCircle className="w-4 h-4 mr-2" />
                                 Mark as Paid
                             </Button>
