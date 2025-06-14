@@ -1,11 +1,11 @@
 import { AppointmentStatus, QueueStatus, TimeSlotStatus } from "@prisma/client"
 import { createNotification } from "@/libs/notification";
-import { BOOKING_CONFIRMED_NOTIFICATION_DOCTOR, BOOKING_CONFIRMED_NOTIFICATION_PATIENT, MISSING_PARAMETERS, NEW_BOOKED_APPOINTMENT_CONFIRMED_HISTORY } from "@/utils/constants";
+import { BOOKING_CONFIRMED_NOTIFICATION_DOCTOR, BOOKING_CONFIRMED_NOTIFICATION_PATIENT, MISSING_PARAMETERS, NEW_BOOKED_APPOINTMENT_CONFIRMED_HISTORY, TIME_ZONE } from "@/utils/constants";
 import { addHours, startOfDay } from "date-fns";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/prisma";
-import { getTodayDateTimezone, nowUTC, parseDate } from "@/utils/helpers/date";
+import { formatDateBaseOnTimeZone, formatDateBaseOnTimeZone_Date, formatDateBaseOnTimeZone_String, getTodayDateTimezone, nowUTC, parseDate } from "@/utils/helpers/date";
 
 export async function POST(request: Request) {
 
@@ -52,6 +52,11 @@ export async function POST(request: Request) {
         console.log("UTC RAW TODAY:", d)
         const today = parseDate(d.toISOString());
         console.log("UTC PARSED TODAY:", today)
+        const timezoned = formatDateBaseOnTimeZone_String(today);
+        const timezoneDate = formatDateBaseOnTimeZone_Date(today);
+        console.log(TIME_ZONE + " PARSED TODAY STRING:", timezoned)
+        console.log(TIME_ZONE + " PARSED TODAY DATE:", timezoneDate)
+
 
         return new NextResponse(
             JSON.stringify({

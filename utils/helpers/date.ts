@@ -55,6 +55,38 @@ export function nowUTC(): Date {
     ));
 }
 
+export function formatDateBaseOnTimeZone_String(
+    input: Date | string,
+    options?: Intl.DateTimeFormatOptions
+): string {
+    const date = typeof input === "string" ? new Date(input) : input;
+
+    const formatter = new Intl.DateTimeFormat("en-PH", {
+        timeZone: TIME_ZONE,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+        ...options,
+    });
+
+    return formatter.format(date);
+}
+
+export function formatDateBaseOnTimeZone_Date(input: Date | string): Date {
+    const date = typeof input === "string" ? new Date(input) : input;
+
+    // Get the timestamp adjusted to Manila time
+    const utc = date.getTime();
+    const manilaOffsetMs = 8 * 60 * 60 * 1000; // UTC+8
+    return new Date(utc + manilaOffsetMs);
+}
+
+
+
 
 
 
