@@ -54,14 +54,22 @@ function getUtcTimeDateMerged({ isoDateString, parsedUtcDate }: { isoDateString:
 
 export function timeSlotFormatterUTC(given: { isoDate: string, isoStart: string, isoEnd: string }) {
     // Date of the timeslot
+    console.log("START timeSlotFormatterUTC")
+    console.log("given: ", given)
     const utcDate = nowUTC(new Date(given.isoDate));
     const parsedUtcDate: Date = parseDate(utcDate.toISOString());
 
+    console.log("parsedUtcDate", parsedUtcDate)
+
     const finalParsedStart = getUtcTimeDateMerged({ isoDateString: given.isoStart, parsedUtcDate })
+    console.log("finalParsedStart", finalParsedStart)
+
     const finalParsedEnd = getUtcTimeDateMerged({ isoDateString: given.isoEnd, parsedUtcDate })
+    console.log("finalParsedEnd", finalParsedEnd)
 
     const result = { date: parsedUtcDate, start: finalParsedStart, end: finalParsedEnd }
 
+    console.log("END timeSlotFormatterUTC")
     return result;
 }
 
