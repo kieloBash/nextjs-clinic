@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
     try {
+        console.log("START POST /api/queue/add")
         const body = await request.json();
         const { doctorId, patientEmail } = body;
 
@@ -18,11 +19,15 @@ export async function POST(request: Request) {
             );
         }
 
+        console.log({ doctorId, patientEmail })
+
         // Check if doctor and patient exist
         const [doctor, patient] = await Promise.all([
             getDoctor({ doctorId }),
             getPatientByEmail({ email: patientEmail }),
         ]);
+
+        console.log({ doctor, patient })
 
         if (!doctor) {
             return new NextResponse(
