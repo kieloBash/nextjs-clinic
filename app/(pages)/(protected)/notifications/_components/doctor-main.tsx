@@ -11,76 +11,22 @@ import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import useNotifications from "../_hooks/use-notifications"
+import { useLoading } from "@/components/providers/loading-provider"
+import { showToast } from "@/utils/helpers/show-toast"
+import axios from "axios"
+import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
+import { useQueryClient } from "@tanstack/react-query"
+import { CLEAR_NOTIFICATIONS } from "@/utils/api-endpoints"
+import { KEY_GET_NOTIFICATIONS } from "../_hooks/keys"
+import MainLoadingPage from "@/components/globals/main-loading"
 
-// Mock notification data based on your Prisma schema
-const mockNotifications = [
-    {
-        id: "notif-001",
-        userId: "doctor-123",
-        message: "New appointment scheduled with Sarah Johnson for tomorrow at 2:00 PM",
-        sentAt: new Date("2024-01-15T10:30:00"),
-    },
-    {
-        id: "notif-002",
-        userId: "doctor-123",
-        message: "Payment of $150.00 received from Michael Chen",
-        sentAt: new Date("2024-01-15T09:15:00"),
-    },
-    {
-        id: "notif-003",
-        userId: "doctor-123",
-        message: "Appointment with Emily Rodriguez has been cancelled",
-        sentAt: new Date("2024-01-14T16:45:00"),
-    },
-    {
-        id: "notif-004",
-        userId: "doctor-123",
-        message: "Reminder: Complete patient notes for David Wilson's consultation",
-        sentAt: new Date("2024-01-14T14:20:00"),
-    },
-    {
-        id: "notif-005",
-        userId: "doctor-123",
-        message: "New patient registration: Lisa Thompson has joined your practice",
-        sentAt: new Date("2024-01-14T11:30:00"),
-    },
-    {
-        id: "notif-006",
-        userId: "doctor-123",
-        message: "Invoice #INV-2024-003 is overdue - Emily Rodriguez ($250.00)",
-        sentAt: new Date("2024-01-13T08:00:00"),
-    },
-    {
-        id: "notif-007",
-        userId: "doctor-123",
-        message: "System maintenance scheduled for tonight at 11:00 PM",
-        sentAt: new Date("2024-01-12T15:00:00"),
-    },
-    {
-        id: "notif-008",
-        userId: "doctor-123",
-        message: "Follow-up appointment requested by Robert Brown",
-        sentAt: new Date("2024-01-12T13:45:00"),
-    },
-    {
-        id: "notif-009",
-        userId: "doctor-123",
-        message: "Your schedule for tomorrow has been updated",
-        sentAt: new Date("2024-01-11T17:30:00"),
-    },
-    {
-        id: "notif-010",
-        userId: "doctor-123",
-        message: "Monthly report is ready for review",
-        sentAt: new Date("2024-01-10T09:00:00"),
-    },
-]
 
 const DoctorMainPage = ({ user }: { user: User }) => {
     const [searchTerm, setSearchTerm] = useState("")
 
     const data = useNotifications({ userId: user.id });
-    console.log(data)
+    const { setIsLoading } = useLoading();
+    const queryClient = useQueryClient();
 
     // Filter notifications based on search
     const filteredNotifications = useMemo(() => {
@@ -128,10 +74,29 @@ const DoctorMainPage = ({ user }: { user: User }) => {
         // In a real app, you would delete from the database here
     }
 
-    const handleClearAll = () => {
-        console.log("Clearing all notifications")
-        // In a real app, you would delete all notifications from the database
+    const handleClearAll = async () => {
+        try {
+            // backend
+            setIsLoading(true)
+
+            const res = await axios.delete(CLEAR_NOTIFICATIONS + `/${user.id}`);
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
+            ]);
+
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setIsLoading(false)
+        }
     }
+
+    if (data.isLoading) {
+        return <MainLoadingPage />
+    }
+
 
     return (
         <div className="container mx-auto p-6 space-y-6">
@@ -205,7 +170,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                                                 </div>
                                             </div>
 
-                                            <DropdownMenu>
+                                            {/* <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
                                                         <MoreHorizontal className="h-4 w-4" />
@@ -217,7 +182,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                                                         Delete
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            </DropdownMenu> */}
                                         </div>
                                     ))}
                                 </div>
