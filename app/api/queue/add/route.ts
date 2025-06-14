@@ -98,8 +98,8 @@ export async function POST(request: Request) {
 
 
         await Promise.all([
-            await createNotification({ userId: newQueue.patientId, message: QUEUE_ADDED_NOTIFICATION_PATIENT(newQueue.position) }),
-            await createNotification({ userId: newQueue.doctorId, message: QUEUE_ADDED_NOTIFICATION_DOCTOR(patient.name, newQueue.position) })
+            await createNotification({ tx: prisma, userId: newQueue.patientId, message: QUEUE_ADDED_NOTIFICATION_PATIENT(newQueue.position) }),
+            await createNotification({ tx: prisma, userId: newQueue.doctorId, message: QUEUE_ADDED_NOTIFICATION_DOCTOR(patient.name, newQueue.position) })
         ])
 
         return new NextResponse(
