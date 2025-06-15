@@ -29,7 +29,7 @@ import axios from "axios"
 import { showToast } from "@/utils/helpers/show-toast"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { useQueryClient } from "@tanstack/react-query"
-import { UPDATE_PROFILE } from "@/utils/api-endpoints"
+import { UPDATE_PASSWORD, UPDATE_PROFILE } from "@/utils/api-endpoints"
 
 // Mock user data based on your User model
 const mockUser = {
@@ -66,7 +66,6 @@ const DoctorMainPage = ({ user }: { user: ExtendedUser }) => {
     const [showNewPassword, setShowNewPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const { isLoading, setIsLoading } = useLoading()
-    const queryClient = useQueryClient();
 
     // Profile form
     const profileForm = useForm<z.infer<typeof profileFormSchema>>({
@@ -109,11 +108,24 @@ const DoctorMainPage = ({ user }: { user: ExtendedUser }) => {
         }
     }
 
-    const onPasswordSubmit = (values: z.infer<typeof passwordFormSchema>) => {
+    const onPasswordSubmit = async (values: z.infer<typeof passwordFormSchema>) => {
         console.log("Password update:", values)
-        // Here you would update the password in your database
-        alert("Password updated successfully!")
-        passwordForm.reset()
+        try {
+            // backend
+            setIsLoading(true)
+
+            const res = await axios.patch(UPDATE_PASSWORD, { userId: user?.id, ...values });
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000)
+
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const handleDisableAccount = () => {

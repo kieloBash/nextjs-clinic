@@ -21,6 +21,7 @@ export const BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR = "A notification promp
 export const BOOKING_WAITING_PAYMENT_NOTIFICATION_PATIENT = "You have an awaiting payment!";
 
 export const PROFILE_UPDATE = "You updated your profile!";
+export const PASSWORD_UPDATE = "You updated your password!";
 
 export const BOOKING_PATIENT_ADDED_FROM_QUEUE = "Patient added from the queue!";
 
