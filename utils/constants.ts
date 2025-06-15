@@ -20,6 +20,9 @@ export const BOOKING_RESCHEDULED_NOTIFICATION_DOCTOR = "You have successfully re
 export const BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR = "A notification prompting the patient to pay their bill has been sent!";
 export const BOOKING_WAITING_PAYMENT_NOTIFICATION_PATIENT = "You have an awaiting payment!";
 
+export const PROFILE_UPDATE = "You updated your profile!";
+export const PASSWORD_UPDATE = "You updated your password!";
+
 export const BOOKING_PATIENT_ADDED_FROM_QUEUE = "Patient added from the queue!";
 
 export const NEW_BOOKED_APPOINTMENT_CONFIRMED_HISTORY = (patientName: string, doctorName: string) => {
