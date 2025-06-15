@@ -22,6 +22,7 @@ import { CANCEL_PAYMENT_APPOINTMENT, CONFIRM_PAYMENT_APPOINTMENT } from '@/utils
 import CompleteAppointmentModal from './complete-appointment-modal'
 import RescheduleAppointmentModal from './reschedule-appointment-modal'
 import { KEY_GET_INVOICES } from '../../billing/_hooks/keys'
+import { KEY_GET_NOTIFICATIONS } from '../../notifications/_hooks/keys'
 
 interface IProps {
     selectedAppointment: FullAppointmentType
@@ -63,6 +64,7 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_INVOICES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
             ]);
 
             clear()
@@ -86,6 +88,7 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
             ]);
 
             clear()

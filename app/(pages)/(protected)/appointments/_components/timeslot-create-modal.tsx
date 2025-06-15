@@ -25,6 +25,7 @@ import { CREATE_TIMESLOT } from '@/utils/api-endpoints'
 import { getTodayDateTimezone, mergeTimeWithDate } from '@/utils/helpers/date'
 import { useQueryClient } from '@tanstack/react-query'
 import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from '../_hooks/keys'
+import { KEY_GET_NOTIFICATIONS } from '../../notifications/_hooks/keys'
 
 const timeSlotSchema = z.object({
     date: z.string().min(1, "Date is required"),
@@ -74,6 +75,7 @@ const CreateTimeSlotModal = () => {
             form.reset()
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
             ]);
         } catch (error: any) {
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)

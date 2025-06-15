@@ -32,6 +32,7 @@ import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { FullQueueType } from "@/types/prisma.type"
 import { QueueStatus } from "@prisma/client"
 import { useLoading } from "@/components/providers/loading-provider"
+import { KEY_GET_NOTIFICATIONS } from "../../notifications/_hooks/keys"
 
 // Form schema
 const addToQueueSchema = z.object({
@@ -87,7 +88,12 @@ export default function AddToQueueModal({ onAddToQueue }: AddToQueueModalProps) 
             showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
 
             // Refresh queue list (or update the optimistic item with real data if needed)
-            await queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false });
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
+            ]);
+
+
             form.reset();
             setOpen(false);
 

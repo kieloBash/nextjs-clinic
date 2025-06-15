@@ -19,6 +19,7 @@ import axios from "axios"
 import { CONFIRM_PAYMENT_APPOINTMENT } from "@/utils/api-endpoints"
 import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../../appointments/_hooks/keys"
 import { KEY_GET_INVOICES } from "../_hooks/keys"
+import { KEY_GET_NOTIFICATIONS } from "../../notifications/_hooks/keys"
 
 interface InvoiceDetailsModalProps {
     isOpen: boolean
@@ -78,6 +79,7 @@ export function InvoiceDetailsModal({ isOpen, onClose, invoice }: InvoiceDetails
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_INVOICES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
             ]);
 
             onClose()

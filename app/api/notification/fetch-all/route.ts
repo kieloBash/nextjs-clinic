@@ -65,9 +65,9 @@ export async function GET(request: Request) {
                 userId,
                 ...filters,
             },
-            include: { user: true },
+            include: { user: { select: { id: true, name: true, email: true } } },
             orderBy: [
-                { sentAt: "asc" }
+                { sentAt: "desc" }
             ]
         })
 

@@ -28,6 +28,7 @@ import { FormInput } from "@/components/forms/input"
 import axios from "axios"
 import { RESCHEDULE_APPOINTMENT } from "@/utils/api-endpoints"
 import { getTodayDateTimezone, mergeTimeWithDate } from "@/utils/helpers/date"
+import { KEY_GET_NOTIFICATIONS } from "../../notifications/_hooks/keys"
 
 const rescheduleSchema = z
     .object({
@@ -105,6 +106,7 @@ export default function RescheduleAppointmentModal({
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_TIMESLOTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
             ])
 
             form.reset()
