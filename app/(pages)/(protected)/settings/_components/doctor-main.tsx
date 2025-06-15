@@ -29,7 +29,8 @@ import axios from "axios"
 import { showToast } from "@/utils/helpers/show-toast"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { useQueryClient } from "@tanstack/react-query"
-import { UPDATE_PASSWORD, UPDATE_PROFILE } from "@/utils/api-endpoints"
+import { UPDATE_DISABLED_USER, UPDATE_PASSWORD, UPDATE_PROFILE } from "@/utils/api-endpoints"
+import { signOut } from "next-auth/react"
 
 // Mock user data based on your User model
 const mockUser = {
@@ -128,10 +129,25 @@ const DoctorMainPage = ({ user }: { user: ExtendedUser }) => {
         }
     }
 
-    const handleDisableAccount = () => {
+    const handleDisableAccount = async () => {
         console.log("Disabling account for user:", mockUser.id)
-        // Here you would disable the account in your database
-        alert("Account has been disabled. You will be logged out.")
+        try {
+            setIsLoading(true);
+
+            const res = await axios.patch(UPDATE_DISABLED_USER, {
+                userId: user?.id, // Replace with actual user data from context/session
+            });
+
+            showToast("success", "Account Disabled", res.data.message);
+
+            setTimeout(() => {
+                signOut(); // Triggers logout, e.g., via NextAuth
+            }, 1500);
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     return (
