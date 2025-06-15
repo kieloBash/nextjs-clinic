@@ -23,6 +23,13 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { ExtendedUser } from "@/auth"
+import { useLoading } from "@/components/providers/loading-provider"
+import axios from "axios"
+import { showToast } from "@/utils/helpers/show-toast"
+import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
+import { useQueryClient } from "@tanstack/react-query"
+import { UPDATE_PROFILE } from "@/utils/api-endpoints"
 
 // Mock user data based on your User model
 const mockUser = {
@@ -54,19 +61,21 @@ const passwordFormSchema = z
         path: ["confirmPassword"],
     })
 
-const DoctorMainPage = ({ user }: { user: User }) => {
+const DoctorMainPage = ({ user }: { user: ExtendedUser }) => {
     const [showCurrentPassword, setShowCurrentPassword] = useState(false)
     const [showNewPassword, setShowNewPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const { isLoading, setIsLoading } = useLoading()
+    const queryClient = useQueryClient();
 
     // Profile form
     const profileForm = useForm<z.infer<typeof profileFormSchema>>({
         resolver: zodResolver(profileFormSchema),
         defaultValues: {
-            name: mockUser.name,
-            email: mockUser.email,
-            phone: mockUser.phone || "",
-            image: mockUser.image || "",
+            name: user?.name ?? "",
+            email: user?.email ?? "",
+            phone: user?.phone ?? "",
+            image: user?.image || "",
         },
     })
 
@@ -80,10 +89,24 @@ const DoctorMainPage = ({ user }: { user: User }) => {
         },
     })
 
-    const onProfileSubmit = (values: z.infer<typeof profileFormSchema>) => {
+    const onProfileSubmit = async (values: z.infer<typeof profileFormSchema>) => {
         console.log("Profile update:", values)
-        // Here you would update the user profile in your database
-        alert("Profile updated successfully!")
+        try {
+            // backend
+            setIsLoading(true)
+
+            const res = await axios.patch(UPDATE_PROFILE, { userId: user?.id, ...values });
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000)
+
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const onPasswordSubmit = (values: z.infer<typeof passwordFormSchema>) => {
@@ -120,7 +143,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                     <Form {...profileForm}>
                         <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
                             {/* Profile Image */}
-                            <div className="flex items-center space-x-4">
+                            {/* <div className="flex items-center space-x-4">
                                 <Avatar className="h-20 w-20">
                                     <AvatarImage src={mockUser.image || "/placeholder.svg"} />
                                     <AvatarFallback className="text-lg">
@@ -148,7 +171,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                                         )}
                                     />
                                 </div>
-                            </div>
+                            </div> */}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField
@@ -204,7 +227,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
 
                                 <div className="flex items-center space-x-2">
                                     <span className="text-sm text-muted-foreground">User ID:</span>
-                                    <code className="text-sm bg-muted px-2 py-1 rounded">{mockUser.id}</code>
+                                    <code className="text-sm bg-muted px-2 py-1 rounded">{user?.id}</code>
                                 </div>
                             </div>
 

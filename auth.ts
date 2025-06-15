@@ -6,6 +6,7 @@ import { PrismaClient } from "@prisma/client";
 
 export type ExtendedUser = DefaultSession["user"] & {
     role: string;
+    phone?: string;
     accessToken?: string;
     isExpired?: boolean;
 };
@@ -56,6 +57,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (session.user) {
                 session.user.name = token.name;
                 session.user.email = token.email as string;
+                session.user.phone = token?.phone as string;
                 session.user.accessToken = token.accessToken as string;
             }
 
@@ -76,6 +78,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.name = existingUser.name;
             token.email = existingUser.email;
             token.picture = existingUser.image;
+            token.phone = existingUser.phone;
 
             console.log("Token:", token);
             console.log("End jwt")
