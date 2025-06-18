@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import type { User } from "next-auth"
 import { TrendingUp, Users, DollarSign, Calendar, BarChart3, ArrowUpRight } from "lucide-react"
 
@@ -20,6 +20,8 @@ import {
     ResponsiveContainer,
     Tooltip,
 } from "recharts"
+import useAnalytics from "../_hooks/use-analytics"
+import MainLoadingPage from "@/components/globals/main-loading"
 
 // Mock data for patients seen per week/month
 const patientsData = [
@@ -79,16 +81,27 @@ const DoctorMainPage = ({ user }: { user: User }) => {
     const currentRevenueData = revenueTimeframe === "weekly" ? revenueData : monthlyRevenueData
 
     // Calculate summary stats
-    const totalPatients = currentPatientsData.reduce((sum, item) => sum + item.patients, 0)
-    const totalRevenue = currentRevenueData.reduce((sum, item) => sum + item.revenue, 0)
-    const totalAppointments = appointmentStatusData.reduce((sum, item) => sum + item.count, 0)
-    const completionRate = Math.round((appointmentStatusData[0].count / totalAppointments) * 100)
+
 
     // Calculate growth percentages (mock data)
     const patientsGrowth = 12.5
     const revenueGrowth = 8.3
     const appointmentsGrowth = 15.2
     const completionGrowth = 2.1
+
+    const analytics = useAnalytics({ userId: user.id })
+    console.log(analytics);
+
+    const { totalPatients, totalAppointments, totalRevenue, completionRate } = useMemo(() => {
+        if (!analytics.payload)
+            return { totalPatients: 0, totalRevenue: 0, totalAppointments: 0, completionRate: 0 }
+
+        return { ...analytics.payload }
+    }, [analytics])
+
+    if (analytics.isLoading) {
+        return <MainLoadingPage />
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
@@ -140,7 +153,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                             </div>
                         </CardHeader>
                         <CardContent className="relative z-10">
-                            <div className="text-3xl font-bold">${totalRevenue.toLocaleString()}</div>
+                            <div className="text-3xl font-bold">₱{totalRevenue.toLocaleString()}</div>
                             <div className="flex items-center gap-1 mt-2">
                                 <ArrowUpRight className="h-4 w-4 text-green-300" />
                                 <span className="text-sm text-emerald-100">+{revenueGrowth}% from last period</span>
@@ -184,71 +197,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                 </div>
 
                 {/* Charts */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                    {/* Patients Seen Chart */}
-                    <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
-                        <CardHeader className="pb-4">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <CardTitle className="text-xl font-semibold text-slate-800">Patients Seen</CardTitle>
-                                    <CardDescription className="text-slate-600">Number of patients seen over time</CardDescription>
-                                </div>
-                                <Select value={patientsTimeframe} onValueChange={setPatientsTimeframe}>
-                                    <SelectTrigger className="w-[130px] border-slate-200 bg-white/50">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="weekly">Weekly</SelectItem>
-                                        <SelectItem value="monthly">Monthly</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                            <div className="h-[300px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={currentPatientsData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                        <defs>
-                                            <linearGradient id="patientsGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <XAxis
-                                            dataKey="period"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: "#64748b", fontSize: 12 }}
-                                        />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
-                                        <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: "rgba(255, 255, 255, 0.95)",
-                                                backdropFilter: "blur(10px)",
-                                                border: "1px solid #e2e8f0",
-                                                borderRadius: "8px",
-                                            }}
-                                        />
-                                        <Area
-                                            type="monotone"
-                                            dataKey="patients"
-                                            stroke="#8b5cf6"
-                                            strokeWidth={3}
-                                            fill="url(#patientsGradient)"
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="patients"
-                                            stroke="#8b5cf6"
-                                            strokeWidth={3}
-                                            dot={{ fill: "#8b5cf6", strokeWidth: 2, r: 4 }}
-                                            activeDot={{ r: 6, fill: "#8b5cf6", strokeWidth: 2, stroke: "#fff" }}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
+                <div className="grid grid-cols-1 gap-8">
 
                     {/* Revenue Chart */}
                     <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">

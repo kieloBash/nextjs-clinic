@@ -25,3 +25,12 @@ export interface IQueryProps {
     startDate?: Date;
     endDate?: Date;
 }
+
+export type DoctorAnalyticsPayload = {
+    totalPatients: number;
+    totalAppointments: number;
+    totalRevenue: number;
+    completionRate: number;
+    appointmentStatusBreakdown: { status: string; count: number }[];
+    revenueOverTime: { date: string; revenue: number }[];
+};

@@ -20,3 +20,5 @@ export const CLEAR_NOTIFICATIONS = "/api/notification/clear"
 export const UPDATE_PROFILE = "/api/settings/profile"
 export const UPDATE_PASSWORD = "/api/settings/password"
 export const UPDATE_DISABLED_USER = "/api/settings/disable"
+
+export const FETCH_ANALYTICS_DOCTOR = "/api/analytics/doctor"
