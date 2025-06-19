@@ -61,7 +61,11 @@ model User {
   doctorTimeSlots       TimeSlot[]     @relation("DoctorTimeSlot")
   queuesAsPatient       Queue[]        @relation("QueuePatient")
   queuesAsDoctor        Queue[]        @relation("QueueDoctor")
+  completedAppointments Int?           @default(0) //new
 
+  @@index([name])
+  @@index([roleId])
+  @@index([completedAppointments])
   @@map("users")
 }
 

@@ -26,6 +26,16 @@ export async function GET(request: Request) {
         });
     }
 
+    let orderBy: Prisma.UserOrderByWithRelationInput = {};
+
+    if (sortBy === "most_experienced") {
+        orderBy = { completedAppointments: "desc" };
+    } else if (sortBy === "name_asc") {
+        orderBy = { name: "asc" };
+    } else if (sortBy === "name_desc") {
+        orderBy = { name: "desc" };
+    }
+
     try {
         const existingUser = await checkUserExists({ id: userId });
         if (!existingUser) {
@@ -42,6 +52,7 @@ export async function GET(request: Request) {
                     mode: "insensitive",
                 },
             },
+            orderBy,
             skip,
             take: limit,
             select: {
@@ -50,6 +61,7 @@ export async function GET(request: Request) {
                 email: true,
                 phone: true,
                 image: true,
+                completedAppointments: true,
                 role: { select: { roleName: true } },
                 doctorTimeSlots: {
                     where: {
@@ -66,17 +78,9 @@ export async function GET(request: Request) {
                         status: true,
                     },
                 },
-                _count: {
-                    select: {
-                        appointmentsAsDoctor: {
-                            where: { status: "COMPLETED" },
-                        },
-                    },
-                },
             },
         });
 
-        // Total doctors for pagination
         const totalDoctors = await prisma.user.count({
             where: {
                 role: { roleName: "DOCTOR" },
@@ -93,7 +97,7 @@ export async function GET(request: Request) {
             payload: {
                 data: doctors.map((doctor) => ({
                     ...doctor,
-                    completedAppointments: doctor._count.appointmentsAsDoctor,
+                    completedAppointments: doctor.completedAppointments,
                 })),
                 pagination: {
                     page,

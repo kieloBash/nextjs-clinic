@@ -119,7 +119,7 @@ const mockDoctors = [
 
 const PatientMainPage = ({ user }: { user: User }) => {
     const [searchTerm, setSearchTerm] = useState("")
-    const [sortBy, setSortBy] = useState("appointments") // appointments, name, rating
+    const [sortBy, setSortBy] = useState("most_experienced") // appointments, name, rating
     const [specializationFilter, setSpecializationFilter] = useState("all")
 
     // Get unique specializations for filter
@@ -202,8 +202,9 @@ const PatientMainPage = ({ user }: { user: User }) => {
                                 <SelectValue placeholder="Sort by" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="appointments">Most Experienced</SelectItem>
-                                <SelectItem value="name">Name (A-Z)</SelectItem>
+                                <SelectItem value="most_experienced">Most Experienced</SelectItem>
+                                <SelectItem value="name_asc">Name (A-Z)</SelectItem>
+                                <SelectItem value="name_desc">Name (Z-A)</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
