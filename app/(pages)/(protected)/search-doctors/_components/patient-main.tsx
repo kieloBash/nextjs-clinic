@@ -203,7 +203,6 @@ const PatientMainPage = ({ user }: { user: User }) => {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="appointments">Most Experienced</SelectItem>
-                                <SelectItem value="rating">Highest Rated</SelectItem>
                                 <SelectItem value="name">Name (A-Z)</SelectItem>
                             </SelectContent>
                         </Select>

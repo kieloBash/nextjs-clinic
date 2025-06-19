@@ -4,6 +4,11 @@ export type UserFullType = User & {
     role: Role
 }
 
+export type FullDoctorSearchType = User & {
+    role: Role
+    completedAppointments: number
+}
+
 export type FullAppointmentType = Appointment & {
     timeSlot: TimeSlot
     patient: User

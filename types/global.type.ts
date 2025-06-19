@@ -26,6 +26,16 @@ export interface IQueryProps {
     endDate?: Date;
 }
 
+export interface IPaginatedQuery<T> {
+    data: T;
+    pagination: {
+        page: number;
+        limit: number;
+        totalPages: number;
+        totalItems: number;
+    }
+}
+
 export type DoctorAnalyticsPayload = {
     totalPatients: number;
     totalAppointments: number;
