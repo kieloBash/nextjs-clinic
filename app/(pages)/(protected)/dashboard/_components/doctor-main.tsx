@@ -22,6 +22,7 @@ import {
 } from "recharts"
 import useAnalytics from "../_hooks/use-analytics"
 import MainLoadingPage from "@/components/globals/main-loading"
+import { AppointmentStatus } from "@prisma/client"
 
 // Mock data for patients seen per week/month
 const patientsData = [
@@ -90,13 +91,54 @@ const DoctorMainPage = ({ user }: { user: User }) => {
     const completionGrowth = 2.1
 
     const analytics = useAnalytics({ userId: user.id })
-    console.log(analytics);
 
-    const { totalPatients, totalAppointments, totalRevenue, completionRate } = useMemo(() => {
+    const formatStatusData = (data: { status: string; count: number }[]) => {
+        const total = data.reduce((sum, item) => sum + item.count, 0);
+
+        const statusMap: Record<string, { label: string; fill: string }> = {
+            PENDING: { label: AppointmentStatus.PENDING, fill: "#3b82f6" },
+            CONFIRMED: { label: AppointmentStatus.CONFIRMED, fill: "#3b82f6" },
+            PENDING_PAYMENT: { label: AppointmentStatus.PENDING_PAYMENT, fill: "#3b82f6" },
+
+            COMPLETED: { label: AppointmentStatus.COMPLETED, fill: "#10b981" },
+            CANCELLED: { label: AppointmentStatus.CANCELLED, fill: "#f59e0b" },
+            RESCHEDULED: { label: AppointmentStatus.RESCHEDULED, fill: "#ef4444" }, // or a different label if needed
+        };
+
+        const aggregatedMap = new Map<string, { count: number; fill: string }>();
+
+        for (const { status, count } of data) {
+            const mapped = statusMap[status];
+            if (!mapped) continue;
+
+            const key = mapped.label;
+
+            if (!aggregatedMap.has(key)) {
+                aggregatedMap.set(key, { count, fill: mapped.fill });
+            } else {
+                const prev = aggregatedMap.get(key)!;
+                aggregatedMap.set(key, { count: prev.count + count, fill: mapped.fill });
+            }
+        }
+
+        const formatted = Array.from(aggregatedMap.entries()).map(([status, { count, fill }]) => ({
+            status,
+            count,
+            fill,
+            percentage: total > 0 ? parseFloat(((count / total) * 100).toFixed(1)) : 0
+        }));
+
+        return formatted;
+    };
+
+    const { totalPatients, totalAppointments, totalRevenue, completionRate, appointmentStatusData } = useMemo(() => {
         if (!analytics.payload)
-            return { totalPatients: 0, totalRevenue: 0, totalAppointments: 0, completionRate: 0 }
+            return {
+                totalPatients: 0, totalRevenue: 0, totalAppointments: 0, completionRate: 0,
+                appointmentStatusData: []
+            }
 
-        return { ...analytics.payload }
+        return { ...analytics.payload, appointmentStatusData: formatStatusData(analytics.payload.appointmentStatusBreakdown) }
     }, [analytics])
 
     if (analytics.isLoading) {
@@ -137,10 +179,10 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                         </CardHeader>
                         <CardContent className="relative z-10">
                             <div className="text-3xl font-bold">{totalPatients}</div>
-                            <div className="flex items-center gap-1 mt-2">
+                            {/* <div className="flex items-center gap-1 mt-2">
                                 <ArrowUpRight className="h-4 w-4 text-green-300" />
                                 <span className="text-sm text-blue-100">+{patientsGrowth}% from last period</span>
-                            </div>
+                            </div> */}
                         </CardContent>
                     </Card>
 
@@ -154,10 +196,10 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                         </CardHeader>
                         <CardContent className="relative z-10">
                             <div className="text-3xl font-bold">₱{totalRevenue.toLocaleString()}</div>
-                            <div className="flex items-center gap-1 mt-2">
+                            {/* <div className="flex items-center gap-1 mt-2">
                                 <ArrowUpRight className="h-4 w-4 text-green-300" />
                                 <span className="text-sm text-emerald-100">+{revenueGrowth}% from last period</span>
-                            </div>
+                            </div> */}
                         </CardContent>
                     </Card>
 
@@ -171,10 +213,10 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                         </CardHeader>
                         <CardContent className="relative z-10">
                             <div className="text-3xl font-bold">{totalAppointments}</div>
-                            <div className="flex items-center gap-1 mt-2">
+                            {/* <div className="flex items-center gap-1 mt-2">
                                 <ArrowUpRight className="h-4 w-4 text-green-300" />
                                 <span className="text-sm text-purple-100">+{appointmentsGrowth}% from last period</span>
-                            </div>
+                            </div> */}
                         </CardContent>
                     </Card>
 
@@ -188,10 +230,10 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                         </CardHeader>
                         <CardContent className="relative z-10">
                             <div className="text-3xl font-bold">{completionRate}%</div>
-                            <div className="flex items-center gap-1 mt-2">
+                            {/* <div className="flex items-center gap-1 mt-2">
                                 <ArrowUpRight className="h-4 w-4 text-green-300" />
                                 <span className="text-sm text-orange-100">+{completionGrowth}% from last period</span>
-                            </div>
+                            </div> */}
                         </CardContent>
                     </Card>
                 </div>
@@ -200,7 +242,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                 <div className="grid grid-cols-1 gap-8">
 
                     {/* Revenue Chart */}
-                    <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                    {/* <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
                         <CardHeader className="pb-4">
                             <div className="flex items-center justify-between">
                                 <div className="space-y-1">
@@ -255,7 +297,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                                 </ResponsiveContainer>
                             </div>
                         </CardContent>
-                    </Card>
+                    </Card> */}
                 </div>
 
                 {/* Appointment Status Breakdown */}
@@ -274,7 +316,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
                                             <defs>
-                                                {appointmentStatusData.map((entry, index) => (
+                                                {appointmentStatusData?.map((entry, index) => (
                                                     <linearGradient key={index} id={`gradient-${index}`} x1="0" y1="0" x2="1" y2="1">
                                                         <stop offset="0%" stopColor={entry.fill} stopOpacity={1} />
                                                         <stop offset="100%" stopColor={entry.fill} stopOpacity={0.8} />
@@ -290,7 +332,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                                                 paddingAngle={3}
                                                 dataKey="count"
                                             >
-                                                {appointmentStatusData.map((entry, index) => (
+                                                {appointmentStatusData?.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={`url(#gradient-${index})`} stroke="#fff" strokeWidth={2} />
                                                 ))}
                                             </Pie>
@@ -312,7 +354,7 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                             <div className="space-y-6">
                                 <h3 className="text-lg font-semibold text-slate-800">Status Summary</h3>
                                 <div className="space-y-4">
-                                    {appointmentStatusData.map((item, index) => (
+                                    {appointmentStatusData?.map((item, index) => (
                                         <div key={item.status} className="group">
                                             <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-gradient-to-r from-white to-slate-50/50 hover:shadow-md transition-all duration-200">
                                                 <div className="flex items-center space-x-4">
