@@ -34,7 +34,7 @@ const DoctorCard = ({ doctor }: { doctor: any }) => {
                     </AvatarFallback>
                 </Avatar>
                 <CardTitle className="text-lg">{doctor.name}</CardTitle>
-                <CardDescription className="font-medium text-primary">{doctor.specialization}</CardDescription>
+                {/* <CardDescription className="font-medium text-primary">{doctor.specialization}</CardDescription> */}
             </CardHeader>
 
             <CardContent className="space-y-4">
@@ -42,24 +42,24 @@ const DoctorCard = ({ doctor }: { doctor: any }) => {
                 <div className="flex justify-center">{getExperienceBadge(doctor.completedAppointments)}</div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-4 text-center">
+                <div className="grid grid-cols-1 gap-4 text-center">
                     <div>
                         <p className="text-2xl font-bold text-primary">{doctor.completedAppointments}</p>
                         <p className="text-xs text-muted-foreground">Completed Appointments</p>
                     </div>
-                    <div>
+                    {/* <div>
                         <div className="flex items-center justify-center gap-1">
                             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                             <span className="text-2xl font-bold">{doctor.rating}</span>
                         </div>
                         <p className="text-xs text-muted-foreground">Patient Rating</p>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Experience */}
-                <div className="text-center">
+                {/* <div className="text-center">
                     <p className="text-sm text-muted-foreground">{doctor.experience} of experience</p>
-                </div>
+                </div> */}
 
                 {/* Contact Info */}
                 <div className="space-y-2">
@@ -67,12 +67,12 @@ const DoctorCard = ({ doctor }: { doctor: any }) => {
                         <Mail className="w-4 h-4" />
                         <span className="truncate">{doctor.email}</span>
                     </div>
-                    {doctor.phone && (
+                    {/* {doctor.phone && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Phone className="w-4 h-4" />
                             <span>{doctor.phone}</span>
                         </div>
-                    )}
+                    )} */}
                 </div>
 
                 {/* Action Button */}

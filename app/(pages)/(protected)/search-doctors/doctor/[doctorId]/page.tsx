@@ -292,20 +292,20 @@ const DoctorDetailsPage = () => {
                                 </AvatarFallback>
                             </Avatar>
                             <CardTitle className="text-xl">{mockDoctor.name}</CardTitle>
-                            <CardDescription className="text-primary font-medium">{mockDoctor.specialization}</CardDescription>
+                            {/* <CardDescription className="text-primary font-medium">{mockDoctor.specialization}</CardDescription> */}
                             <div className="flex justify-center">{getExperienceBadge(mockDoctor.completedAppointments)}</div>
                         </CardHeader>
 
                         <CardContent className="space-y-4">
                             {/* Rating and Stats */}
-                            <div className="grid grid-cols-2 gap-4 text-center">
-                                <div>
+                            <div className="grid grid-cols-1 gap-4 text-center">
+                                {/* <div>
                                     <div className="flex items-center justify-center gap-1 mb-1">
                                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                                         <span className="font-bold">{mockDoctor.rating}</span>
                                     </div>
                                     <p className="text-xs text-muted-foreground">Rating</p>
-                                </div>
+                                </div> */}
                                 <div>
                                     <p className="font-bold text-primary">{mockDoctor.completedAppointments}</p>
                                     <p className="text-xs text-muted-foreground">Appointments</p>
@@ -324,43 +324,43 @@ const DoctorDetailsPage = () => {
                                     <Phone className="w-4 h-4 text-muted-foreground" />
                                     <span className="text-sm">{mockDoctor.phone}</span>
                                 </div>
-                                <div className="flex items-center gap-3">
+                                {/* <div className="flex items-center gap-3">
                                     <MapPin className="w-4 h-4 text-muted-foreground" />
                                     <span className="text-sm">{mockDoctor.location}</span>
-                                </div>
+                                </div> */}
                             </div>
 
-                            <Separator />
+                            {/* <Separator /> */}
 
                             {/* Experience */}
-                            <div className="space-y-2">
+                            {/* <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                     <Award className="w-4 h-4 text-muted-foreground" />
                                     <span className="text-sm font-medium">Experience</span>
                                 </div>
                                 <p className="text-sm text-muted-foreground">{mockDoctor.experience}</p>
-                            </div>
+                            </div> */}
 
                             {/* Education */}
-                            <div className="space-y-2">
+                            {/* <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                     <Users className="w-4 h-4 text-muted-foreground" />
                                     <span className="text-sm font-medium">Education</span>
                                 </div>
                                 <p className="text-sm text-muted-foreground">{mockDoctor.education}</p>
-                            </div>
+                            </div> */}
                         </CardContent>
                     </Card>
 
                     {/* About */}
-                    <Card>
+                    {/* <Card>
                         <CardHeader>
                             <CardTitle className="text-lg">About</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <p className="text-sm text-muted-foreground leading-relaxed">{mockDoctor.bio}</p>
                         </CardContent>
-                    </Card>
+                    </Card> */}
                 </div>
 
                 {/* Appointment Booking */}
