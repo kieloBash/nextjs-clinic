@@ -1,0 +1,1 @@
+export type SORT_BY_DOCTORS = "most_experienced" | "name_asc" | "name_desc"

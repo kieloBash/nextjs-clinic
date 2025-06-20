@@ -4,6 +4,16 @@ export type UserFullType = User & {
     role: Role
 }
 
+export type FullDoctorSearchType = User & {
+    role: Role
+    completedAppointments: number
+    doctorTimeSlots: FullTimeSlotType[]
+}
+
+export type FullTimeSlotType = TimeSlot & {
+    appointment?: Appointment
+}
+
 export type FullAppointmentType = Appointment & {
     timeSlot: TimeSlot
     patient: User

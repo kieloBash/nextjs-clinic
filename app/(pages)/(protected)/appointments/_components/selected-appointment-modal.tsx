@@ -18,7 +18,7 @@ import { showToast } from '@/utils/helpers/show-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from '../_hooks/keys'
-import { CANCEL_PAYMENT_APPOINTMENT, CONFIRM_PAYMENT_APPOINTMENT } from '@/utils/api-endpoints'
+import { CANCEL_PAYMENT_APPOINTMENT, CONFIRM_APPOINTMENT, CONFIRM_PAYMENT_APPOINTMENT } from '@/utils/api-endpoints'
 import CompleteAppointmentModal from './complete-appointment-modal'
 import RescheduleAppointmentModal from './reschedule-appointment-modal'
 import { KEY_GET_INVOICES } from '../../billing/_hooks/keys'
@@ -75,7 +75,26 @@ const SelectedAppointmentModal = ({ selectedAppointment, clear, getStatusColor, 
             setisUpdating(false)
         }
     }
-    const handleConfirmAppointment = async () => { }
+    const handleConfirmAppointment = async () => {
+        try {
+            setisUpdating(true)
+            const body = { timeSlotId: selectedAppointment.timeSlotId }
+            const res = await axios.post(CONFIRM_APPOINTMENT, body);
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_APPOINTMENTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
+            ]);
+
+            clear()
+
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setisUpdating(false)
+        }
+    }
     const handleRescheduleAppointment = async () => { setIsRescheduleModalOpen(true) }
     const handleCancelAppointment = async () => {
         try {
