@@ -4,11 +4,11 @@ import { FETCH_INTERVAL } from "@/utils/constants";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { FETCH_SEARCH_SINGLE_DOCTOR } from "@/utils/api-endpoints";
 import { ApiResponse, IPaginatedQuery } from "@/types/global.type";
-import { KEY_GET_DOCTORS } from "./keys";
+import { KEY_GET_DOCTOR } from "./keys";
 import { FullDoctorSearchType } from "@/types/prisma.type";
 
 const ROUTE = FETCH_SEARCH_SINGLE_DOCTOR;
-const KEY = KEY_GET_DOCTORS;
+const KEY = KEY_GET_DOCTOR;
 const INTERVAL = FETCH_INTERVAL;
 
 const fetchData = async ({
@@ -30,7 +30,7 @@ const useDoctor = (
 ) => {
 
     const { data, error, isLoading, isFetching, isError } = useQuery<ApiResponse<FullDoctorSearchType>>({
-        queryKey: [KEY, id],
+        queryKey: [KEY + "-" + id],
         queryFn: () =>
             fetchData({ id }),
         staleTime: INTERVAL,

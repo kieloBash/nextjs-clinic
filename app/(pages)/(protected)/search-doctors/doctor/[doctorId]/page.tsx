@@ -31,6 +31,14 @@ import MainLoadingPage from "@/components/globals/main-loading"
 import { formatDateBaseOnTimeZone_Date, getDifferenceTimeSlot } from "@/utils/helpers/date"
 import { TimeSlot, TimeSlotStatus } from "@prisma/client"
 import { FullTimeSlotType } from "@/types/prisma.type"
+import { useLoading } from "@/components/providers/loading-provider"
+import axios from "axios"
+import { BOOK_APPOINTMENT } from "@/utils/api-endpoints"
+import { showToast } from "@/utils/helpers/show-toast"
+import { useQueryClient } from "@tanstack/react-query"
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_TIMESLOTS } from "../../../appointments/_hooks/keys"
+import { useCurrentUser } from "@/libs/hooks"
+import { KEY_GET_DOCTOR } from "../../_hooks/keys"
 
 // Mock time slots (would come from TimeSlot model)
 const mockTimeSlots = [
@@ -132,15 +140,17 @@ const DoctorDetailsPage = () => {
     const router = useRouter()
     const doctorId = params.doctorId as string
 
-    console.log(doctorId)
-
     const doctorInfo = useDoctor({ id: doctorId });
+    const patientInfo = useCurrentUser();
 
     const doctorDetails = useMemo(() => (doctorInfo.payload), [doctorInfo])
 
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
     const [selectedTimeSlot, setSelectedTimeSlot] = useState<FullTimeSlotType | null>(null)
     const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfDay(new Date()))
+    const queryClient = useQueryClient()
+
+    const { isLoading, setIsLoading } = useLoading();
 
     // Generate next 7 days for date selection
     const availableDates = useMemo(() => {
@@ -188,21 +198,29 @@ const DoctorDetailsPage = () => {
         setSelectedTimeSlot(slotId)
     }
 
-    const handleBookAppointment = () => {
+    const handleBookAppointment = async () => {
         if (!selectedTimeSlot) return
 
-        // const selectedSlot = mockTimeSlots.find((slot) => slot.id === selectedTimeSlot)
-        // console.log("Booking appointment:", {
-        //     doctorId,
-        //     slotId: selectedTimeSlot,
-        //     date: selectedDate,
-        //     time: selectedSlot?.startTime,
-        // })
+        try {
+            setIsLoading(true)
+            const res = await axios.post(BOOK_APPOINTMENT, {
+                doctorId,
+                patientId: patientInfo?.id ?? "",
+                timeSlotId: selectedTimeSlot.id
+            });
+            // Optional: show success toast
+            showToast("success", "Queue confirmed", res.data.message);
 
-        // // In a real app, you would make an API call to book the appointment
-        // alert(
-        //     `Appointment booked with ${doctorDetails?.name} on ${format(selectedDate, "MMM dd, yyyy")} at ${selectedSlot?.startTime}`,
-        // )
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR + "-" + doctorId], exact: false }),
+            ]);
+            setSelectedTimeSlot(null);
+
+        } catch (error: any) {
+            showToast("error", "Failed to confirm queue", error?.response?.data?.message || error.message);
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const getExperienceBadge = (appointments: number) => {
