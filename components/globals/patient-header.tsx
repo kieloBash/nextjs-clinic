@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { signOut } from "next-auth/react"
 import { User } from "next-auth"
+import { NotificationsDropdown } from "./notifications-dropdown"
 
 export function PatientHeader({ user, title }: { user: User; title?: string }) {
 
@@ -22,10 +23,7 @@ export function PatientHeader({ user, title }: { user: User; title?: string }) {
                 <div className="flex w-full h-16 items-center justify-between">
                     <h1 className="text-primary text-lg font-medium capitalize">{title}</h1>
                     <div className="flex items-center gap-3">
-                        <Button variant="ghost" size="icon" className="relative">
-                            <Bell className="h-5 w-5" />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-                        </Button>
+                        <NotificationsDropdown user={user}/>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">

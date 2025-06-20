@@ -3,6 +3,7 @@ import { useCurrentUser } from '@/libs/hooks';
 import React from 'react'
 import DoctorMainPage from './_components/doctor/doctor-main';
 import DoctorLayout from '@/components/globals/doctor-layout';
+import PatientMainPage from './_components/patient/patient-main';
 
 const AppointmentsPage = () => {
     const user = useCurrentUser();
@@ -13,7 +14,7 @@ const AppointmentsPage = () => {
                 <DoctorMainPage user={user} />
             )
         else if (user.role === "PATIENT") {
-            return;
+            return <PatientMainPage user={user} />;
         }
     }
 

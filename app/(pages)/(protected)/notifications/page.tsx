@@ -12,7 +12,7 @@ const NotificationsPage = () => {
                 <DoctorMainPage user={user} />
             )
         else if (user.role === "PATIENT") {
-            return;
+            return <DoctorMainPage user={user} />;
         }
     }
 
