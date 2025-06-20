@@ -26,9 +26,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import useDoctor from "../../_hooks/use-doctor"
+import MainLoadingPage from "@/components/globals/main-loading"
 
 // Mock doctor data (in real app, this would come from your database)
-const mockDoctor = {
+const doctorDetails = {
     id: "doc-001",
     email: "dr.sarah.johnson@clinic.com",
     name: "Dr. Sarah Johnson",
@@ -151,6 +153,10 @@ const DoctorDetailsPage = () => {
 
     console.log(doctorId)
 
+    const doctorInfo = useDoctor({ id: doctorId });
+
+    const doctorDetails = useMemo(() => (doctorInfo.payload), [doctorInfo])
+
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
     const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null)
     const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfDay(new Date()))
@@ -214,7 +220,7 @@ const DoctorDetailsPage = () => {
 
         // In a real app, you would make an API call to book the appointment
         alert(
-            `Appointment booked with ${mockDoctor.name} on ${format(selectedDate, "MMM dd, yyyy")} at ${selectedSlot?.startTime}`,
+            `Appointment booked with ${doctorDetails?.name} on ${format(selectedDate, "MMM dd, yyyy")} at ${selectedSlot?.startTime}`,
         )
     }
 
@@ -269,6 +275,13 @@ const DoctorDetailsPage = () => {
         )
     }
 
+    if (doctorInfo?.isError || !doctorInfo.payload && (!doctorInfo.isLoading || !doctorInfo.isFetching))
+        return <div>No doctor found</div>
+
+    if (doctorInfo.isLoading || doctorInfo.isFetching) {
+        return <MainLoadingPage />
+    }
+
     return (
         <div className="container mx-auto p-6 space-y-6">
             {/* Back Button */}
@@ -283,17 +296,17 @@ const DoctorDetailsPage = () => {
                     <Card>
                         <CardHeader className="text-center">
                             <Avatar className="w-24 h-24 mx-auto mb-4">
-                                <AvatarImage src={mockDoctor.image || "/placeholder.svg"} alt={mockDoctor.name} />
+                                <AvatarImage src={doctorDetails?.image || "/placeholder.svg"} alt={doctorDetails?.name} />
                                 <AvatarFallback className="text-xl">
-                                    {mockDoctor.name
+                                    {doctorDetails?.name
                                         .split(" ")
                                         .map((n) => n[0])
                                         .join("")}
                                 </AvatarFallback>
                             </Avatar>
-                            <CardTitle className="text-xl">{mockDoctor.name}</CardTitle>
-                            {/* <CardDescription className="text-primary font-medium">{mockDoctor.specialization}</CardDescription> */}
-                            <div className="flex justify-center">{getExperienceBadge(mockDoctor.completedAppointments)}</div>
+                            <CardTitle className="text-xl">{doctorDetails?.name}</CardTitle>
+                            {/* <CardDescription className="text-primary font-medium">{doctorDetails.specialization}</CardDescription> */}
+                            <div className="flex justify-center">{getExperienceBadge(doctorDetails?.completedAppointments ?? 0)}</div>
                         </CardHeader>
 
                         <CardContent className="space-y-4">
@@ -302,12 +315,12 @@ const DoctorDetailsPage = () => {
                                 {/* <div>
                                     <div className="flex items-center justify-center gap-1 mb-1">
                                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                        <span className="font-bold">{mockDoctor.rating}</span>
+                                        <span className="font-bold">{doctorDetails.rating}</span>
                                     </div>
                                     <p className="text-xs text-muted-foreground">Rating</p>
                                 </div> */}
                                 <div>
-                                    <p className="font-bold text-primary">{mockDoctor.completedAppointments}</p>
+                                    <p className="font-bold text-primary">{doctorDetails?.completedAppointments ?? 0}</p>
                                     <p className="text-xs text-muted-foreground">Appointments</p>
                                 </div>
                             </div>
@@ -318,15 +331,15 @@ const DoctorDetailsPage = () => {
                             <div className="space-y-3">
                                 <div className="flex items-center gap-3">
                                     <Mail className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-sm">{mockDoctor.email}</span>
+                                    <span className="text-sm">{doctorDetails?.email}</span>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <Phone className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-sm">{mockDoctor.phone}</span>
+                                    <span className="text-sm">{doctorDetails?.phone}</span>
                                 </div>
                                 {/* <div className="flex items-center gap-3">
                                     <MapPin className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-sm">{mockDoctor.location}</span>
+                                    <span className="text-sm">{doctorDetails.location}</span>
                                 </div> */}
                             </div>
 
@@ -338,7 +351,7 @@ const DoctorDetailsPage = () => {
                                     <Award className="w-4 h-4 text-muted-foreground" />
                                     <span className="text-sm font-medium">Experience</span>
                                 </div>
-                                <p className="text-sm text-muted-foreground">{mockDoctor.experience}</p>
+                                <p className="text-sm text-muted-foreground">{doctorDetails.experience}</p>
                             </div> */}
 
                             {/* Education */}
@@ -347,7 +360,7 @@ const DoctorDetailsPage = () => {
                                     <Users className="w-4 h-4 text-muted-foreground" />
                                     <span className="text-sm font-medium">Education</span>
                                 </div>
-                                <p className="text-sm text-muted-foreground">{mockDoctor.education}</p>
+                                <p className="text-sm text-muted-foreground">{doctorDetails.education}</p>
                             </div> */}
                         </CardContent>
                     </Card>
@@ -358,7 +371,7 @@ const DoctorDetailsPage = () => {
                             <CardTitle className="text-lg">About</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm text-muted-foreground leading-relaxed">{mockDoctor.bio}</p>
+                            <p className="text-sm text-muted-foreground leading-relaxed">{doctorDetails.bio}</p>
                         </CardContent>
                     </Card> */}
                 </div>
@@ -457,7 +470,7 @@ const DoctorDetailsPage = () => {
                                         <h4 className="font-medium mb-2">Appointment Summary</h4>
                                         <div className="space-y-1 text-sm">
                                             <p>
-                                                <span className="text-muted-foreground">Doctor:</span> {mockDoctor.name}
+                                                <span className="text-muted-foreground">Doctor:</span> {doctorDetails?.name}
                                             </p>
                                             <p>
                                                 <span className="text-muted-foreground">Date:</span> {format(selectedDate, "MMMM dd, yyyy")}

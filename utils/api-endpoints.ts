@@ -23,3 +23,4 @@ export const UPDATE_DISABLED_USER = "/api/settings/disable"
 
 export const FETCH_ANALYTICS_DOCTOR = "/api/analytics/doctor"
 export const FETCH_SEARCH_DOCTORS = "/api/search/doctors"
+export const FETCH_SEARCH_SINGLE_DOCTOR = "/api/search/doctors/single"
