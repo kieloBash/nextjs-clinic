@@ -8,9 +8,11 @@ import {
     NEW_BOOKED_APPOINTMENT_COMPLETED_HISTORY,
 } from "@/utils/constants";
 import { createNotification } from "@/libs/notification";
+import { auth } from "@/auth";
 
 export async function POST(request: Request) {
     try {
+        const session = await auth();
         const body = await request.json();
         const { appointmentId } = body;
 
@@ -19,8 +21,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: MISSING_PARAMETERS }, { status: 400 });
         }
 
+        if (!session || !session.user) {
+            return NextResponse.json({ message: "Session not found!" }, { status: 400 });
+        }
 
-        const [existingAppointment, existingQueue] = await Promise.all([
+
+        const [existingAppointment, existingQueue, existingUser] = await Promise.all([
             prisma.appointment.findFirst({
                 where: { id: appointmentId },
                 include: {
@@ -34,23 +40,27 @@ export async function POST(request: Request) {
                     patient: { select: { name: true } },
                     doctor: { select: { name: true } },
                 },
-            })
+            }),
+            prisma.user.findFirst({ where: { id: session.user.id }, select: { id: true, completedAppointments: true } })
         ])
 
         console.log(existingAppointment, existingQueue)
 
-        if (!existingAppointment) {
+        if (!existingAppointment || !existingUser) {
             return NextResponse.json(
-                { message: "Appointment not found." },
+                { message: "Appointment not found and/or user not found!" },
                 { status: 404 }
             );
         }
 
 
+
         // COMPLETED FLOW
         const result = await prisma.$transaction(async (tx) => {
 
-            const [updatedAppointment, updatedInvoice] = await Promise.all([
+            const newCount = (existingUser?.completedAppointments ?? 0) + 1
+
+            const [updatedAppointment, updatedInvoice, updatedUser] = await Promise.all([
                 tx.appointment.update({
                     where: { id: existingAppointment.id },
                     data: { status: AppointmentStatus.COMPLETED },
@@ -59,6 +69,7 @@ export async function POST(request: Request) {
                     where: { appointmentId: existingAppointment.id },
                     data: { status: InvoiceStatus.PAID },
                 }),
+                tx.user.update({ where: { id: existingUser?.id }, data: { completedAppointments: newCount } })
             ]);
 
             if (existingQueue) {
@@ -93,7 +104,7 @@ export async function POST(request: Request) {
                 }),
             ]);
 
-            return { updatedAppointment, updatedInvoice };
+            return { updatedAppointment, updatedInvoice, updatedUser };
         });
 
         return NextResponse.json(
