@@ -2,161 +2,107 @@
 
 import { useState, useMemo } from "react"
 import type { User } from "next-auth"
-import { Search, Star, Phone, Mail, Calendar, Filter } from "lucide-react"
+import { Search, Filter, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import DoctorCard from "./doctor-card"
-
-
-// create a page where if the patient clicks on the schedule an appointment, it would rerdirrect them to the doctor details and the doctors available timeslot.
-
-// maybe make the ui for displaying the available timeslot more intuuitive
-// Mock doctor data based on your User model
-const mockDoctors = [
-    {
-        id: "doc-001",
-        email: "dr.sarah.johnson@clinic.com",
-        name: "Dr. Sarah Johnson",
-        image: "/placeholder.svg?height=100&width=100",
-        phone: "(555) 123-4567",
-        roleId: "doctor-role",
-        hashedPassword: "hashed",
-        isActive: true,
-        createdAt: new Date("2022-01-15"),
-        updatedAt: new Date("2024-01-15"),
-        // Derived data from relations (would come from database queries)
-        completedAppointments: 245,
-        specialization: "Cardiology", // This would be stored elsewhere in your system
-        experience: "8 years",
-        rating: 4.8,
-    },
-    {
-        id: "doc-002",
-        email: "dr.michael.chen@clinic.com",
-        name: "Dr. Michael Chen",
-        image: "/placeholder.svg?height=100&width=100",
-        phone: "(555) 234-5678",
-        roleId: "doctor-role",
-        hashedPassword: "hashed",
-        isActive: true,
-        createdAt: new Date("2021-03-20"),
-        updatedAt: new Date("2024-01-14"),
-        completedAppointments: 189,
-        specialization: "Pediatrics",
-        experience: "6 years",
-        rating: 4.9,
-    },
-    {
-        id: "doc-003",
-        email: "dr.emily.rodriguez@clinic.com",
-        name: "Dr. Emily Rodriguez",
-        image: "/placeholder.svg?height=100&width=100",
-        phone: "(555) 345-6789",
-        roleId: "doctor-role",
-        hashedPassword: "hashed",
-        isActive: true,
-        createdAt: new Date("2020-06-10"),
-        updatedAt: new Date("2024-01-13"),
-        completedAppointments: 312,
-        specialization: "Dermatology",
-        experience: "10 years",
-        rating: 4.7,
-    },
-    {
-        id: "doc-004",
-        email: "dr.david.wilson@clinic.com",
-        name: "Dr. David Wilson",
-        image: "/placeholder.svg?height=100&width=100",
-        phone: "(555) 456-7890",
-        roleId: "doctor-role",
-        hashedPassword: "hashed",
-        isActive: true,
-        createdAt: new Date("2023-02-28"),
-        updatedAt: new Date("2024-01-12"),
-        completedAppointments: 87,
-        specialization: "Orthopedics",
-        experience: "4 years",
-        rating: 4.6,
-    },
-    {
-        id: "doc-005",
-        email: "dr.lisa.thompson@clinic.com",
-        name: "Dr. Lisa Thompson",
-        image: "/placeholder.svg?height=100&width=100",
-        phone: "(555) 567-8901",
-        roleId: "doctor-role",
-        hashedPassword: "hashed",
-        isActive: true,
-        createdAt: new Date("2019-09-15"),
-        updatedAt: new Date("2024-01-11"),
-        completedAppointments: 428,
-        specialization: "Internal Medicine",
-        experience: "12 years",
-        rating: 4.9,
-    },
-    {
-        id: "doc-006",
-        email: "dr.robert.brown@clinic.com",
-        name: "Dr. Robert Brown",
-        image: "/placeholder.svg?height=100&width=100",
-        phone: "(555) 678-9012",
-        roleId: "doctor-role",
-        hashedPassword: "hashed",
-        isActive: true,
-        createdAt: new Date("2021-11-05"),
-        updatedAt: new Date("2024-01-10"),
-        completedAppointments: 156,
-        specialization: "Neurology",
-        experience: "7 years",
-        rating: 4.5,
-    },
-]
+import useDoctors from "../_hooks/use-doctors"
+import { useDebounce } from "@/utils/helpers/use-debounce"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
 
 const PatientMainPage = ({ user }: { user: User }) => {
     const [searchTerm, setSearchTerm] = useState("")
-    const [sortBy, setSortBy] = useState("most_experienced") // appointments, name, rating
-    const [specializationFilter, setSpecializationFilter] = useState("all")
+    const [sortBy, setSortBy] = useState<any>("most_experienced")
+    const [currentPage, setCurrentPage] = useState(1)
+    const [limit, setLimit] = useState(9)
 
-    // Get unique specializations for filter
-    const specializations = useMemo(() => {
-        const unique = Array.from(new Set(mockDoctors.map((doc) => doc.specialization)))
-        return unique.sort()
-    }, [])
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-    // Filter and sort doctors
-    const filteredAndSortedDoctors = useMemo(() => {
-        const filtered = mockDoctors.filter((doctor) => {
-            const matchesSearch =
-                doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                doctor.email.toLowerCase().includes(searchTerm.toLowerCase())
+    const doctors = useDoctors({ userId: user.id, searchTerm: debouncedSearchTerm, sortBy, limit, page: currentPage })
 
-            const matchesSpecialization = specializationFilter === "all" || doctor.specialization === specializationFilter
+    const { data: filteredAndSortedDoctors, isLoading, pagination } = useMemo(() => {
+        return { data: doctors?.payload?.data ?? [], pagination: doctors?.payload?.pagination, isLoading: doctors.isLoading || doctors.isFetching }
+    }, [doctors])
 
-            return doctor.isActive && matchesSearch && matchesSpecialization
-        })
+    const handleSearchChange = (value: string) => {
+        setSearchTerm(value)
+        setCurrentPage(1)
+    }
 
-        // Sort doctors
-        filtered.sort((a, b) => {
-            switch (sortBy) {
-                case "appointments":
-                    return b.completedAppointments - a.completedAppointments
-                case "name":
-                    return a.name.localeCompare(b.name)
-                case "rating":
-                    return b.rating - a.rating
-                default:
-                    return 0
+    const handleSortChange = (value: any) => {
+        setSortBy(value)
+        setCurrentPage(1)
+    }
+
+    const handleLimitChange = (value: string) => {
+        setLimit(Number.parseInt(value))
+        setCurrentPage(1)
+    }
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page)
+        // Scroll to top when page changes
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    const getPageNumbers = () => {
+        if (!pagination) return []
+
+        const { page, totalPages } = pagination
+        const pages = []
+        const maxVisiblePages = 5
+
+        if (totalPages <= maxVisiblePages) {
+            // Show all pages if total pages is small
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i)
             }
-        })
+        } else {
+            // Show smart pagination
+            if (page <= 3) {
+                // Show first pages
+                for (let i = 1; i <= 4; i++) {
+                    pages.push(i)
+                }
+                pages.push("...")
+                pages.push(totalPages)
+            } else if (page >= totalPages - 2) {
+                // Show last pages
+                pages.push(1)
+                pages.push("...")
+                for (let i = totalPages - 3; i <= totalPages; i++) {
+                    pages.push(i)
+                }
+            } else {
+                // Show middle pages
+                pages.push(1)
+                pages.push("...")
+                for (let i = page - 1; i <= page + 1; i++) {
+                    pages.push(i)
+                }
+                pages.push("...")
+                pages.push(totalPages)
+            }
+        }
 
-        return filtered
-    }, [searchTerm, sortBy, specializationFilter])
+        return pages
+    }
+
+    const getSortLabel = (sortValue: string) => {
+        switch (sortValue) {
+            case "most_experienced":
+                return "Most Experienced"
+            case "name_asc":
+                return "Name (A-Z)"
+            case "name_desc":
+                return "Name (Z-A)"
+            default:
+                return "Default"
+        }
+    }
 
     return (
         <div className="container mx-auto p-6 space-y-6">
@@ -174,30 +120,16 @@ const PatientMainPage = ({ user }: { user: User }) => {
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                             <Input
-                                placeholder="Search by doctor name, specialization, or email..."
+                                placeholder="Search by doctor name..."
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => handleSearchChange(e.target.value)}
                                 className="pl-10"
+                                disabled={isLoading}
                             />
                         </div>
 
-                        {/* Specialization Filter */}
-                        <Select value={specializationFilter} onValueChange={setSpecializationFilter}>
-                            <SelectTrigger className="w-full lg:w-[200px]">
-                                <SelectValue placeholder="Specialization" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Specializations</SelectItem>
-                                {specializations.map((spec) => (
-                                    <SelectItem key={spec} value={spec}>
-                                        {spec}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-
                         {/* Sort By */}
-                        <Select value={sortBy} onValueChange={setSortBy}>
+                        <Select value={sortBy} onValueChange={handleSortChange} disabled={isLoading}>
                             <SelectTrigger className="w-full lg:w-[180px]">
                                 <SelectValue placeholder="Sort by" />
                             </SelectTrigger>
@@ -207,37 +139,84 @@ const PatientMainPage = ({ user }: { user: User }) => {
                                 <SelectItem value="name_desc">Name (Z-A)</SelectItem>
                             </SelectContent>
                         </Select>
+
+                        <Select value={limit.toString()} onValueChange={handleLimitChange} disabled={isLoading}>
+                            <SelectTrigger className="w-full lg:w-[120px]">
+                                <SelectValue placeholder="Per page" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="6">6 per page</SelectItem>
+                                <SelectItem value="9">9 per page</SelectItem>
+                                <SelectItem value="12">12 per page</SelectItem>
+                                <SelectItem value="18">18 per page</SelectItem>
+                                <SelectItem value="24">24 per page</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </CardContent>
             </Card>
 
             {/* Results Summary */}
             <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                    Showing {filteredAndSortedDoctors.length} doctor{filteredAndSortedDoctors.length !== 1 ? "s" : ""}
-                </p>
+                <div className="flex items-center gap-2">
+                    {isLoading ? (
+                        <Skeleton className="h-4 w-32" />
+                    ) : (
+                        <p className="text-sm text-muted-foreground">
+                            Showing {filteredAndSortedDoctors.length} of {pagination?.totalItems || 0} doctor
+                            {(pagination?.totalItems || 0) !== 1 ? "s" : ""}
+                            {pagination && pagination.totalPages > 1 && (
+                                <span>
+                                    {" "}
+                                    (Page {pagination.page} of {pagination.totalPages})
+                                </span>
+                            )}
+                        </p>
+                    )}
+                </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Filter className="w-4 h-4" />
-                    Sorted by:{" "}
-                    {sortBy === "appointments"
-                        ? "Experience"
-                        : sortBy === "rating"
-                            ? "Rating"
-                            : sortBy === "name"
-                                ? "Name"
-                                : "Default"}
+                    Sorted by: {getSortLabel(sortBy)}
                 </div>
             </div>
 
+            {isLoading && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Array.from({ length: limit }).map((_, index) => (
+                        <Card key={index}>
+                            <CardContent className="p-6">
+                                <div className="flex items-center space-x-4 mb-4">
+                                    <Skeleton className="h-12 w-12 rounded-full" />
+                                    <div className="space-y-2 flex-1">
+                                        <Skeleton className="h-4 w-3/4" />
+                                        <Skeleton className="h-3 w-1/2" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-3 w-full" />
+                                    <Skeleton className="h-3 w-2/3" />
+                                </div>
+                                <div className="mt-4 flex justify-between items-center">
+                                    <Skeleton className="h-6 w-16" />
+                                    <Skeleton className="h-9 w-24" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
+
             {/* Doctors Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredAndSortedDoctors.map((doctor) => (
-                    <DoctorCard doctor={doctor} key={doctor.id} />
-                ))}
-            </div>
+            {!isLoading && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredAndSortedDoctors.map((doctor) => (
+                        <DoctorCard doctor={doctor} key={doctor.id} />
+                    ))}
+                </div>
+            )}
 
             {/* No Results */}
-            {filteredAndSortedDoctors.length === 0 && (
+            {!isLoading && filteredAndSortedDoctors.length === 0 && (
                 <Card>
                     <CardContent className="text-center py-12">
                         <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -245,6 +224,77 @@ const PatientMainPage = ({ user }: { user: User }) => {
                         <p className="text-muted-foreground">Try adjusting your search criteria or filters to find more doctors.</p>
                     </CardContent>
                 </Card>
+            )}
+
+            {!isLoading && pagination && pagination.totalPages > 1 && (
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handlePageChange(pagination.page - 1)}
+                                    disabled={pagination.page === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4 mr-1" />
+                                    Previous
+                                </Button>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                                {getPageNumbers().map((pageNum, index) => (
+                                    <div key={index}>
+                                        {pageNum === "..." ? (
+                                            <span className="px-3 py-2 text-muted-foreground">...</span>
+                                        ) : (
+                                            <Button
+                                                variant={pageNum === pagination.page ? "default" : "outline"}
+                                                size="sm"
+                                                onClick={() => handlePageChange(pageNum as number)}
+                                                className="min-w-[40px]"
+                                            >
+                                                {pageNum}
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handlePageChange(pagination.page + 1)}
+                                    disabled={pagination.page === pagination.totalPages}
+                                >
+                                    Next
+                                    <ChevronRight className="h-4 w-4 ml-1" />
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Pagination Info */}
+                        <div className="text-center mt-4">
+                            <p className="text-sm text-muted-foreground">
+                                Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                                {Math.min(pagination.page * pagination.limit, pagination.totalItems)} of {pagination.totalItems} results
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Loading Overlay for Page Changes */}
+            {isLoading && currentPage > 1 && (
+                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <Card>
+                        <CardContent className="flex items-center gap-3 p-6">
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                            <p className="text-sm font-medium">Loading doctors...</p>
+                        </CardContent>
+                    </Card>
+                </div>
             )}
         </div>
     )

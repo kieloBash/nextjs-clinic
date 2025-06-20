@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const sortBy = searchParams.get("sortBy") || "most_experienced";
 
-    console.log(userId)
+    console.log({ userId })
 
     if (page < 1 || limit < 1) {
         return NextResponse.json({ message: "Invalid pagination" }, { status: 400 });
@@ -36,6 +36,8 @@ export async function GET(request: Request) {
         orderBy = { name: "desc" };
     }
 
+    console.log({ orderBy })
+
     try {
         const existingUser = await checkUserExists({ id: userId });
         if (!existingUser) {
@@ -43,6 +45,8 @@ export async function GET(request: Request) {
                 status: 400,
             });
         }
+
+        console.log({ existingUser })
 
         const doctors = await prisma.user.findMany({
             where: {
@@ -80,6 +84,8 @@ export async function GET(request: Request) {
                 },
             },
         });
+
+        console.log({ doctors })
 
         const totalDoctors = await prisma.user.count({
             where: {

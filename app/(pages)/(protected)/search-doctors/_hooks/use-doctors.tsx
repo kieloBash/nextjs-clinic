@@ -2,14 +2,14 @@
 
 import { FETCH_INTERVAL, FORMAT } from "@/utils/constants";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { endOfMonth, format, startOfMonth, startOfWeek } from "date-fns";
-import { FETCH_ALL_DOCTOR_INVOICES } from "@/utils/api-endpoints";
+import { endOfMonth, format, startOfMonth } from "date-fns";
+import { FETCH_SEARCH_DOCTORS } from "@/utils/api-endpoints";
 import { ApiResponse, FetchParams, IPaginatedQuery, IQueryProps } from "@/types/global.type";
-import { TimeSlotStatus } from "@prisma/client"
 import { KEY_GET_DOCTORS } from "./keys";
 import { FullDoctorSearchType, UserFullType } from "@/types/prisma.type";
+import { SORT_BY_DOCTORS } from "../_components/helper";
 
-const ROUTE = FETCH_ALL_DOCTOR_INVOICES;
+const ROUTE = FETCH_SEARCH_DOCTORS;
 const KEY = KEY_GET_DOCTORS;
 const INTERVAL = FETCH_INTERVAL;
 
@@ -27,10 +27,10 @@ const fetchData = async ({
     startDate = default_start_date,
     endDate = default_end_date,
     userId,
-    statusFilter
-}: FetchParams & { userId: string, statusFilter: TimeSlotStatus | "ALL" }): Promise<ApiResponse<any>> => {
+    sortBy
+}: FetchParams & { userId?: string, sortBy: SORT_BY_DOCTORS }): Promise<ApiResponse<any>> => {
     const response = await fetch(
-        `${ROUTE}?page=${page}&limit=${limit}&filter=${filter}&searchTerm=${searchTerm}&startDate=${format(startDate, FORMAT)}&endDate=${format(endDate, FORMAT)}&userId=${userId}&statusFilter=${statusFilter}`
+        `${ROUTE}?page=${page}&limit=${limit}&filter=${filter}&searchTerm=${searchTerm}&startDate=${format(startDate, FORMAT)}&endDate=${format(endDate, FORMAT)}&userId=${userId}&sortBy=${sortBy}`
     );
     if (!response.ok) {
         throw new Error("Network response was not ok");
@@ -38,16 +38,16 @@ const fetchData = async ({
     return response.json();
 };
 
-type IProps = IQueryProps & { userId: string, statusFilter?: TimeSlotStatus | "ALL" }
+type IProps = IQueryProps & { userId?: string, sortBy?: SORT_BY_DOCTORS }
 
 const useDoctors = (
-    { userId, page = 1, limit = default_limit, filter = default_filter, searchTerm = "", select, startDate = default_start_date, endDate = default_end_date, statusFilter = "ALL" }: IProps
+    { userId, page = 1, limit = default_limit, filter = default_filter, searchTerm = "", select, startDate = default_start_date, endDate = default_end_date, sortBy = "most_experienced" }: IProps
 ) => {
 
     const { data, error, isLoading, isFetching, isError } = useQuery<ApiResponse<IPaginatedQuery<FullDoctorSearchType[]>>>({
-        queryKey: [KEY, userId, page, limit, filter, searchTerm, format(startDate, FORMAT), format(endDate, FORMAT), statusFilter],
+        queryKey: [KEY, userId, page, limit, filter, searchTerm, format(startDate, FORMAT), format(endDate, FORMAT), sortBy],
         queryFn: () =>
-            fetchData({ page, limit, filter, searchTerm, startDate, endDate, userId, statusFilter }),
+            fetchData({ page, limit, filter, searchTerm, startDate, endDate, userId, sortBy }),
         staleTime: INTERVAL,
         refetchOnWindowFocus: false,
         placeholderData: keepPreviousData,
