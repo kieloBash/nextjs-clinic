@@ -1,28 +1,35 @@
-import { QueueStatus } from "@/app/generated/prisma";
 import { createNotification } from "@/libs/notification";
-import { getDoctor, getPatient } from "@/libs/user";
+import { getDoctor, getPatientByEmail } from "@/libs/user";
 import { prisma } from "@/prisma"; // Ensure you import this correctly
 import { MISSING_PARAMETERS, QUEUE_ADDED_NOTIFICATION_DOCTOR, QUEUE_ADDED_NOTIFICATION_PATIENT } from "@/utils/constants";
+import { nowUTC } from "@/utils/helpers/date";
+import { QueueStatus } from "@prisma/client";
+import { endOfDay, startOfDay } from "date-fns";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
     try {
+        console.log("START POST /api/queue/add")
         const body = await request.json();
-        const { doctorId, patientId } = body;
+        const { doctorId, patientEmail } = body;
 
         // Validate required parameters
-        if (!doctorId || !patientId) {
+        if (!doctorId || !patientEmail) {
             return new NextResponse(
                 JSON.stringify({ message: MISSING_PARAMETERS }),
                 { status: 400 }
             );
         }
 
+        console.log({ doctorId, patientEmail })
+
         // Check if doctor and patient exist
         const [doctor, patient] = await Promise.all([
             getDoctor({ doctorId }),
-            getPatient({ patientId }),
+            getPatientByEmail({ email: patientEmail }),
         ]);
+
+        console.log({ doctor, patient })
 
         if (!doctor) {
             return new NextResponse(
@@ -33,23 +40,25 @@ export async function POST(request: Request) {
 
         if (!patient) {
             return new NextResponse(
-                JSON.stringify({ message: `Patient with ID ${patientId} not found.` }),
+                JSON.stringify({ message: `Patient with email ${patientEmail} not found.` }),
                 { status: 404 }
             );
         }
 
-        const today = new Date();
-
-        today.setHours(0, 0, 0, 0); // Normalize date to 00:00
+        const today = nowUTC()
 
         // Check if patient is already queued to this doctor
         const alreadyQueued = await prisma.queue.findFirst({
             where: {
                 doctorId,
-                patientId,
-                status: QueueStatus.WAITING
+                patientId: patient.id,
+                status: {
+                    in: [QueueStatus.WAITING, QueueStatus.SKIPPED]
+                }
             },
         });
+
+        console.log({ alreadyQueued })
 
         if (alreadyQueued) {
             return new NextResponse(
@@ -65,14 +74,19 @@ export async function POST(request: Request) {
         const lastPosition = await prisma.queue.count({
             where: {
                 doctorId,
-                date: today,
+                date: {
+                    gte: startOfDay(today),
+                    lte: endOfDay(today)
+                },
             },
         });
+
+        console.log({ lastPosition })
 
         // Create the queue entry
         const newQueue = await prisma.queue.create({
             data: {
-                patientId,
+                patientId: patient.id,
                 doctorId,
                 status: QueueStatus.WAITING,
                 position: lastPosition + 1,
@@ -80,9 +94,12 @@ export async function POST(request: Request) {
             },
         });
 
+        console.log({ newQueue })
+
+
         await Promise.all([
-            await createNotification({ userId: newQueue.patientId, message: QUEUE_ADDED_NOTIFICATION_PATIENT(newQueue.position) }),
-            await createNotification({ userId: newQueue.doctorId, message: QUEUE_ADDED_NOTIFICATION_DOCTOR(patient.name, newQueue.position) })
+            await createNotification({ tx: prisma, userId: newQueue.patientId, message: QUEUE_ADDED_NOTIFICATION_PATIENT(newQueue.position) }),
+            await createNotification({ tx: prisma, userId: newQueue.doctorId, message: QUEUE_ADDED_NOTIFICATION_DOCTOR(patient.name, newQueue.position) })
         ])
 
         return new NextResponse(

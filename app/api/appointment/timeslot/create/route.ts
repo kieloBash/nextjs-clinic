@@ -1,10 +1,10 @@
-import { Prisma } from "@prisma/client";
-import { TimeSlotStatus } from "@/app/generated/prisma";
+import { TimeSlotStatus } from "@prisma/client"
 import { getDoctor } from "@/libs/user";
 import { prisma } from "@/prisma";
 import { NextResponse } from "next/server";
-import { parseDate } from "@/utils/helpers/date";
+import { nowUTC, parseDate, timeSlotFormatterUTC } from "@/utils/helpers/date";
 import { MISSING_PARAMETERS } from "@/utils/constants";
+import { timeslotValid } from "@/utils/helpers/timeslot";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -38,9 +38,24 @@ export async function POST(request: Request) {
   }
 
   const status = statusRaw.toString() as TimeSlotStatus;
-  const date = parseDate(dateRaw.toString());
-  const startTime = parseDate(startTimeRaw.toString());
-  const endTime = parseDate(endTimeRaw.toString());
+
+  const { date, start, end } = timeSlotFormatterUTC({ isoDate: dateRaw.toString(), isoStart: startTimeRaw.toString(), isoEnd: endTimeRaw.toString() });
+
+  console.log({ date, start, end })
+  console.log(date, start.toISOString(), end.toISOString(), doctorId)
+
+  // console.log("RAW DETAILS -- DATE:", dateRaw.toString(), " START:", startTimeRaw.toString(), " END:", endTimeRaw.toString())
+  // const d = nowUTC(new Date(dateRaw.toString()))
+  // const date = parseDate(d.toISOString());
+
+  // const startTime = parseDate(startTimeRaw.toString());
+  // const endTime = parseDate(endTimeRaw.toString());
+  // console.log("PARSED DETAILS -- DATE:", date, " START:", startTime, " END:", endTime)
+
+  const checker = await timeslotValid(date, start.toISOString(), end.toISOString(), doctorId)
+  if (checker) {
+    return checker;
+  }
 
   try {
     const newTimeSlot = await prisma.timeSlot.create({
@@ -48,13 +63,16 @@ export async function POST(request: Request) {
         doctorId: existingDoctor.id,
         status,
         date,
-        startTime,
-        endTime,
+        startTime: start,
+        endTime: end,
       },
     });
 
+    console.log(newTimeSlot)
+
+
     return new NextResponse(
-      JSON.stringify({ message: "Created time slot", data: newTimeSlot }),
+      JSON.stringify({ message: "Created time slot", payload: newTimeSlot }),
       { status: 200 }
     );
   } catch (error: any) {
@@ -74,5 +92,7 @@ export async function POST(request: Request) {
       }),
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }

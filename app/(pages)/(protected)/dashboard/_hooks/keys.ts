@@ -1,0 +1,1 @@
+export const KEY_GET_ANALYTICS = "get-analytics";

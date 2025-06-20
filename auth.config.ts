@@ -13,6 +13,7 @@ export default {
                 const password = credentials.password as string;
 
                 const user = await checkUserExists({ email });
+                console.log("FOUND USER: ", user)
                 if (!user || !user.hashedPassword) return null;
 
                 const passwordsMatch = await bcrypt.compare(password, user.hashedPassword);
