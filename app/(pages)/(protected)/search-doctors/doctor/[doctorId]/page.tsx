@@ -28,28 +28,9 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import useDoctor from "../../_hooks/use-doctor"
 import MainLoadingPage from "@/components/globals/main-loading"
-
-// Mock doctor data (in real app, this would come from your database)
-const doctorDetails = {
-    id: "doc-001",
-    email: "dr.sarah.johnson@clinic.com",
-    name: "Dr. Sarah Johnson",
-    image: "/placeholder.svg?height=150&width=150",
-    phone: "(555) 123-4567",
-    roleId: "doctor-role",
-    hashedPassword: "hashed",
-    isActive: true,
-    createdAt: new Date("2022-01-15"),
-    updatedAt: new Date("2024-01-15"),
-    // Additional info (would be stored in related tables)
-    completedAppointments: 245,
-    specialization: "Cardiology",
-    experience: "8 years",
-    rating: 4.8,
-    bio: "Dr. Sarah Johnson is a board-certified cardiologist with over 8 years of experience in treating heart conditions. She specializes in preventive cardiology and has helped hundreds of patients maintain healthy hearts.",
-    education: "MD from Harvard Medical School",
-    location: "Main Clinic, Floor 3, Room 301",
-}
+import { formatDateBaseOnTimeZone_Date, getDifferenceTimeSlot } from "@/utils/helpers/date"
+import { TimeSlot, TimeSlotStatus } from "@prisma/client"
+import { FullTimeSlotType } from "@/types/prisma.type"
 
 // Mock time slots (would come from TimeSlot model)
 const mockTimeSlots = [
@@ -158,7 +139,7 @@ const DoctorDetailsPage = () => {
     const doctorDetails = useMemo(() => (doctorInfo.payload), [doctorInfo])
 
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-    const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null)
+    const [selectedTimeSlot, setSelectedTimeSlot] = useState<FullTimeSlotType | null>(null)
     const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfDay(new Date()))
 
     // Generate next 7 days for date selection
@@ -172,23 +153,23 @@ const DoctorDetailsPage = () => {
 
     // Filter time slots for selected date
     const timeSlotsForSelectedDate = useMemo(() => {
-        return mockTimeSlots.filter((slot) => isSameDay(slot.date, selectedDate))
-    }, [selectedDate])
+        return doctorDetails?.doctorTimeSlots?.filter((slot) => isSameDay(slot.date, selectedDate)) ?? []
+    }, [selectedDate, doctorDetails])
 
     // Group time slots by time period
     const groupedTimeSlots = useMemo(() => {
         const morning = timeSlotsForSelectedDate.filter((slot) => {
-            const hour = Number.parseInt(slot.startTime.split(":")[0])
+            const { hour } = formatDateBaseOnTimeZone_Date(slot.startTime);
             return hour < 12
         })
 
         const afternoon = timeSlotsForSelectedDate.filter((slot) => {
-            const hour = Number.parseInt(slot.startTime.split(":")[0])
+            const { hour } = formatDateBaseOnTimeZone_Date(slot.startTime);
             return hour >= 12 && hour < 17
         })
 
         const evening = timeSlotsForSelectedDate.filter((slot) => {
-            const hour = Number.parseInt(slot.startTime.split(":")[0])
+            const { hour } = formatDateBaseOnTimeZone_Date(slot.startTime);
             return hour >= 17
         })
 
@@ -203,25 +184,25 @@ const DoctorDetailsPage = () => {
         setCurrentWeekStart(addDays(currentWeekStart, 7))
     }
 
-    const handleTimeSlotSelect = (slotId: string) => {
+    const handleTimeSlotSelect = (slotId: FullTimeSlotType) => {
         setSelectedTimeSlot(slotId)
     }
 
     const handleBookAppointment = () => {
         if (!selectedTimeSlot) return
 
-        const selectedSlot = mockTimeSlots.find((slot) => slot.id === selectedTimeSlot)
-        console.log("Booking appointment:", {
-            doctorId,
-            slotId: selectedTimeSlot,
-            date: selectedDate,
-            time: selectedSlot?.startTime,
-        })
+        // const selectedSlot = mockTimeSlots.find((slot) => slot.id === selectedTimeSlot)
+        // console.log("Booking appointment:", {
+        //     doctorId,
+        //     slotId: selectedTimeSlot,
+        //     date: selectedDate,
+        //     time: selectedSlot?.startTime,
+        // })
 
-        // In a real app, you would make an API call to book the appointment
-        alert(
-            `Appointment booked with ${doctorDetails?.name} on ${format(selectedDate, "MMM dd, yyyy")} at ${selectedSlot?.startTime}`,
-        )
+        // // In a real app, you would make an API call to book the appointment
+        // alert(
+        //     `Appointment booked with ${doctorDetails?.name} on ${format(selectedDate, "MMM dd, yyyy")} at ${selectedSlot?.startTime}`,
+        // )
     }
 
     const getExperienceBadge = (appointments: number) => {
@@ -236,7 +217,7 @@ const DoctorDetailsPage = () => {
         }
     }
 
-    const renderTimeSlotGroup = (title: string, slots: typeof mockTimeSlots, icon: React.ReactNode) => {
+    const renderTimeSlotGroup = (title: string, slots: TimeSlot[], icon: React.ReactNode) => {
         if (slots.length === 0) return null
 
         return (
@@ -249,21 +230,21 @@ const DoctorDetailsPage = () => {
                     {slots.map((slot) => (
                         <Button
                             key={slot.id}
-                            variant={selectedTimeSlot === slot.id ? "default" : "outline"}
+                            variant={selectedTimeSlot?.id === slot.id ? "default" : "outline"}
                             size="sm"
-                            disabled={!slot.isAvailable}
-                            onClick={() => handleTimeSlotSelect(slot.id)}
-                            className={`h-10 ${selectedTimeSlot === slot.id
+                            disabled={slot.status === TimeSlotStatus.CLOSED}
+                            onClick={() => handleTimeSlotSelect(slot)}
+                            className={`h-10 ${selectedTimeSlot?.id === slot.id
                                 ? "bg-primary text-primary-foreground"
-                                : slot.isAvailable
+                                : slot.status === TimeSlotStatus.OPEN
                                     ? "hover:bg-primary/10"
                                     : "opacity-50 cursor-not-allowed"
                                 }`}
                         >
-                            {slot.isAvailable ? (
+                            {slot.status === TimeSlotStatus.OPEN ? (
                                 <div className="flex items-center gap-1">
-                                    {selectedTimeSlot === slot.id && <Check className="w-3 h-3" />}
-                                    <span className="text-xs">{slot.startTime}</span>
+                                    {selectedTimeSlot?.id === slot.id && <Check className="w-3 h-3" />}
+                                    <span className="text-xs">{formatDateBaseOnTimeZone_Date(slot.startTime).displayTime}</span>
                                 </div>
                             ) : (
                                 <span className="text-xs text-muted-foreground">Booked</span>
@@ -477,10 +458,10 @@ const DoctorDetailsPage = () => {
                                             </p>
                                             <p>
                                                 <span className="text-muted-foreground">Time:</span>{" "}
-                                                {mockTimeSlots.find((slot) => slot.id === selectedTimeSlot)?.startTime}
+                                                {formatDateBaseOnTimeZone_Date(selectedTimeSlot.startTime).displayTime}
                                             </p>
                                             <p>
-                                                <span className="text-muted-foreground">Duration:</span> 30 minutes
+                                                <span className="text-muted-foreground">Duration:</span> {getDifferenceTimeSlot(selectedTimeSlot)} minutes est.
                                             </p>
                                         </div>
                                     </div>
@@ -489,7 +470,7 @@ const DoctorDetailsPage = () => {
 
                             {/* Book Button */}
                             <Button onClick={handleBookAppointment} disabled={!selectedTimeSlot} className="w-full h-12 text-base">
-                                {selectedTimeSlot ? "Confirm Appointment" : "Select a time slot"}
+                                {selectedTimeSlot ? "Book Appointment" : "Select a time slot"}
                             </Button>
                         </CardContent>
                     </Card>

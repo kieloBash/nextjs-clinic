@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/prisma";
 import { Prisma } from "@prisma/client";
+import { addDays, endOfDay, startOfDay } from "date-fns";
+import { auth } from "@/auth";
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url || "");
+    const session = await auth()
+    if (!session || !session.user) {
+        return NextResponse.json({ message: "Session not found!" }, { status: 400 });
+    }
 
     const doctorId = searchParams.get("id") || "";
 
@@ -14,6 +20,11 @@ export async function GET(request: Request) {
     }
 
     try {
+        const now = new Date();
+
+        const from = startOfDay(now);
+        const to = endOfDay(addDays(now, 3));
+
         const doctor = await prisma.user.findFirst({
             where: {
                 id: doctorId
@@ -28,17 +39,20 @@ export async function GET(request: Request) {
                 role: { select: { roleName: true } },
                 doctorTimeSlots: {
                     where: {
-                        status: "OPEN",
-                        startTime: { gte: new Date() },
+                        startTime: {
+                            gte: from,
+                            lte: to,
+                        },
                     },
                     orderBy: { startTime: "asc" },
-                    take: 5,
+                    // take: 5,
                     select: {
                         id: true,
                         date: true,
                         startTime: true,
                         endTime: true,
                         status: true,
+                        appointment: { select: { patientId: true } }
                     },
                 },
             },
