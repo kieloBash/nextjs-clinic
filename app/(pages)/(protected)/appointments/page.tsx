@@ -1,7 +1,7 @@
 "use client"
 import { useCurrentUser } from '@/libs/hooks';
 import React from 'react'
-import DoctorMainPage from './_components/doctor-main';
+import DoctorMainPage from './_components/doctor/doctor-main';
 import DoctorLayout from '@/components/globals/doctor-layout';
 
 const AppointmentsPage = () => {

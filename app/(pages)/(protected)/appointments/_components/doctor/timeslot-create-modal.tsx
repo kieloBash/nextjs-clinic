@@ -24,8 +24,8 @@ import { showToast } from '@/utils/helpers/show-toast'
 import { CREATE_TIMESLOT } from '@/utils/api-endpoints'
 import { getTodayDateTimezone, mergeTimeWithDate } from '@/utils/helpers/date'
 import { useQueryClient } from '@tanstack/react-query'
-import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from '../_hooks/keys'
-import { KEY_GET_NOTIFICATIONS } from '../../notifications/_hooks/keys'
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from '../../_hooks/keys'
+import { KEY_GET_NOTIFICATIONS } from '../../../notifications/_hooks/keys'
 
 const timeSlotSchema = z.object({
     date: z.string().min(1, "Date is required"),

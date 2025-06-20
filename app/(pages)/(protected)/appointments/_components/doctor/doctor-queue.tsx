@@ -18,7 +18,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import useDoctorQueues from "../_hooks/use-queues"
+import useDoctorQueues from "../../_hooks/use-queues"
 import { User } from "next-auth"
 import { FullQueueType } from "@/types/prisma.type"
 import { QueueStatus } from "@prisma/client"
@@ -29,7 +29,7 @@ import { showToast } from "@/utils/helpers/show-toast"
 import AddToQueueModal from "./add-to-queue-modal"
 import CompleteAppointmentModal from "./complete-appointment-modal-queue"
 import { useQueryClient } from "@tanstack/react-query"
-import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../_hooks/keys"
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../../_hooks/keys"
 import MainLoadingPage from "@/components/globals/main-loading"
 import { useLoading } from "@/components/providers/loading-provider"
 
