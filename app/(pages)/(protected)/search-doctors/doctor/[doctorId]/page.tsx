@@ -39,101 +39,8 @@ import { useQueryClient } from "@tanstack/react-query"
 import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_TIMESLOTS } from "../../../appointments/_hooks/keys"
 import { useCurrentUser } from "@/libs/hooks"
 import { KEY_GET_DOCTOR } from "../../_hooks/keys"
-
-// Mock time slots (would come from TimeSlot model)
-const mockTimeSlots = [
-    // Today
-    { id: "slot-1", doctorId: "doc-001", date: new Date(), startTime: "09:00", endTime: "09:30", isAvailable: true },
-    { id: "slot-2", doctorId: "doc-001", date: new Date(), startTime: "09:30", endTime: "10:00", isAvailable: false },
-    { id: "slot-3", doctorId: "doc-001", date: new Date(), startTime: "10:00", endTime: "10:30", isAvailable: true },
-    { id: "slot-4", doctorId: "doc-001", date: new Date(), startTime: "14:00", endTime: "14:30", isAvailable: true },
-    { id: "slot-5", doctorId: "doc-001", date: new Date(), startTime: "14:30", endTime: "15:00", isAvailable: true },
-    { id: "slot-6", doctorId: "doc-001", date: new Date(), startTime: "15:00", endTime: "15:30", isAvailable: false },
-
-    // Tomorrow
-    {
-        id: "slot-7",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 1),
-        startTime: "09:00",
-        endTime: "09:30",
-        isAvailable: true,
-    },
-    {
-        id: "slot-8",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 1),
-        startTime: "09:30",
-        endTime: "10:00",
-        isAvailable: true,
-    },
-    {
-        id: "slot-9",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 1),
-        startTime: "10:00",
-        endTime: "10:30",
-        isAvailable: true,
-    },
-    {
-        id: "slot-10",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 1),
-        startTime: "11:00",
-        endTime: "11:30",
-        isAvailable: true,
-    },
-    {
-        id: "slot-11",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 1),
-        startTime: "14:00",
-        endTime: "14:30",
-        isAvailable: false,
-    },
-    {
-        id: "slot-12",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 1),
-        startTime: "15:00",
-        endTime: "15:30",
-        isAvailable: true,
-    },
-
-    // Day after tomorrow
-    {
-        id: "slot-13",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 2),
-        startTime: "08:00",
-        endTime: "08:30",
-        isAvailable: true,
-    },
-    {
-        id: "slot-14",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 2),
-        startTime: "08:30",
-        endTime: "09:00",
-        isAvailable: true,
-    },
-    {
-        id: "slot-15",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 2),
-        startTime: "10:00",
-        endTime: "10:30",
-        isAvailable: true,
-    },
-    {
-        id: "slot-16",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 2),
-        startTime: "16:00",
-        endTime: "16:30",
-        isAvailable: true,
-    },
-]
+import { WaitingLineCard } from "../../_components/waiting-line-card"
+import useDoctorQueues from "../../../appointments/_hooks/use-queues"
 
 const DoctorDetailsPage = () => {
     const params = useParams()
@@ -141,7 +48,12 @@ const DoctorDetailsPage = () => {
     const doctorId = params.doctorId as string
 
     const doctorInfo = useDoctor({ id: doctorId });
+    const queue = useDoctorQueues({ doctorId });
     const patientInfo = useCurrentUser();
+
+    const patientPosition = useMemo(() => {
+        return queue?.payload?.find((q) => q.patientId === patientInfo?.id)?.position ?? 0
+    }, [patientInfo, queue])
 
     const doctorDetails = useMemo(() => (doctorInfo.payload), [doctorInfo])
 
@@ -277,7 +189,7 @@ const DoctorDetailsPage = () => {
     if (doctorInfo?.isError || !doctorInfo.payload && (!doctorInfo.isLoading || !doctorInfo.isFetching))
         return <div>No doctor found</div>
 
-    if (doctorInfo.isLoading || doctorInfo.isFetching) {
+    if (doctorInfo.isLoading || doctorInfo.isFetching || queue.isLoading) {
         return <MainLoadingPage />
     }
 
@@ -373,6 +285,13 @@ const DoctorDetailsPage = () => {
                             <p className="text-sm text-muted-foreground leading-relaxed">{doctorDetails.bio}</p>
                         </CardContent>
                     </Card> */}
+                    <WaitingLineCard
+                        totalInQueue={queue?.payload?.length ?? 0}
+                        patientPosition={patientPosition}
+                        isLoading={false}
+                        onJoinQueue={() => { }}
+                        onLeaveQueue={() => { }}
+                    />
                 </div>
 
                 {/* Appointment Booking */}
@@ -405,7 +324,7 @@ const DoctorDetailsPage = () => {
                                     {availableDates.map((date) => {
                                         const isSelected = isSameDay(date, selectedDate)
                                         const isPast = isBefore(date, startOfDay(new Date()))
-                                        const hasSlots = mockTimeSlots.some((slot) => isSameDay(slot.date, date) && slot.isAvailable)
+                                        const hasSlots = doctorDetails?.doctorTimeSlots?.some((slot) => isSameDay(slot.date, date) && slot.status === "OPEN")
 
                                         return (
                                             <Button
