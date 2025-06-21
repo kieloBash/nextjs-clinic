@@ -26,13 +26,13 @@ import { useCurrentUser } from "@/libs/hooks"
 import { showToast } from "@/utils/helpers/show-toast"
 import axios from "axios"
 import { useQueryClient } from "@tanstack/react-query"
-import { KEY_GET_DOCTOR_QUEUES } from "../_hooks/keys"
+import { KEY_GET_DOCTOR_QUEUES } from "../../_hooks/keys"
 import { ADD_QUEUE } from "@/utils/api-endpoints"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { FullQueueType } from "@/types/prisma.type"
 import { QueueStatus } from "@prisma/client"
 import { useLoading } from "@/components/providers/loading-provider"
-import { KEY_GET_NOTIFICATIONS } from "../../notifications/_hooks/keys"
+import { KEY_GET_NOTIFICATIONS } from "../../../notifications/_hooks/keys"
 
 // Form schema
 const addToQueueSchema = z.object({

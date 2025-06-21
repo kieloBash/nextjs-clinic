@@ -38,7 +38,7 @@ import { DELETE_TIMESLOT } from "@/utils/api-endpoints"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { showToast } from "@/utils/helpers/show-toast"
 import { useQueryClient } from "@tanstack/react-query"
-import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_TIMESLOTS } from "../_hooks/keys"
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_TIMESLOTS } from "../../_hooks/keys"
 
 const editTimeSlotSchema = z
     .object({

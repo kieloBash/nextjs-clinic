@@ -10,12 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import GoogleCalendar from "./google.calendar"
 import CreateTimeSlotModal from "./timeslot-create-modal"
-import useDoctorTimeSlots from "../_hooks/use-timeslots"
-import useDoctorAppointments from "../_hooks/use-appointments"
+import useDoctorTimeSlots from "../../_hooks/use-timeslots"
+import useDoctorAppointments from "../../_hooks/use-appointments"
 import { User } from "next-auth"
 import DoctorQueue from "./doctor-queue"
 import MainLoadingPage from "@/components/globals/main-loading"
-import useDoctorQueues from "../_hooks/use-queues"
+import useDoctorQueues from "../../_hooks/use-queues"
 
 export default function DoctorAppointmentsPage({ user }: { user: User }) {
     const [selectedDate, setSelectedDate] = useState(new Date())

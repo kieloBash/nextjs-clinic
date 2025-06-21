@@ -6,3 +6,14 @@ export async function createAppointmentHistory(data: { appointmentId: string, de
         data,
     });
 }
+
+export function getStatusLabel(status: AppointmentStatus) {
+    switch (status) {
+        case AppointmentStatus.PENDING: return "Pending Approval";
+        case AppointmentStatus.CANCELLED: return "Cancelled";
+        case AppointmentStatus.COMPLETED: return "Completed";
+        case AppointmentStatus.CONFIRMED: return "Confirmed Booking";
+        case AppointmentStatus.PENDING_PAYMENT: return "Pending Payment";
+        case AppointmentStatus.RESCHEDULED: return "Rescheduled";
+    }
+}

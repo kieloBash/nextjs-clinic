@@ -49,7 +49,7 @@ export function PatientSidebar({ routes }: { routes: INavLink[] }) {
                                 if (route.title === "Notifications") {
                                     return (<NavItem key={route.url} href={route.url} icon={route.icon} active={route.isActive}>
                                         Notifications
-                                        <span className="ml-2 bg-white text-primary text-xs font-medium px-2 py-0.5 rounded-full">3</span>
+                                        {/* <span className="ml-2 bg-white text-primary text-xs font-medium px-2 py-0.5 rounded-full">3</span> */}
                                     </NavItem>);
                                 }
 

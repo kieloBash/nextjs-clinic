@@ -28,7 +28,7 @@ const PatientLayout = ({ children, user }: ILayout & { user: User }) => {
             },
             {
                 title: "My Appointments",
-                url: "appointments",
+                url: "/appointments",
                 icon: Calendar,
                 isActive: pathname.includes("/appointments"),
             },

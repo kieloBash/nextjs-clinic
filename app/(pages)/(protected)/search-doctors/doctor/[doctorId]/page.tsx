@@ -29,111 +29,19 @@ import { Separator } from "@/components/ui/separator"
 import useDoctor from "../../_hooks/use-doctor"
 import MainLoadingPage from "@/components/globals/main-loading"
 import { formatDateBaseOnTimeZone_Date, getDifferenceTimeSlot } from "@/utils/helpers/date"
-import { TimeSlot, TimeSlotStatus } from "@prisma/client"
+import { QueueStatus, TimeSlot, TimeSlotStatus } from "@prisma/client"
 import { FullTimeSlotType } from "@/types/prisma.type"
 import { useLoading } from "@/components/providers/loading-provider"
 import axios from "axios"
-import { BOOK_APPOINTMENT } from "@/utils/api-endpoints"
+import { ADD_QUEUE, BOOK_APPOINTMENT, LEAVE_QUEUE, UPDATE_QUEUE_STATUS } from "@/utils/api-endpoints"
 import { showToast } from "@/utils/helpers/show-toast"
 import { useQueryClient } from "@tanstack/react-query"
-import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_TIMESLOTS } from "../../../appointments/_hooks/keys"
 import { useCurrentUser } from "@/libs/hooks"
 import { KEY_GET_DOCTOR } from "../../_hooks/keys"
-
-// Mock time slots (would come from TimeSlot model)
-const mockTimeSlots = [
-    // Today
-    { id: "slot-1", doctorId: "doc-001", date: new Date(), startTime: "09:00", endTime: "09:30", isAvailable: true },
-    { id: "slot-2", doctorId: "doc-001", date: new Date(), startTime: "09:30", endTime: "10:00", isAvailable: false },
-    { id: "slot-3", doctorId: "doc-001", date: new Date(), startTime: "10:00", endTime: "10:30", isAvailable: true },
-    { id: "slot-4", doctorId: "doc-001", date: new Date(), startTime: "14:00", endTime: "14:30", isAvailable: true },
-    { id: "slot-5", doctorId: "doc-001", date: new Date(), startTime: "14:30", endTime: "15:00", isAvailable: true },
-    { id: "slot-6", doctorId: "doc-001", date: new Date(), startTime: "15:00", endTime: "15:30", isAvailable: false },
-
-    // Tomorrow
-    {
-        id: "slot-7",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 1),
-        startTime: "09:00",
-        endTime: "09:30",
-        isAvailable: true,
-    },
-    {
-        id: "slot-8",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 1),
-        startTime: "09:30",
-        endTime: "10:00",
-        isAvailable: true,
-    },
-    {
-        id: "slot-9",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 1),
-        startTime: "10:00",
-        endTime: "10:30",
-        isAvailable: true,
-    },
-    {
-        id: "slot-10",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 1),
-        startTime: "11:00",
-        endTime: "11:30",
-        isAvailable: true,
-    },
-    {
-        id: "slot-11",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 1),
-        startTime: "14:00",
-        endTime: "14:30",
-        isAvailable: false,
-    },
-    {
-        id: "slot-12",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 1),
-        startTime: "15:00",
-        endTime: "15:30",
-        isAvailable: true,
-    },
-
-    // Day after tomorrow
-    {
-        id: "slot-13",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 2),
-        startTime: "08:00",
-        endTime: "08:30",
-        isAvailable: true,
-    },
-    {
-        id: "slot-14",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 2),
-        startTime: "08:30",
-        endTime: "09:00",
-        isAvailable: true,
-    },
-    {
-        id: "slot-15",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 2),
-        startTime: "10:00",
-        endTime: "10:30",
-        isAvailable: true,
-    },
-    {
-        id: "slot-16",
-        doctorId: "doc-001",
-        date: addDays(new Date(), 2),
-        startTime: "16:00",
-        endTime: "16:30",
-        isAvailable: true,
-    },
-]
+import { WaitingLineCard } from "../../_components/waiting-line-card"
+import useDoctorQueues from "../../../appointments/_hooks/use-queues"
+import { KEY_GET_NOTIFICATIONS } from "../../../notifications/_hooks/keys"
+import { KEY_GET_DOCTOR_QUEUES } from "../../../appointments/_hooks/keys"
 
 const DoctorDetailsPage = () => {
     const params = useParams()
@@ -141,14 +49,21 @@ const DoctorDetailsPage = () => {
     const doctorId = params.doctorId as string
 
     const doctorInfo = useDoctor({ id: doctorId });
+    const queue = useDoctorQueues({ doctorId });
     const patientInfo = useCurrentUser();
+
+    const queryClient = useQueryClient();
+
+    const { position: patientPosition, status: patientStatus, id: currentQueueId } = useMemo(() => {
+        const currentQueue = queue?.payload?.find((q) => q.patientId === patientInfo?.id);
+        return { position: currentQueue?.position, status: currentQueue?.status, id: currentQueue?.id }
+    }, [patientInfo, queue])
 
     const doctorDetails = useMemo(() => (doctorInfo.payload), [doctorInfo])
 
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
     const [selectedTimeSlot, setSelectedTimeSlot] = useState<FullTimeSlotType | null>(null)
     const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfDay(new Date()))
-    const queryClient = useQueryClient()
 
     const { isLoading, setIsLoading } = useLoading();
 
@@ -274,12 +189,103 @@ const DoctorDetailsPage = () => {
         )
     }
 
+    async function handleJoinQueue() {
+        try {
+
+            if (!patientInfo || !doctorDetails) {
+                throw new Error("No Patient and/or Doctor selected!")
+            }
+            setIsLoading(true)
+
+            const body = {
+                patientEmail: patientInfo?.email,
+                doctorId: doctorDetails?.id,
+            }
+
+            const res = await axios.post(ADD_QUEUE, body)
+
+            showToast("success", "Join queue", res.data.message)
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR + "-" + body.doctorId], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
+            ])
+
+            // onClose()
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    async function handleLeaveQueue() {
+        try {
+
+            if (!patientInfo || !doctorDetails) {
+                throw new Error("No Patient and/or Doctor selected!")
+            }
+            setIsLoading(true)
+
+            const body = {
+                patientId: patientInfo?.id,
+                doctorId: doctorDetails?.id,
+            }
+
+            const res = await axios.post(LEAVE_QUEUE, body)
+
+            showToast("success", "Leave queue", res.data.message)
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR + "-" + body.doctorId], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
+            ])
+
+            // onClose()
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    async function handleJoinBackQueue() {
+        try {
+
+            if (!currentQueueId) {
+                throw new Error("No selected queue!")
+            }
+            const body = {
+                queueId: currentQueueId,
+                status: QueueStatus.WAITING
+            }
+            setIsLoading(true)
+            const res = await axios.patch(UPDATE_QUEUE_STATUS, body)
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR + "-" + doctorDetails?.id], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
+            ])
+
+            showToast("success", "Queue returned", res.data.message);
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     if (doctorInfo?.isError || !doctorInfo.payload && (!doctorInfo.isLoading || !doctorInfo.isFetching))
         return <div>No doctor found</div>
 
-    if (doctorInfo.isLoading || doctorInfo.isFetching) {
+    if (doctorInfo.isLoading || doctorInfo.isFetching || queue.isLoading) {
         return <MainLoadingPage />
     }
+
+    console.log({ queue, patientPosition })
 
     return (
         <div className="container mx-auto p-6 space-y-6">
@@ -373,6 +379,15 @@ const DoctorDetailsPage = () => {
                             <p className="text-sm text-muted-foreground leading-relaxed">{doctorDetails.bio}</p>
                         </CardContent>
                     </Card> */}
+                    <WaitingLineCard
+                        totalInQueue={queue?.payload?.length ?? 0}
+                        patientPosition={patientPosition}
+                        patientStatus={patientStatus}
+                        isLoading={false}
+                        onJoinQueue={handleJoinQueue}
+                        onLeaveQueue={handleLeaveQueue}
+                        onJoinBackQueue={handleJoinBackQueue}
+                    />
                 </div>
 
                 {/* Appointment Booking */}
@@ -405,7 +420,7 @@ const DoctorDetailsPage = () => {
                                     {availableDates.map((date) => {
                                         const isSelected = isSameDay(date, selectedDate)
                                         const isPast = isBefore(date, startOfDay(new Date()))
-                                        const hasSlots = mockTimeSlots.some((slot) => isSameDay(slot.date, date) && slot.isAvailable)
+                                        const hasSlots = doctorDetails?.doctorTimeSlots?.some((slot) => isSameDay(slot.date, date) && slot.status === "OPEN")
 
                                         return (
                                             <Button

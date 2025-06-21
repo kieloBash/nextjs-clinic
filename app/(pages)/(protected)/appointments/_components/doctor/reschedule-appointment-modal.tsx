@@ -22,13 +22,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import type { FullAppointmentType } from "@/types/prisma.type"
 import { showToast } from "@/utils/helpers/show-toast"
-import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../_hooks/keys"
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from "../../_hooks/keys"
 import { useQueryClient } from "@tanstack/react-query"
 import { FormInput } from "@/components/forms/input"
 import axios from "axios"
 import { RESCHEDULE_APPOINTMENT } from "@/utils/api-endpoints"
 import { getTodayDateTimezone, mergeTimeWithDate } from "@/utils/helpers/date"
-import { KEY_GET_NOTIFICATIONS } from "../../notifications/_hooks/keys"
+import { KEY_GET_NOTIFICATIONS } from "../../../notifications/_hooks/keys"
 
 const rescheduleSchema = z
     .object({

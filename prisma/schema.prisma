@@ -50,7 +50,7 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
+F
   // Relations
   role                  Role           @relation(fields: [roleId], references: [id])
   appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
