@@ -33,14 +33,15 @@ import { TimeSlot, TimeSlotStatus } from "@prisma/client"
 import { FullTimeSlotType } from "@/types/prisma.type"
 import { useLoading } from "@/components/providers/loading-provider"
 import axios from "axios"
-import { BOOK_APPOINTMENT } from "@/utils/api-endpoints"
+import { BOOK_APPOINTMENT, LEAVE_QUEUE } from "@/utils/api-endpoints"
 import { showToast } from "@/utils/helpers/show-toast"
 import { useQueryClient } from "@tanstack/react-query"
-import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_TIMESLOTS } from "../../../appointments/_hooks/keys"
 import { useCurrentUser } from "@/libs/hooks"
 import { KEY_GET_DOCTOR } from "../../_hooks/keys"
 import { WaitingLineCard } from "../../_components/waiting-line-card"
 import useDoctorQueues from "../../../appointments/_hooks/use-queues"
+import { KEY_GET_NOTIFICATIONS } from "../../../notifications/_hooks/keys"
+import { KEY_GET_DOCTOR_QUEUES } from "../../../appointments/_hooks/keys"
 
 const DoctorDetailsPage = () => {
     const params = useParams()
@@ -51,8 +52,10 @@ const DoctorDetailsPage = () => {
     const queue = useDoctorQueues({ doctorId });
     const patientInfo = useCurrentUser();
 
+    const queryClient = useQueryClient();
+
     const patientPosition = useMemo(() => {
-        return queue?.payload?.find((q) => q.patientId === patientInfo?.id)?.position ?? 0
+        return queue?.payload?.find((q) => q.patientId === patientInfo?.id)?.position
     }, [patientInfo, queue])
 
     const doctorDetails = useMemo(() => (doctorInfo.payload), [doctorInfo])
@@ -60,7 +63,6 @@ const DoctorDetailsPage = () => {
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
     const [selectedTimeSlot, setSelectedTimeSlot] = useState<FullTimeSlotType | null>(null)
     const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfDay(new Date()))
-    const queryClient = useQueryClient()
 
     const { isLoading, setIsLoading } = useLoading();
 
@@ -186,6 +188,37 @@ const DoctorDetailsPage = () => {
         )
     }
 
+    async function handleLeaveQueue() {
+        try {
+
+            if (!patientInfo || !doctorDetails) {
+                throw new Error("No Patient and/or Doctor selected!")
+            }
+            setIsLoading(true)
+
+            const body = {
+                patientId: patientInfo?.id,
+                doctorId: doctorDetails?.id,
+            }
+
+            const res = await axios.post(LEAVE_QUEUE, body)
+
+            showToast("success", "Appointment rescheduled", res.data.message)
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR + "-" + body.doctorId], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
+            ])
+
+            // onClose()
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
+        } finally {
+            setIsLoading(true)
+        }
+    }
+
     if (doctorInfo?.isError || !doctorInfo.payload && (!doctorInfo.isLoading || !doctorInfo.isFetching))
         return <div>No doctor found</div>
 
@@ -290,7 +323,7 @@ const DoctorDetailsPage = () => {
                         patientPosition={patientPosition}
                         isLoading={false}
                         onJoinQueue={() => { }}
-                        onLeaveQueue={() => { }}
+                        onLeaveQueue={handleLeaveQueue}
                     />
                 </div>
 
