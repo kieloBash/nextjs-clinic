@@ -70,32 +70,19 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
         setIsViewInvoiceModalOpen(true)
     }
 
-    const handleRescheduleConfirm = async (appointmentId: string, newDate: Date, newTimeSlot: string) => {
-        setIsLoading(true)
-        try {
-            console.log("Rescheduling appointment:", { appointmentId, newDate, newTimeSlot })
-            await new Promise((resolve) => setTimeout(resolve, 1000))
-            setIsRescheduleModalOpen(false)
-            setSelectedAppointment(null)
-        } catch (error) {
-            console.error("Failed to reschedule appointment:", error)
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
     const handleCancelConfirm = async (appointmentId: string, reason: string) => {
-        setIsLoading(true)
-        try {
-            console.log("Cancelling appointment:", { appointmentId, reason })
-            await new Promise((resolve) => setTimeout(resolve, 1000))
-            setIsCancelModalOpen(false)
-            setSelectedAppointment(null)
-        } catch (error) {
-            console.error("Failed to cancel appointment:", error)
-        } finally {
-            setIsLoading(false)
-        }
+        // setIsLoading(true)
+        // try {
+        //     console.log("Cancelling appointment:", { appointmentId, reason })
+        //     await new Promise((resolve) => setTimeout(resolve, 1000))
+        //     setIsCancelModalOpen(false)
+        //     setSelectedAppointment(null)
+        // } catch (error) {
+        //     console.error("Failed to cancel appointment:", error)
+        // } finally {
+        //     setIsLoading(false)
+        // }
+        
     }
 
     const handlePageChange = (page: number) => {
@@ -259,7 +246,6 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
                             onClose={() => setIsCancelModalOpen(false)}
                             appointment={selectedAppointment}
                             onConfirm={handleCancelConfirm}
-                            isLoading={isLoading}
                         />
                         <ViewInvoiceModal
                             isOpen={isViewInvoiceModalOpen}

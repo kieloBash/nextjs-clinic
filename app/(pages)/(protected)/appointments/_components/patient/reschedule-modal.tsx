@@ -112,6 +112,7 @@ export default function RescheduleAppointmentModal({ isOpen, onClose, appointmen
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR + "-" + appointment.doctorId], exact: false }),
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_PATIENT_APPOINTMENTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
             ])
 
             form.reset()

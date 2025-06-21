@@ -9,38 +9,52 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { formatDateBaseOnTimeZone_Date } from "@/utils/helpers/date"
+import axios from "axios"
+import { showToast } from "@/utils/helpers/show-toast"
+import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
+import { CANCEL_PAYMENT_APPOINTMENT } from "@/utils/api-endpoints"
+import { useQueryClient } from "@tanstack/react-query"
+import { useLoading } from "@/components/providers/loading-provider"
+import { KEY_GET_DOCTOR } from "../../../search-doctors/_hooks/keys"
+import { KEY_GET_PATIENT_APPOINTMENTS } from "../../_hooks/keys"
+import { KEY_GET_NOTIFICATIONS } from "../../../notifications/_hooks/keys"
 
 interface CancelModalProps {
     isOpen: boolean
     onClose: () => void
     appointment: any
     onConfirm: (appointmentId: string, reason: string) => void
-    isLoading: boolean
 }
 
-export function CancelModal({ isOpen, onClose, appointment, onConfirm, isLoading }: CancelModalProps) {
+export function CancelModal({ isOpen, onClose, appointment }: CancelModalProps) {
     const [reason, setReason] = useState("")
     const [customReason, setCustomReason] = useState("")
+    const queryClient = useQueryClient()
+    const { isLoading, setIsLoading } = useLoading();
 
-    const predefinedReasons = [
-        "Schedule conflict",
-        "Feeling better",
-        "Emergency came up",
-        "Doctor unavailable",
-        "Personal reasons",
-        "Other",
-    ]
+    const handleConfirm = async () => {
+        try {
+            setIsLoading(true)
+            const body = { appointmentId: appointment.id }
+            const res = await axios.post(CANCEL_PAYMENT_APPOINTMENT, body);
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message);
 
-    const handleConfirm = () => {
-        const finalReason = reason === "Other" ? customReason : reason
-        if (finalReason.trim()) {
-            onConfirm(appointment.id, finalReason)
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR + "-" + appointment.doctorId], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_PATIENT_APPOINTMENTS], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
+            ]);
+
+            onClose()
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setIsLoading(false)
         }
     }
 
-    const handleClose = () => {
-        setReason("")
-        setCustomReason("")
+    const handleClose = async () => {
         onClose()
     }
 
@@ -69,7 +83,7 @@ export function CancelModal({ isOpen, onClose, appointment, onConfirm, isLoading
                             </Avatar>
                             <div>
                                 <p className="font-medium">{appointment.doctor.name}</p>
-                                <p className="text-sm text-muted-foreground">{appointment.doctor.specialization}</p>
+                                <p className="text-sm text-muted-foreground">{appointment.doctor.phone}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -80,7 +94,7 @@ export function CancelModal({ isOpen, onClose, appointment, onConfirm, isLoading
                             <div className="flex items-center gap-1">
                                 <Clock className="w-4 h-4" />
                                 <span>
-                                    {appointment.timeSlot.startTime} - {appointment.timeSlot.endTime}
+                                    {formatDateBaseOnTimeZone_Date(appointment.timeSlot.startTime).displayTime} - {formatDateBaseOnTimeZone_Date(appointment.timeSlot.endTime).displayTime}
                                 </span>
                             </div>
                         </div>
@@ -88,7 +102,7 @@ export function CancelModal({ isOpen, onClose, appointment, onConfirm, isLoading
 
                     {/* Cancellation Reason */}
                     <div className="space-y-4">
-                        <div>
+                        {/* <div>
                             <label className="text-sm font-medium mb-2 block">Reason for cancellation</label>
                             <Select value={reason} onValueChange={setReason} disabled={isLoading}>
                                 <SelectTrigger>
@@ -102,7 +116,7 @@ export function CancelModal({ isOpen, onClose, appointment, onConfirm, isLoading
                                     ))}
                                 </SelectContent>
                             </Select>
-                        </div>
+                        </div> */}
 
                         {reason === "Other" && (
                             <div>
@@ -133,7 +147,7 @@ export function CancelModal({ isOpen, onClose, appointment, onConfirm, isLoading
                         </Button>
                         <Button
                             onClick={handleConfirm}
-                            disabled={!reason || (reason === "Other" && !customReason.trim()) || isLoading}
+                            disabled={isLoading}
                             variant="destructive"
                         >
                             {isLoading ? "Cancelling..." : "Cancel Appointment"}
