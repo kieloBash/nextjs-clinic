@@ -16,6 +16,8 @@ export async function GET(request: Request) {
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
 
+    console.log({ startDateParam, endDateParam })
+
     if (page < 1 || limit < 1) {
         return NextResponse.json({ message: "Invalid pagination" }, { status: 400 });
     }
@@ -69,6 +71,8 @@ export async function GET(request: Request) {
             }),
         }
 
+        console.log({ filters })
+
         const appointments = await prisma.appointment.findMany({
             skip,
             take: limit,
@@ -96,12 +100,15 @@ export async function GET(request: Request) {
             _count: true,
         });
 
+        console.log({ groupedCounts })
+
         const statusSummary = {
             total: groupedCounts.reduce((sum, group) => sum + group._count, 0),
             completed: groupedCounts.find(g => g.status === 'COMPLETED')?._count || 0,
-            cancelled: groupedCounts.find(g => g.status === 'CANCELLED')?._count || 0,
+            cancelled: (groupedCounts.find(g => g.status === 'RESCHEDULED')?._count || 0) + (groupedCounts.find(g => g.status === 'CANCELLED')?._count || 0),
             pending_or_confirmed:
                 (groupedCounts.find(g => g.status === 'PENDING')?._count || 0) +
+                (groupedCounts.find(g => g.status === 'PENDING_PAYMENT')?._count || 0) +
                 (groupedCounts.find(g => g.status === 'CONFIRMED')?._count || 0),
         };
 

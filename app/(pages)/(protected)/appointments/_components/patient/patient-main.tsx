@@ -21,6 +21,8 @@ import usePatientAppointments from "../../_hooks/use-appointments-patient"
 import { AppointmentStatus } from "@prisma/client"
 import { getStatusLabel } from "@/libs/appointment"
 import MainLoadingPage from "@/components/globals/main-loading"
+import { InvoiceDetailsModal } from "./invoice-details"
+import { ViewInvoiceModal } from "./view-invoice-modal"
 
 const PatientAppointmentsPage = ({ user }: { user: User }) => {
     const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "ALL">("ALL")
@@ -29,6 +31,7 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
     const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false)
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
+    const [isViewInvoiceModalOpen, setIsViewInvoiceModalOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
 
     const appointments = usePatientAppointments({
@@ -60,6 +63,11 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
     const handleCancel = (appointment: any) => {
         setSelectedAppointment(appointment)
         setIsCancelModalOpen(true)
+    }
+
+    const handleViewInvoice = (appointment: any) => {
+        setSelectedAppointment(appointment)
+        setIsViewInvoiceModalOpen(true)
     }
 
     const handleRescheduleConfirm = async (appointmentId: string, newDate: Date, newTimeSlot: string) => {
@@ -160,6 +168,7 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
                                 appointment={appointment}
                                 handleCancel={handleCancel}
                                 handleReschedule={handleReschedule}
+                                handleViewInvoice={handleViewInvoice}
                             />
                         ))}
 
@@ -173,7 +182,7 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
                                 <p className="text-gray-600 max-w-md mx-auto">
                                     {statusFilter === "ALL"
                                         ? "You haven't booked any appointments yet. Start by finding a doctor and booking your first appointment."
-                                        : `No ${statusFilter} appointments found. Try changing the filter to see more appointments.`}
+                                        : `No ${getStatusLabel(statusFilter as any)} appointments found. Try changing the filter to see more appointments.`}
                                 </p>
                             </div>
                         )}
@@ -246,6 +255,11 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
                             appointment={selectedAppointment}
                             onConfirm={handleCancelConfirm}
                             isLoading={isLoading}
+                        />
+                        <ViewInvoiceModal
+                            isOpen={isViewInvoiceModalOpen}
+                            onClose={() => setIsViewInvoiceModalOpen(false)}
+                            appointment={selectedAppointment}
                         />
                     </>
                 )}

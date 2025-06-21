@@ -2,7 +2,7 @@
 
 import { FETCH_INTERVAL, FORMAT } from "@/utils/constants";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { format, startOfWeek } from "date-fns";
+import { endOfMonth, format, startOfMonth, startOfWeek } from "date-fns";
 import { KEY_GET_PATIENT_APPOINTMENTS } from "./keys";
 import { FETCH_ALL_PATIENT_APPOINTMENTS } from "@/utils/api-endpoints";
 import { ApiResponse, FetchParams, IPaginatedQuery, IQueryProps } from "@/types/global.type";
@@ -15,8 +15,8 @@ const INTERVAL = FETCH_INTERVAL;
 
 const default_limit = 10;
 const default_filter = "all";
-const default_start_date = startOfWeek(new Date());
-const default_end_date = startOfWeek(new Date());
+const default_start_date = startOfMonth(new Date());
+const default_end_date = endOfMonth(new Date());
 
 const fetchData = async ({
     page = 1,

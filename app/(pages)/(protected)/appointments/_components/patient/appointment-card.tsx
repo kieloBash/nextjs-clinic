@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from '@/components/ui/badge'
-import { Calendar, CheckCircle, Clock, Edit, MoreHorizontal, X } from 'lucide-react'
+import { Calendar, CheckCircle, Clock, DollarSign, Edit, MoreHorizontal, X } from 'lucide-react'
 import { format, isFuture, isToday, isTomorrow } from 'date-fns'
 import { formatDateBaseOnTimeZone_Date } from '@/utils/helpers/date'
 
@@ -13,8 +13,9 @@ interface IProps {
     appointment: any
     handleReschedule: (e: any) => void
     handleCancel: (e: any) => void
+    handleViewInvoice: (e: any) => void
 }
-const AppointmentCard = ({ appointment, handleReschedule, handleCancel }: IProps) => {
+const AppointmentCard = ({ appointment, handleReschedule, handleCancel, handleViewInvoice }: IProps) => {
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -72,6 +73,10 @@ const AppointmentCard = ({ appointment, handleReschedule, handleCancel }: IProps
         return (appointment.status === "CONFIRMED" || appointment.status === "PENDING")
     }
 
+    const canViewInvoice = (appointment: any) => {
+        return (appointment.status === "COMPLETED" || appointment.status === "PENDING_PAYMENT")
+    }
+
     const onHandleReschedule = (appointment: any) => {
         handleReschedule(appointment)
         // setSelectedAppointment(appointment)
@@ -79,7 +84,11 @@ const AppointmentCard = ({ appointment, handleReschedule, handleCancel }: IProps
     }
 
     const onHandleCancel = (appointment: any) => {
-        handleCancel(appointment.id)
+        handleCancel(appointment)
+    }
+
+    const onHandleViewInvoice = (appointment: any) => {
+        handleViewInvoice(appointment)
     }
 
     return (
@@ -129,7 +138,7 @@ const AppointmentCard = ({ appointment, handleReschedule, handleCancel }: IProps
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {(canReschedule(appointment) || canCancel(appointment)) && (
+                        {(canReschedule(appointment) || canCancel(appointment) || canViewInvoice(appointment)) && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="sm" className="h-10 w-10 p-0 hover:bg-gray-100">
@@ -147,6 +156,12 @@ const AppointmentCard = ({ appointment, handleReschedule, handleCancel }: IProps
                                         <DropdownMenuItem onClick={() => onHandleCancel(appointment)} className="text-red-600">
                                             <X className="mr-2 h-4 w-4" />
                                             Cancel
+                                        </DropdownMenuItem>
+                                    )}
+                                    {canViewInvoice(appointment) && (
+                                        <DropdownMenuItem onClick={() => onHandleViewInvoice(appointment)} className="">
+                                            <DollarSign className="mr-2 h-4 w-4" />
+                                            View Invoice
                                         </DropdownMenuItem>
                                     )}
                                 </DropdownMenuContent>
