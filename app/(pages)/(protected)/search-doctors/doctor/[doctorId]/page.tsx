@@ -29,11 +29,11 @@ import { Separator } from "@/components/ui/separator"
 import useDoctor from "../../_hooks/use-doctor"
 import MainLoadingPage from "@/components/globals/main-loading"
 import { formatDateBaseOnTimeZone_Date, getDifferenceTimeSlot } from "@/utils/helpers/date"
-import { TimeSlot, TimeSlotStatus } from "@prisma/client"
+import { QueueStatus, TimeSlot, TimeSlotStatus } from "@prisma/client"
 import { FullTimeSlotType } from "@/types/prisma.type"
 import { useLoading } from "@/components/providers/loading-provider"
 import axios from "axios"
-import { BOOK_APPOINTMENT, LEAVE_QUEUE } from "@/utils/api-endpoints"
+import { ADD_QUEUE, BOOK_APPOINTMENT, LEAVE_QUEUE, UPDATE_QUEUE_STATUS } from "@/utils/api-endpoints"
 import { showToast } from "@/utils/helpers/show-toast"
 import { useQueryClient } from "@tanstack/react-query"
 import { useCurrentUser } from "@/libs/hooks"
@@ -54,8 +54,9 @@ const DoctorDetailsPage = () => {
 
     const queryClient = useQueryClient();
 
-    const patientPosition = useMemo(() => {
-        return queue?.payload?.find((q) => q.patientId === patientInfo?.id)?.position
+    const { position: patientPosition, status: patientStatus, id: currentQueueId } = useMemo(() => {
+        const currentQueue = queue?.payload?.find((q) => q.patientId === patientInfo?.id);
+        return { position: currentQueue?.position, status: currentQueue?.status, id: currentQueue?.id }
     }, [patientInfo, queue])
 
     const doctorDetails = useMemo(() => (doctorInfo.payload), [doctorInfo])
@@ -188,6 +189,37 @@ const DoctorDetailsPage = () => {
         )
     }
 
+    async function handleJoinQueue() {
+        try {
+
+            if (!patientInfo || !doctorDetails) {
+                throw new Error("No Patient and/or Doctor selected!")
+            }
+            setIsLoading(true)
+
+            const body = {
+                patientEmail: patientInfo?.email,
+                doctorId: doctorDetails?.id,
+            }
+
+            const res = await axios.post(ADD_QUEUE, body)
+
+            showToast("success", "Join queue", res.data.message)
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR + "-" + body.doctorId], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
+            ])
+
+            // onClose()
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     async function handleLeaveQueue() {
         try {
 
@@ -203,7 +235,7 @@ const DoctorDetailsPage = () => {
 
             const res = await axios.post(LEAVE_QUEUE, body)
 
-            showToast("success", "Appointment rescheduled", res.data.message)
+            showToast("success", "Leave queue", res.data.message)
 
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR + "-" + body.doctorId], exact: false }),
@@ -215,7 +247,34 @@ const DoctorDetailsPage = () => {
         } catch (error: any) {
             showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
         } finally {
+            setIsLoading(false)
+        }
+    }
+
+    async function handleJoinBackQueue() {
+        try {
+
+            if (!currentQueueId) {
+                throw new Error("No selected queue!")
+            }
+            const body = {
+                queueId: currentQueueId,
+                status: QueueStatus.WAITING
+            }
             setIsLoading(true)
+            const res = await axios.patch(UPDATE_QUEUE_STATUS, body)
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR + "-" + doctorDetails?.id], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_DOCTOR_QUEUES], exact: false }),
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_NOTIFICATIONS], exact: false }),
+            ])
+
+            showToast("success", "Queue returned", res.data.message);
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message);
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -225,6 +284,8 @@ const DoctorDetailsPage = () => {
     if (doctorInfo.isLoading || doctorInfo.isFetching || queue.isLoading) {
         return <MainLoadingPage />
     }
+
+    console.log({ queue, patientPosition })
 
     return (
         <div className="container mx-auto p-6 space-y-6">
@@ -321,9 +382,11 @@ const DoctorDetailsPage = () => {
                     <WaitingLineCard
                         totalInQueue={queue?.payload?.length ?? 0}
                         patientPosition={patientPosition}
+                        patientStatus={patientStatus}
                         isLoading={false}
-                        onJoinQueue={() => { }}
+                        onJoinQueue={handleJoinQueue}
                         onLeaveQueue={handleLeaveQueue}
+                        onJoinBackQueue={handleJoinBackQueue}
                     />
                 </div>
 
