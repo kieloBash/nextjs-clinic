@@ -13,7 +13,6 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { RescheduleModal } from "./reschedule-modal"
 import { CancelModal } from "./cancel-modal"
 import StatsCards from "./stats-cards"
 import AppointmentCard from "./appointment-card"
@@ -23,6 +22,7 @@ import { getStatusLabel } from "@/libs/appointment"
 import MainLoadingPage from "@/components/globals/main-loading"
 import { InvoiceDetailsModal } from "./invoice-details"
 import { ViewInvoiceModal } from "./view-invoice-modal"
+import RescheduleAppointmentModal from "./reschedule-modal"
 
 const PatientAppointmentsPage = ({ user }: { user: User }) => {
     const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "ALL">("ALL")
@@ -242,13 +242,18 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
                 {/* Modals */}
                 {selectedAppointment && (
                     <>
-                        <RescheduleModal
+                        <RescheduleAppointmentModal
+                            isOpen={isRescheduleModalOpen}
+                            onClose={() => setIsRescheduleModalOpen(false)}
+                            appointment={selectedAppointment}
+                        />
+                        {/* <RescheduleModal
                             isOpen={isRescheduleModalOpen}
                             onClose={() => setIsRescheduleModalOpen(false)}
                             appointment={selectedAppointment}
                             onConfirm={handleRescheduleConfirm}
                             isLoading={isLoading}
-                        />
+                        /> */}
                         <CancelModal
                             isOpen={isCancelModalOpen}
                             onClose={() => setIsCancelModalOpen(false)}

@@ -15,6 +15,7 @@ export const CONFIRM_PAYMENT_APPOINTMENT = "/api/appointment/confirm-payment"
 export const CONFIRM_APPOINTMENT = "/api/appointment/confirm-appointment"
 export const CANCEL_PAYMENT_APPOINTMENT = "/api/appointment/cancel"
 export const RESCHEDULE_APPOINTMENT = "/api/appointment/reschedule"
+export const RESCHEDULE_APPOINTMENT_PATIENT = "/api/appointment/patient/reschedule"
 
 export const FETCH_ALL_DOCTOR_INVOICES = "/api/invoice/doctor/fetch-all"
 export const FETCH_ALL_NOTIFICATIONS = "/api/notification/fetch-all"
