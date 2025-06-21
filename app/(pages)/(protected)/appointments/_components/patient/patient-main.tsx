@@ -25,6 +25,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { RescheduleModal } from "./reschedule-modal"
 import { CancelModal } from "./cancel-modal"
 import StatsCards from "./stats-cards"
+import AppointmentCard from "./appointment-card"
+import usePatientAppointments from "../../_hooks/use-appointments-patient"
+import { AppointmentStatus } from "@prisma/client"
+import { getStatusLabel } from "@/libs/appointment"
+import MainLoadingPage from "@/components/globals/main-loading"
 
 // Mock appointment data based on your Prisma schema
 const mockAppointments = [
@@ -199,7 +204,7 @@ const mockAppointments = [
 ]
 
 const PatientAppointmentsPage = ({ user }: { user: User }) => {
-    const [statusFilter, setStatusFilter] = useState("all")
+    const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "ALL">("ALL")
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage] = useState(5)
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
@@ -207,13 +212,13 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
 
+    const appointments = usePatientAppointments({ patientId: user?.id, statusFilter });
+    console.log({ appointments })
+
     // Filter appointments based on status
     const filteredAppointments = useMemo(() => {
-        return mockAppointments.filter((appointment) => {
-            if (statusFilter === "all") return true
-            return appointment.status.toLowerCase() === statusFilter.toLowerCase()
-        })
-    }, [statusFilter])
+        return appointments?.payload ?? []
+    }, [appointments])
 
     // Pagination logic
     const paginatedAppointments = useMemo(() => {
@@ -225,58 +230,9 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
     const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage)
 
     // Reset to first page when filter changes
-    const handleStatusFilterChange = (value: string) => {
+    const handleStatusFilterChange = (value: any) => {
         setStatusFilter(value)
         setCurrentPage(1)
-    }
-
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case "CONFIRMED":
-                return (
-                    <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Confirmed
-                    </Badge>
-                )
-            case "PENDING":
-                return (
-                    <Badge className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50">
-                        <Clock className="w-3 h-3 mr-1" />
-                        Pending
-                    </Badge>
-                )
-            case "COMPLETED":
-                return (
-                    <Badge className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Completed
-                    </Badge>
-                )
-            case "CANCELLED":
-                return (
-                    <Badge className="bg-red-50 text-red-700 border-red-200 hover:bg-red-50">
-                        <X className="w-3 h-3 mr-1" />
-                        Cancelled
-                    </Badge>
-                )
-            default:
-                return <Badge variant="secondary">{status}</Badge>
-        }
-    }
-
-    const getDateLabel = (date: Date) => {
-        if (isToday(date)) return "Today"
-        if (isTomorrow(date)) return "Tomorrow"
-        return format(date, "EEEE, MMM dd")
-    }
-
-    const canReschedule = (appointment: any) => {
-        return (appointment.status === "CONFIRMED" || appointment.status === "PENDING") && isFuture(appointment.date)
-    }
-
-    const canCancel = (appointment: any) => {
-        return (appointment.status === "CONFIRMED" || appointment.status === "PENDING") && isFuture(appointment.date)
     }
 
     const handleReschedule = (appointment: any) => {
@@ -322,6 +278,10 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
         window.scrollTo({ top: 0, behavior: "smooth" })
     }
 
+    if (appointments.isLoading || appointments.isFetching) {
+        return <MainLoadingPage />
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
             <div className="container mx-auto p-6 space-y-8">
@@ -358,11 +318,13 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
                                         <SelectValue placeholder="Filter by status" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">All Status</SelectItem>
-                                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="ALL">All Status</SelectItem>
+                                        {Object.keys(AppointmentStatus).map((status) => (
+                                            <SelectItem key={status} value={status}>{getStatusLabel(status as any)}</SelectItem>
+                                        ))}
+                                        {/* <SelectItem value="pending">Pending</SelectItem>
                                         <SelectItem value="completed">Completed</SelectItem>
-                                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                                        <SelectItem value="cancelled">Cancelled</SelectItem> */}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -371,80 +333,12 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
                     <CardContent className="space-y-4">
                         {/* Appointments List */}
                         {paginatedAppointments.map((appointment) => (
-                            <Card
+                            <AppointmentCard
                                 key={appointment.id}
-                                className="border border-gray-100 hover:shadow-lg transition-all duration-200 bg-white"
-                            >
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-4 flex-1">
-                                            <div className="relative">
-                                                <Avatar className="h-14 w-14 ring-2 ring-gray-100">
-                                                    <AvatarImage src={appointment.doctor.avatar || "/placeholder.svg"} />
-                                                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold">
-                                                        {appointment.doctor.name
-                                                            .split(" ")
-                                                            .map((n) => n[0])
-                                                            .join("")}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
-                                            </div>
-
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <h3 className="font-bold text-lg text-gray-900">{appointment.doctor.name}</h3>
-                                                    {getStatusBadge(appointment.status)}
-                                                </div>
-                                                <p className="text-gray-600 font-medium mb-3">{appointment.doctor.specialization}</p>
-
-                                                <div className="flex items-center gap-6 text-sm">
-                                                    <div className="flex items-center gap-2 text-gray-700">
-                                                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                            <Calendar className="w-4 h-4 text-blue-600" />
-                                                        </div>
-                                                        <span className="font-medium">{getDateLabel(appointment.date)}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 text-gray-700">
-                                                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                                            <Clock className="w-4 h-4 text-purple-600" />
-                                                        </div>
-                                                        <span className="font-medium">
-                                                            {appointment.timeSlot.startTime} - {appointment.timeSlot.endTime}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            {(canReschedule(appointment) || canCancel(appointment)) && (
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="sm" className="h-10 w-10 p-0 hover:bg-gray-100">
-                                                            <MoreHorizontal className="h-5 w-5" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-48">
-                                                        {canReschedule(appointment) && (
-                                                            <DropdownMenuItem onClick={() => handleReschedule(appointment)} className="text-blue-600">
-                                                                <Edit className="mr-2 h-4 w-4" />
-                                                                Reschedule
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                        {canCancel(appointment) && (
-                                                            <DropdownMenuItem onClick={() => handleCancel(appointment)} className="text-red-600">
-                                                                <X className="mr-2 h-4 w-4" />
-                                                                Cancel
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            )}
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                appointment={appointment}
+                                handleCancel={handleCancel}
+                                handleReschedule={handleReschedule}
+                            />
                         ))}
 
                         {/* Empty State */}
@@ -455,7 +349,7 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
                                 </div>
                                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No appointments found</h3>
                                 <p className="text-gray-600 max-w-md mx-auto">
-                                    {statusFilter === "all"
+                                    {statusFilter === "ALL"
                                         ? "You haven't booked any appointments yet. Start by finding a doctor and booking your first appointment."
                                         : `No ${statusFilter} appointments found. Try changing the filter to see more appointments.`}
                                 </p>

@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from '@/components/ui/badge'
 import { Calendar, CheckCircle, Clock, Edit, MoreHorizontal, X } from 'lucide-react'
 import { format, isFuture, isToday, isTomorrow } from 'date-fns'
+import { formatDateBaseOnTimeZone_Date } from '@/utils/helpers/date'
 
 interface IProps {
     appointment: any
@@ -45,6 +46,13 @@ const AppointmentCard = ({ appointment, handleReschedule, handleCancel }: IProps
                         Cancelled
                     </Badge>
                 )
+            case "RESCHEDULED":
+                return (
+                    <Badge className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-50">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        Rescheduled
+                    </Badge>
+                )
             default:
                 return <Badge variant="secondary">{status}</Badge>
         }
@@ -57,11 +65,11 @@ const AppointmentCard = ({ appointment, handleReschedule, handleCancel }: IProps
     }
 
     const canReschedule = (appointment: any) => {
-        return (appointment.status === "CONFIRMED" || appointment.status === "PENDING") && isFuture(appointment.date)
+        return (appointment.status === "CONFIRMED" || appointment.status === "PENDING")
     }
 
     const canCancel = (appointment: any) => {
-        return (appointment.status === "CONFIRMED" || appointment.status === "PENDING") && isFuture(appointment.date)
+        return (appointment.status === "CONFIRMED" || appointment.status === "PENDING")
     }
 
     const onHandleReschedule = (appointment: any) => {
@@ -92,7 +100,6 @@ const AppointmentCard = ({ appointment, handleReschedule, handleCancel }: IProps
                                         .join("")}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
                         </div>
 
                         <div className="flex-1 min-w-0">
@@ -100,7 +107,7 @@ const AppointmentCard = ({ appointment, handleReschedule, handleCancel }: IProps
                                 <h3 className="font-bold text-lg text-gray-900">{appointment.doctor.name}</h3>
                                 {getStatusBadge(appointment.status)}
                             </div>
-                            <p className="text-gray-600 font-medium mb-3">{appointment.doctor.specialization}</p>
+                            {/* <p className="text-gray-600 font-medium mb-3">{appointment.doctor.specialization}</p> */}
 
                             <div className="flex items-center gap-6 text-sm">
                                 <div className="flex items-center gap-2 text-gray-700">
@@ -114,7 +121,7 @@ const AppointmentCard = ({ appointment, handleReschedule, handleCancel }: IProps
                                         <Clock className="w-4 h-4 text-purple-600" />
                                     </div>
                                     <span className="font-medium">
-                                        {appointment.timeSlot.startTime} - {appointment.timeSlot.endTime}
+                                        {formatDateBaseOnTimeZone_Date(appointment.timeSlot.startTime).displayTime} - {formatDateBaseOnTimeZone_Date(appointment.timeSlot.endTime).displayTime}
                                     </span>
                                 </div>
                             </div>
