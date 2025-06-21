@@ -2,14 +2,8 @@
 
 import { useState, useMemo } from "react"
 import type { User } from "next-auth"
-import { format, isToday, isTomorrow, isFuture } from "date-fns"
 import {
     Calendar,
-    Clock,
-    MoreHorizontal,
-    Edit,
-    X,
-    CheckCircle,
     Loader2,
     ChevronLeft,
     ChevronRight,
@@ -17,11 +11,8 @@ import {
 } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { RescheduleModal } from "./reschedule-modal"
 import { CancelModal } from "./cancel-modal"
 import StatsCards from "./stats-cards"
@@ -30,178 +21,6 @@ import usePatientAppointments from "../../_hooks/use-appointments-patient"
 import { AppointmentStatus } from "@prisma/client"
 import { getStatusLabel } from "@/libs/appointment"
 import MainLoadingPage from "@/components/globals/main-loading"
-
-// Mock appointment data based on your Prisma schema
-const mockAppointments = [
-    {
-        id: "apt-001",
-        patientId: "patient-123",
-        doctorId: "doctor-456",
-        date: new Date("2024-01-16T14:00:00"),
-        status: "CONFIRMED",
-        timeSlotId: "slot-001",
-        createdAt: new Date("2024-01-10T10:00:00"),
-        updatedAt: new Date("2024-01-10T10:00:00"),
-        doctor: {
-            id: "doctor-456",
-            name: "Dr. Sarah Johnson",
-            specialization: "Cardiologist",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        timeSlot: {
-            id: "slot-001",
-            startTime: "14:00",
-            endTime: "14:30",
-        },
-    },
-    {
-        id: "apt-002",
-        patientId: "patient-123",
-        doctorId: "doctor-789",
-        date: new Date("2024-01-18T10:30:00"),
-        status: "PENDING",
-        timeSlotId: "slot-002",
-        createdAt: new Date("2024-01-12T15:30:00"),
-        updatedAt: new Date("2024-01-12T15:30:00"),
-        doctor: {
-            id: "doctor-789",
-            name: "Dr. Michael Chen",
-            specialization: "Dermatologist",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        timeSlot: {
-            id: "slot-002",
-            startTime: "10:30",
-            endTime: "11:00",
-        },
-    },
-    {
-        id: "apt-003",
-        patientId: "patient-123",
-        doctorId: "doctor-321",
-        date: new Date("2024-01-12T16:00:00"),
-        status: "COMPLETED",
-        timeSlotId: "slot-003",
-        createdAt: new Date("2024-01-08T09:00:00"),
-        updatedAt: new Date("2024-01-12T16:30:00"),
-        doctor: {
-            id: "doctor-321",
-            name: "Dr. Emily Rodriguez",
-            specialization: "General Practitioner",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        timeSlot: {
-            id: "slot-003",
-            startTime: "16:00",
-            endTime: "16:30",
-        },
-    },
-    {
-        id: "apt-004",
-        patientId: "patient-123",
-        doctorId: "doctor-654",
-        date: new Date("2024-01-20T09:00:00"),
-        status: "CANCELLED",
-        timeSlotId: "slot-004",
-        createdAt: new Date("2024-01-13T11:00:00"),
-        updatedAt: new Date("2024-01-14T14:00:00"),
-        doctor: {
-            id: "doctor-654",
-            name: "Dr. David Wilson",
-            specialization: "Orthopedic Surgeon",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        timeSlot: {
-            id: "slot-004",
-            startTime: "09:00",
-            endTime: "09:30",
-        },
-    },
-    {
-        id: "apt-005",
-        patientId: "patient-123",
-        doctorId: "doctor-987",
-        date: new Date("2024-01-25T11:15:00"),
-        status: "CONFIRMED",
-        timeSlotId: "slot-005",
-        createdAt: new Date("2024-01-14T16:00:00"),
-        updatedAt: new Date("2024-01-14T16:00:00"),
-        doctor: {
-            id: "doctor-987",
-            name: "Dr. Lisa Thompson",
-            specialization: "Pediatrician",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        timeSlot: {
-            id: "slot-005",
-            startTime: "11:15",
-            endTime: "11:45",
-        },
-    },
-    {
-        id: "apt-006",
-        patientId: "patient-123",
-        doctorId: "doctor-111",
-        date: new Date("2024-01-28T15:00:00"),
-        status: "CONFIRMED",
-        timeSlotId: "slot-006",
-        createdAt: new Date("2024-01-15T10:00:00"),
-        updatedAt: new Date("2024-01-15T10:00:00"),
-        doctor: {
-            id: "doctor-111",
-            name: "Dr. Robert Brown",
-            specialization: "Neurologist",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        timeSlot: {
-            id: "slot-006",
-            startTime: "15:00",
-            endTime: "15:30",
-        },
-    },
-    {
-        id: "apt-007",
-        patientId: "patient-123",
-        doctorId: "doctor-222",
-        date: new Date("2024-01-30T08:30:00"),
-        status: "PENDING",
-        timeSlotId: "slot-007",
-        createdAt: new Date("2024-01-16T14:00:00"),
-        updatedAt: new Date("2024-01-16T14:00:00"),
-        doctor: {
-            id: "doctor-222",
-            name: "Dr. Amanda White",
-            specialization: "Psychiatrist",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        timeSlot: {
-            id: "slot-007",
-            startTime: "08:30",
-            endTime: "09:00",
-        },
-    },
-    {
-        id: "apt-008",
-        patientId: "patient-123",
-        doctorId: "doctor-333",
-        date: new Date("2024-01-05T13:45:00"),
-        status: "COMPLETED",
-        timeSlotId: "slot-008",
-        createdAt: new Date("2024-01-01T12:00:00"),
-        updatedAt: new Date("2024-01-05T14:15:00"),
-        doctor: {
-            id: "doctor-333",
-            name: "Dr. James Miller",
-            specialization: "Ophthalmologist",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        timeSlot: {
-            id: "slot-008",
-            startTime: "13:45",
-            endTime: "14:15",
-        },
-    },
-]
 
 const PatientAppointmentsPage = ({ user }: { user: User }) => {
     const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "ALL">("ALL")
@@ -212,22 +31,20 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
 
-    const appointments = usePatientAppointments({ patientId: user?.id, statusFilter });
-    console.log({ appointments })
+    const appointments = usePatientAppointments({
+        patientId: user?.id, statusFilter, page: currentPage, limit: itemsPerPage
+    });
 
     // Filter appointments based on status
-    const filteredAppointments = useMemo(() => {
-        return appointments?.payload ?? []
+    const { data: filteredAppointments, pagination, summary } = useMemo(() => {
+        return {
+            summary: appointments?.payload?.data?.statusSummary,
+            data: appointments?.payload?.data?.appointments ?? [],
+            pagination: appointments?.payload?.pagination
+        }
     }, [appointments])
 
-    // Pagination logic
-    const paginatedAppointments = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage
-        const endIndex = startIndex + itemsPerPage
-        return filteredAppointments.slice(startIndex, endIndex)
-    }, [filteredAppointments, currentPage, itemsPerPage])
-
-    const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage)
+    const totalPages = pagination?.totalPages ?? 0
 
     // Reset to first page when filter changes
     const handleStatusFilterChange = (value: any) => {
@@ -299,7 +116,12 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
                 </div>
 
                 {/* Stats Cards */}
-                <StatsCards data={[]} />
+                <StatsCards
+                    total={summary?.total ?? 0}
+                    upcoming={summary?.pending_or_confirmed ?? 0}
+                    completed={summary?.completed ?? 0}
+                    cancelled={summary?.cancelled ?? 0}
+                />
 
                 {/* Filter and Results */}
                 <Card className="border-0 bg-white/80 backdrop-blur-sm">
@@ -308,7 +130,7 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
                             <div>
                                 <CardTitle className="text-2xl font-bold text-gray-900">All Appointments</CardTitle>
                                 <CardDescription className="text-gray-600">
-                                    Showing {paginatedAppointments.length} of {filteredAppointments.length} appointments
+                                    Showing {filteredAppointments.length} of {pagination?.totalItems ?? 0} appointments
                                 </CardDescription>
                             </div>
                             <div className="flex items-center gap-3">
@@ -332,7 +154,7 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {/* Appointments List */}
-                        {paginatedAppointments.map((appointment) => (
+                        {filteredAppointments.map((appointment) => (
                             <AppointmentCard
                                 key={appointment.id}
                                 appointment={appointment}
@@ -342,7 +164,7 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
                         ))}
 
                         {/* Empty State */}
-                        {paginatedAppointments.length === 0 && (
+                        {filteredAppointments.length === 0 && (
                             <div className="text-center py-16">
                                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <Calendar className="w-12 h-12 text-gray-400" />
@@ -360,15 +182,9 @@ const PatientAppointmentsPage = ({ user }: { user: User }) => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-                        <CardContent className="pt-6">
-                            <div className="flex items-center justify-between">
-                                <div className="text-sm text-gray-600">
-                                    Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                                    {Math.min(currentPage * itemsPerPage, filteredAppointments.length)} of {filteredAppointments.length}{" "}
-                                    appointments
-                                </div>
-
+                    <Card className="bg-white/80 backdrop-blur-sm">
+                        <CardContent className="">
+                            <div className="flex items-center justify-end">
                                 <div className="flex items-center gap-2">
                                     <Button
                                         variant="outline"

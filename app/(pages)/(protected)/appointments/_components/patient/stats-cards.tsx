@@ -3,28 +3,14 @@ import { isFuture } from 'date-fns'
 import { Calendar, CheckCircle, Clock, X } from 'lucide-react'
 import React, { useMemo } from 'react'
 
-const StatsCards = ({ data }: { data: any[] }) => {
+interface IProps {
+    total: number;
+    upcoming: number;
+    completed: number;
+    cancelled: number;
 
-    const appointmentStats = useMemo(() => {
-        const stats = {
-            total: data.length,
-            upcoming: 0,
-            completed: 0,
-            cancelled: 0,
-        }
-
-        data.forEach((appointment) => {
-            if (appointment.status === "COMPLETED") {
-                stats.completed++
-            } else if (appointment.status === "CANCELLED") {
-                stats.cancelled++
-            } else if (isFuture(appointment.date)) {
-                stats.upcoming++
-            }
-        })
-
-        return stats
-    }, [data])
+}
+const StatsCards = (appointmentStats: IProps) => {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

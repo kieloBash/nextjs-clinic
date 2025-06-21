@@ -10,8 +10,17 @@ export async function GET(request: Request) {
     const patientId = searchParams.get("patientId") || "";
     const statusFilter = searchParams.get("statusFilter") || "ALL";
 
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
+
+    if (page < 1 || limit < 1) {
+        return NextResponse.json({ message: "Invalid pagination" }, { status: 400 });
+    }
+
+    const skip = (page - 1) * limit;
 
     const isOnlyOneDateProvided =
         (!!startDateParam && !endDateParam) || (!startDateParam && !!endDateParam);
@@ -61,6 +70,8 @@ export async function GET(request: Request) {
         }
 
         const appointments = await prisma.appointment.findMany({
+            skip,
+            take: limit,
             where: {
                 patientId,
                 ...filters,
@@ -71,7 +82,48 @@ export async function GET(request: Request) {
             ]
         })
 
-        return new NextResponse(JSON.stringify({ message: "Fetched appointments of patient", payload: appointments }), { status: 200 })
+        const groupedCounts = await prisma.appointment.groupBy({
+            by: ['status'],
+            where: {
+                patientId,
+                ...(startDateParam && endDateParam && {
+                    date: {
+                        gte: startOfDay(new Date(startDateParam)),
+                        lte: endOfDay(new Date(endDateParam)),
+                    },
+                }),
+            },
+            _count: true,
+        });
+
+        const statusSummary = {
+            total: groupedCounts.reduce((sum, group) => sum + group._count, 0),
+            completed: groupedCounts.find(g => g.status === 'COMPLETED')?._count || 0,
+            cancelled: groupedCounts.find(g => g.status === 'CANCELLED')?._count || 0,
+            pending_or_confirmed:
+                (groupedCounts.find(g => g.status === 'PENDING')?._count || 0) +
+                (groupedCounts.find(g => g.status === 'CONFIRMED')?._count || 0),
+        };
+
+        const totalItems = await prisma.appointment.count({
+            where: {
+                patientId,
+                ...filters,
+            }
+        })
+
+        return new NextResponse(JSON.stringify({
+            message: "Fetched appointments of patient",
+            payload: {
+                data: { appointments, statusSummary },
+                pagination: {
+                    page,
+                    limit,
+                    totalPages: Math.ceil(totalItems / limit),
+                    totalItems,
+                }
+            }
+        }), { status: 200 })
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
             return new NextResponse(

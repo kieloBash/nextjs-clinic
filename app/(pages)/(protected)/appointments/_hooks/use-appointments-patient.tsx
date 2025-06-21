@@ -5,7 +5,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { format, startOfWeek } from "date-fns";
 import { KEY_GET_PATIENT_APPOINTMENTS } from "./keys";
 import { FETCH_ALL_PATIENT_APPOINTMENTS } from "@/utils/api-endpoints";
-import { ApiResponse, FetchParams, IQueryProps } from "@/types/global.type";
+import { ApiResponse, FetchParams, IPaginatedQuery, IQueryProps } from "@/types/global.type";
 import { AppointmentStatus } from "@prisma/client"
 import { FullAppointmentType } from "@/types/prisma.type";
 
@@ -40,11 +40,20 @@ const fetchData = async ({
 
 type IProps = IQueryProps & { patientId?: string, statusFilter?: AppointmentStatus | "ALL" }
 
+type IQueryResponse = IPaginatedQuery<{
+    appointments: FullAppointmentType[], statusSummary: {
+        total: number;
+        completed: number;
+        cancelled: number;
+        pending_or_confirmed: number;
+    }
+}>;
+
 const usePatientAppointments = (
     { patientId, page = 1, limit = default_limit, filter = default_filter, searchTerm = "", select, startDate = default_start_date, endDate = default_end_date, statusFilter = "ALL" }: IProps
 ) => {
 
-    const { data, error, isLoading, isFetching, isError } = useQuery<ApiResponse<FullAppointmentType[]>>({
+    const { data, error, isLoading, isFetching, isError } = useQuery<ApiResponse<IQueryResponse>>({
         queryKey: [KEY, patientId, page, limit, filter, searchTerm, format(startDate, FORMAT), format(endDate, FORMAT), statusFilter],
         queryFn: () =>
             fetchData({ page, limit, filter, searchTerm, startDate, endDate, patientId, statusFilter }),
