@@ -159,12 +159,6 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                         </h1>
                         <p className="text-slate-600 text-lg">Track your practice performance and insights</p>
                     </div>
-                    <Badge
-                        variant="secondary"
-                        className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 px-4 py-2 text-sm font-medium"
-                    >
-                        Live Data
-                    </Badge>
                 </div>
 
                 {/* Summary Cards */}
