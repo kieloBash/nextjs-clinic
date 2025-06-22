@@ -3,8 +3,6 @@ import { useCurrentUser } from '@/libs/hooks';
 import React from 'react'
 import DoctorMainPage from './_components/doctor-main';
 import PatientMainPage from './_components/patient.main';
-import DoctorLayout from '@/components/globals/doctor-layout';
-import PatientLayout from '@/components/globals/patient-layout';
 
 const DashboardPage = () => {
     const user = useCurrentUser();
