@@ -145,8 +145,6 @@ const DoctorDetailsPage = () => {
     const renderTimeSlotGroup = (title: string, slots: TimeSlot[], icon: React.ReactNode) => {
         if (slots.length === 0) return null
 
-
-
         return (
             <div className="space-y-3">
                 <div className="flex items-center gap-2">
@@ -414,14 +412,14 @@ const DoctorDetailsPage = () => {
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="font-medium">Select Date</h3>
-                                    <div className="flex items-center gap-2">
+                                    {/* <div className="flex items-center gap-2">
                                         <Button variant="outline" size="sm" onClick={handlePreviousWeek}>
                                             <ChevronLeft className="w-4 h-4" />
                                         </Button>
                                         <Button variant="outline" size="sm" onClick={handleNextWeek}>
                                             <ChevronRight className="w-4 h-4" />
                                         </Button>
-                                    </div>
+                                    </div> */}
                                 </div>
 
                                 <div className="grid grid-cols-7 gap-2">
