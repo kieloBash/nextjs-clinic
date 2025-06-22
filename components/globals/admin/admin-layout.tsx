@@ -21,24 +21,24 @@ const AdminLayout = ({ children, user }: ILayout & { user: User }) => {
                 icon: Home,
                 isActive: pathname.includes("/dashboard"),
             },
-            {
-                title: "User Managemnt",
-                url: "/users",
-                icon: Users,
-                isActive: pathname.includes("/users"),
-            },
-            {
-                title: "Reports",
-                url: "/reports",
-                icon: NotebookPenIcon,
-                isActive: pathname.includes("/reports"),
-            },
-            {
-                title: "Audit Logs",
-                url: "/logs",
-                icon: MessageSquare,
-                isActive: pathname.includes("/logs"),
-            },
+            // {
+            //     title: "User Managemnt",
+            //     url: "/users",
+            //     icon: Users,
+            //     isActive: pathname.includes("/users"),
+            // },
+            // {
+            //     title: "Reports",
+            //     url: "/reports",
+            //     icon: NotebookPenIcon,
+            //     isActive: pathname.includes("/reports"),
+            // },
+            // {
+            //     title: "Audit Logs",
+            //     url: "/logs",
+            //     icon: MessageSquare,
+            //     isActive: pathname.includes("/logs"),
+            // },
             {
                 title: "Settings",
                 url: "/settings",

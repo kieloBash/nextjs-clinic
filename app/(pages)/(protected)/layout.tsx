@@ -24,7 +24,7 @@ const Layout = async ({ children }: ILayout) => {
                     {children}
                 </PatientLayout>
             )
-        } else if (user.role === "HEAD_ADMIN") {
+        } else if (user.role === "HEAD_ADMIN" || user.role === "IT_ADMIN") {
             return (
                 <AdminLayout user={user}>
                     {children}
