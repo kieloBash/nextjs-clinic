@@ -1,11 +1,13 @@
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp } from 'lucide-react'
+import { FullAppointmentType } from '@/types/prisma.type'
+import { InvoiceStatus } from '@prisma/client'
 
 interface IProps {
     totalSpent: number
     totalAppointments: number
-    appointments: any[]
+    appointments: FullAppointmentType[]
 }
 const FinancialOverviewCard = ({ appointments, ...analytics }: IProps) => {
     return (
@@ -30,9 +32,9 @@ const FinancialOverviewCard = ({ appointments, ...analytics }: IProps) => {
                             {(
                                 analytics.totalSpent -
                                 appointments
-                                    .filter((apt) => !apt.invoicePaid)
-                                    .reduce((sum, apt) => sum + apt.amount, 0)
-                            ).toFixed(2)}
+                                    .filter((apt) => apt?.invoice?.status === InvoiceStatus.PAID)
+                                    .reduce((sum, apt) => sum + (apt.invoice?.amount ?? 0), 0)
+                            ).toLocaleString()}
                         </div>
                         <p className="text-sm font-medium text-green-800">Amount Paid</p>
                         <p className="text-xs text-green-600 mt-1">Successfully processed</p>
@@ -41,16 +43,16 @@ const FinancialOverviewCard = ({ appointments, ...analytics }: IProps) => {
                         <div className="text-3xl font-bold text-red-600 mb-2">
                             $
                             {appointments
-                                .filter((apt) => !apt.invoicePaid)
-                                .reduce((sum, apt) => sum + apt.amount, 0)
-                                .toFixed(2)}
+                                .filter((apt) => apt?.invoice?.status === InvoiceStatus.PENDING)
+                                .reduce((sum, apt) => sum + (apt.invoice?.amount ?? 0), 0)
+                                .toLocaleString()}
                         </div>
                         <p className="text-sm font-medium text-red-800">Outstanding Balance</p>
                         <p className="text-xs text-red-600 mt-1">Requires payment</p>
                     </div>
                     <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
                         <div className="text-3xl font-bold text-blue-600 mb-2">
-                            ${(analytics.totalSpent / analytics.totalAppointments).toFixed(2)}
+                            ${(analytics.totalSpent / analytics.totalAppointments).toLocaleString()}
                         </div>
                         <p className="text-sm font-medium text-blue-800">Average per Visit</p>
                         <p className="text-xs text-blue-600 mt-1">Cost efficiency</p>

@@ -4,7 +4,7 @@ import { FETCH_INTERVAL, FORMAT } from "@/utils/constants";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { FETCH_ANALYTICS_PATIENT } from "@/utils/api-endpoints";
-import { ApiResponse, DoctorAnalyticsPayload, FetchParams, IQueryProps } from "@/types/global.type";
+import { ApiResponse, DoctorAnalyticsPayload, FetchParams, IQueryProps, PatientAnalyticsPayload } from "@/types/global.type";
 import { TimeSlotStatus } from "@prisma/client"
 import { KEY_GET_ANALYTICS } from "./keys";
 
@@ -27,7 +27,7 @@ const fetchData = async ({
     endDate = default_end_date,
     userId,
     statusFilter
-}: FetchParams & { userId?: string, statusFilter: TimeSlotStatus | "ALL" }): Promise<ApiResponse<DoctorAnalyticsPayload>> => {
+}: FetchParams & { userId?: string, statusFilter: TimeSlotStatus | "ALL" }): Promise<ApiResponse<PatientAnalyticsPayload>> => {
     const response = await fetch(
         `${ROUTE}?page=${page}&limit=${limit}&filter=${filter}&searchTerm=${searchTerm}&startDate=${format(startDate, FORMAT)}&endDate=${format(endDate, FORMAT)}&userId=${userId}&statusFilter=${statusFilter}`
     );
@@ -43,7 +43,7 @@ const usePatientAnalytics = (
     { userId, page = 1, limit = default_limit, filter = default_filter, searchTerm = "", select, startDate = default_start_date, endDate = default_end_date, statusFilter = "ALL" }: IProps
 ) => {
 
-    const { data, error, isLoading, isFetching, isError } = useQuery<ApiResponse<DoctorAnalyticsPayload>>({
+    const { data, error, isLoading, isFetching, isError } = useQuery<ApiResponse<PatientAnalyticsPayload>>({
         queryKey: [KEY, userId, page, limit, filter, searchTerm, format(startDate, FORMAT), format(endDate, FORMAT), statusFilter],
         queryFn: () =>
             fetchData({ page, limit, filter, searchTerm, startDate, endDate, userId, statusFilter }),

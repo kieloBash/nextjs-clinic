@@ -5,11 +5,22 @@ import { ArrowRight, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { FullAppointmentType } from '@/types/prisma.type'
+import { format, isToday, isTomorrow } from 'date-fns'
+import { formatDateBaseOnTimeZone_Date } from '@/utils/helpers/date'
+import { getStatusLabel } from '@/libs/appointment'
 
 interface IProps {
-    appointments: any[]
+    appointments: FullAppointmentType[]
 }
 const UpcomingAppointmentCard = ({ appointments }: IProps) => {
+
+    const getDateLabel = (date: Date) => {
+        if (isToday(date)) return "Today"
+        if (isTomorrow(date)) return "Tomorrow"
+        return format(date, "EEEE, MMM dd")
+    }
+
     return (
         <Card className="relative overflow-hidden border-0 shadow-xl bg-white/80 backdrop-blur-sm">
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-emerald-600/10 rounded-full -translate-y-16 translate-x-16"></div>
@@ -31,31 +42,35 @@ const UpcomingAppointmentCard = ({ appointments }: IProps) => {
             </CardHeader>
             <CardContent className="relative z-10">
                 <div className="space-y-3">
-                    {appointments.slice(0, 2).map((appointment) => (
+                    {appointments.slice(0, 3).map((appointment) => (
                         <div
                             key={appointment.id}
                             className="flex items-center space-x-4 p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl border border-slate-200/50"
                         >
                             <Avatar className="h-12 w-12 ring-2 ring-white shadow-md">
-                                <AvatarImage src={appointment.avatar || "/placeholder.svg"} />
+                                <AvatarImage src={appointment?.doctor?.image || ""} />
                                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold">
-                                    {appointment.doctorName
+                                    {appointment.doctor.name
                                         .split(" ")
                                         .map((n: any) => n[1])
                                         .join("")}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-slate-900">{appointment.doctorName}</p>
-                                <p className="text-sm text-slate-600">{appointment.specialty}</p>
+                                <div className="flex gap-2 mb-1">
+                                    <p className="font-semibold text-slate-900">{appointment.doctor.name}</p>
+                                    <Badge>{getStatusLabel(appointment.status)}
+                                    </Badge>
+                                </div>
+                                {/* <p className="text-sm text-slate-600">{appointment.specialty}</p> */}
                                 <p className="text-xs text-slate-500">
-                                    {appointment.date.toLocaleDateString()} at{" "}
-                                    {appointment.date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                    {getDateLabel(appointment.date)} at                                         {formatDateBaseOnTimeZone_Date(appointment.timeSlot.startTime).displayTime} - {formatDateBaseOnTimeZone_Date(appointment.timeSlot.endTime).displayTime}
+
                                 </p>
                             </div>
-                            <Badge variant="outline" className="bg-white/50 border-slate-300">
+                            {/* <Badge variant="outline" className="bg-white/50 border-slate-300">
                                 {appointment.type}
-                            </Badge>
+                            </Badge> */}
                         </div>
                     ))}
                 </div>

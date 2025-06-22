@@ -19,7 +19,7 @@ const SummaryCards = (analytics: IProps) => {
                     </div>
                 </CardHeader>
                 <CardContent className="relative z-10">
-                    <div className="text-4xl font-bold">${analytics.totalSpent.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">${analytics.totalSpent.toFixed(2)}</div>
                     <p className="text-xs text-blue-100">All time medical expenses</p>
                 </CardContent>
             </Card>
@@ -34,7 +34,7 @@ const SummaryCards = (analytics: IProps) => {
                     </div>
                 </CardHeader>
                 <CardContent className="relative z-10">
-                    <div className="text-4xl font-bold">{analytics.totalAppointments}</div>
+                    <div className="text-2xl font-bold">{analytics.totalAppointments}</div>
                     <p className="text-xs text-emerald-100">Completed visits</p>
                 </CardContent>
             </Card>

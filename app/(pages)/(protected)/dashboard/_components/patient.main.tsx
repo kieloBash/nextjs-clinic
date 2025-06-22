@@ -25,158 +25,30 @@ import PatientCTA from "./patient/cta"
 import SummaryCards from "./patient/summary-cards"
 import UpcomingAppointmentCard from "./patient/upcoming-appointments-card"
 import FinancialOverviewCard from "./patient/financial-overview"
+import usePatientAnalytics from "../_hooks/use-analytics-patient"
+import MainLoadingPage from "@/components/globals/main-loading"
 
-// Mock data for patient analytics
-const mockPatientData = {
-    appointments: [
-        {
-            id: "apt-001",
-            doctorName: "Dr. Sarah Wilson",
-            specialty: "Cardiology",
-            date: new Date("2024-01-15"),
-            amount: 200.0,
-            status: "completed",
-            invoicePaid: true,
-        },
-        {
-            id: "apt-002",
-            doctorName: "Dr. Michael Chen",
-            specialty: "General Practice",
-            date: new Date("2024-01-10"),
-            amount: 150.0,
-            status: "completed",
-            invoicePaid: true,
-        },
-        {
-            id: "apt-003",
-            doctorName: "Dr. Sarah Wilson",
-            specialty: "Cardiology",
-            date: new Date("2024-01-05"),
-            amount: 180.0,
-            status: "completed",
-            invoicePaid: false,
-        },
-        {
-            id: "apt-004",
-            doctorName: "Dr. Emily Rodriguez",
-            specialty: "Dermatology",
-            date: new Date("2023-12-20"),
-            amount: 120.0,
-            status: "completed",
-            invoicePaid: true,
-        },
-        {
-            id: "apt-005",
-            doctorName: "Dr. Michael Chen",
-            specialty: "General Practice",
-            date: new Date("2023-12-15"),
-            amount: 150.0,
-            status: "completed",
-            invoicePaid: true,
-        },
-        {
-            id: "apt-006",
-            doctorName: "Dr. Sarah Wilson",
-            specialty: "Cardiology",
-            date: new Date("2023-12-01"),
-            amount: 200.0,
-            status: "completed",
-            invoicePaid: true,
-        },
-        {
-            id: "apt-007",
-            doctorName: "Dr. David Kim",
-            specialty: "Orthopedics",
-            date: new Date("2023-11-25"),
-            amount: 250.0,
-            status: "completed",
-            invoicePaid: false,
-        },
-        {
-            id: "apt-008",
-            doctorName: "Dr. Michael Chen",
-            specialty: "General Practice",
-            date: new Date("2023-11-10"),
-            amount: 150.0,
-            status: "completed",
-            invoicePaid: true,
-        },
-    ],
-}
 
-// Mock upcoming appointments
-const mockUpcomingAppointments = [
-    {
-        id: "upcoming-001",
-        doctorName: "Dr. Sarah Wilson",
-        specialty: "Cardiology",
-        date: new Date("2024-01-20T14:30:00"),
-        type: "Follow-up",
-        location: "Room 205",
-        avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-        id: "upcoming-002",
-        doctorName: "Dr. Michael Chen",
-        specialty: "General Practice",
-        date: new Date("2024-01-25T10:00:00"),
-        type: "Consultation",
-        location: "Room 101",
-        avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-        id: "upcoming-003",
-        doctorName: "Dr. Emily Rodriguez",
-        specialty: "Dermatology",
-        date: new Date("2024-02-02T16:15:00"),
-        type: "Check-up",
-        location: "Room 303",
-        avatar: "/placeholder.svg?height=40&width=40",
-    },
-]
+// {
+//     totalSpent: number;
+//     paidInvoices: number;
+//     unpaidInvoices: number;
+//     uniqueDoctors: number;
+//     totalAppointments: number;
+//     topDoctors: {
+//         name: string;
+//         visits: number;
+//     }[];
+// }
 
 const PatientMainPage = ({ user }: { user: User }) => {
-    // Calculate analytics
+    const data = usePatientAnalytics({ userId: user.id })
+
     const analytics = useMemo(() => {
-        const appointments = mockPatientData.appointments
-
-        // Total amount spent
-        const totalSpent = appointments.reduce((sum, apt) => sum + apt.amount, 0)
-
-        // Paid vs unpaid invoices
-        const paidInvoices = appointments.filter((apt) => apt.invoicePaid).length
-        const unpaidInvoices = appointments.filter((apt) => !apt.invoicePaid).length
-
-        // Doctor visit frequency
-        const doctorVisits: { [key: string]: number } = {}
-        appointments.forEach((apt) => {
-            doctorVisits[apt.doctorName] = (doctorVisits[apt.doctorName] || 0) + 1
-        })
-
-        // Number of different doctors
-        const uniqueDoctors = Object.keys(doctorVisits).length
-
-        // Total appointments
-        const totalAppointments = appointments.length
-
-        // Most frequently visited doctors (top 5)
-        const topDoctors = Object.entries(doctorVisits)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 5)
-            .map(([name, visits]) => ({
-                name: name.replace("Dr. ", ""),
-                visits,
-            }))
-
         return {
-            totalSpent,
-            paidInvoices,
-            unpaidInvoices,
-            uniqueDoctors,
-            totalAppointments,
-            topDoctors,
+            ...data.payload
         }
-    }, [])
+    }, [data])
 
     // Chart data
     const invoiceStatusData = [
@@ -202,6 +74,11 @@ const PatientMainPage = ({ user }: { user: User }) => {
             color: "#ef4444",
         },
     }
+
+    if (data.isLoading) {
+        return <MainLoadingPage />
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
             <div className="container mx-auto p-6 space-y-8">
@@ -225,8 +102,8 @@ const PatientMainPage = ({ user }: { user: User }) => {
                         <PatientCTA />
                     </div>
                     <SummaryCards
-                        totalSpent={0}
-                        totalAppointments={0}
+                        totalSpent={analytics?.totalSpent ?? 0}
+                        totalAppointments={analytics?.totalAppointments ?? 0}
                     />
                 </div>
 
@@ -349,12 +226,12 @@ const PatientMainPage = ({ user }: { user: User }) => {
                     {/* Overviews */}
                     <div className="flex flex-col gap-6 flex-1/3">
                         <UpcomingAppointmentCard
-                            appointments={[]}
+                            appointments={analytics?.upcomingAppointments ?? []}
                         />
                         <FinancialOverviewCard
-                            totalSpent={0}
-                            totalAppointments={0}
-                            appointments={[]}
+                            totalSpent={analytics?.totalSpent ?? 0}
+                            totalAppointments={analytics?.totalAppointments ?? 0}
+                            appointments={analytics?.appointments ?? []}
                         />
                     </div>
                 </div>

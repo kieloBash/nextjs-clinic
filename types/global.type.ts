@@ -1,3 +1,5 @@
+import { FullAppointmentType } from "./prisma.type";
+
 export interface ILayout {
     children: React.ReactNode
 }
@@ -50,9 +52,11 @@ export type PatientAnalyticsPayload = {
     paidInvoices: number,
     unpaidInvoices: number,
     uniqueDoctors: number,
-    totalAppointments: number,
     topDoctors: {
         name: string;
         visits: number;
     }[],
+    appointments: FullAppointmentType[]
+    upcomingAppointments: FullAppointmentType[]
+    totalAppointments: number;
 };
