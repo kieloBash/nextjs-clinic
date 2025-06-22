@@ -17,12 +17,12 @@ import { AppointmentStatus } from '@prisma/client'
 import { showToast } from '@/utils/helpers/show-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from '../_hooks/keys'
+import { KEY_GET_DOCTOR_APPOINTMENTS, KEY_GET_DOCTOR_QUEUES, KEY_GET_DOCTOR_TIMESLOTS } from '../../_hooks/keys'
 import { CANCEL_PAYMENT_APPOINTMENT, CONFIRM_APPOINTMENT, CONFIRM_PAYMENT_APPOINTMENT } from '@/utils/api-endpoints'
 import CompleteAppointmentModal from './complete-appointment-modal'
 import RescheduleAppointmentModal from './reschedule-appointment-modal'
-import { KEY_GET_INVOICES } from '../../billing/_hooks/keys'
-import { KEY_GET_NOTIFICATIONS } from '../../notifications/_hooks/keys'
+import { KEY_GET_INVOICES } from '../../../billing/_hooks/keys'
+import { KEY_GET_NOTIFICATIONS } from '../../../notifications/_hooks/keys'
 
 interface IProps {
     selectedAppointment: FullAppointmentType

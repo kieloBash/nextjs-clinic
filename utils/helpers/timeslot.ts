@@ -25,24 +25,24 @@ function isMaximumDurationMet(start: Date, end: Date, maxMinutes = 180): boolean
 }
 
 async function hasOverlappingTimeSlot(doctorId: string, start: Date, end: Date): Promise<boolean> {
-    const overlappingSlots = await prisma.timeSlot.findFirst({
+    const overlappingSlot = await prisma.timeSlot.findFirst({
         where: {
             doctorId,
-            OR: [
-                {
-                    startTime: {
-                        lte: end,
-                    },
-                    endTime: {
-                        gte: start,
-                    },
-                },
-            ],
+            startTime: {
+                lt: end, // must start before the new one ends
+            },
+            endTime: {
+                gt: start, // must end after the new one starts
+            },
         },
     });
 
-    return !!overlappingSlots;
+    console.log({ overlappingSlot });
+
+    return !!overlappingSlot;
 }
+
+
 
 export async function timeslotValid(date: Date, startTimeRaw: string, endTimeRaw: string, doctorId: string) {
 
@@ -94,6 +94,7 @@ export async function timeslotValid(date: Date, startTimeRaw: string, endTimeRaw
             { status: 400 }
         );
     }
+
 
     if (await hasOverlappingTimeSlot(doctorId, startTime, endTime)) {
         return new NextResponse(
