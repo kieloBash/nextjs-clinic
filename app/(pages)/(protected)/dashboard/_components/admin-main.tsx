@@ -47,118 +47,13 @@ import {
 } from "@/components/ui/alert-dialog"
 import { User } from "next-auth"
 import CreateUserModal from "./admin/create-user-modal"
-
-// Mock user data
-const mockUsers = [
-    {
-        id: "user-001",
-        name: "Dr. Sarah Wilson",
-        email: "sarah.wilson@clinic.com",
-        role: "doctor",
-        specialty: "Cardiology",
-        status: "active",
-        lastLogin: new Date("2024-01-15T10:30:00"),
-        joinedDate: new Date("2023-06-15"),
-        avatar: "/placeholder.svg?height=40&width=40",
-        phone: "+1 (555) 123-4567",
-        appointmentsCount: 245,
-    },
-    {
-        id: "user-002",
-        name: "John Smith",
-        email: "john.smith@email.com",
-        role: "patient",
-        specialty: null,
-        status: "active",
-        lastLogin: new Date("2024-01-14T15:20:00"),
-        joinedDate: new Date("2023-08-20"),
-        avatar: "/placeholder.svg?height=40&width=40",
-        phone: "+1 (555) 234-5678",
-        appointmentsCount: 12,
-    },
-    {
-        id: "user-003",
-        name: "Dr. Michael Chen",
-        email: "michael.chen@clinic.com",
-        role: "doctor",
-        specialty: "General Practice",
-        status: "disabled",
-        lastLogin: new Date("2024-01-10T09:15:00"),
-        joinedDate: new Date("2023-04-10"),
-        avatar: "/placeholder.svg?height=40&width=40",
-        phone: "+1 (555) 345-6789",
-        appointmentsCount: 189,
-    },
-    {
-        id: "user-004",
-        name: "Emily Rodriguez",
-        email: "emily.rodriguez@clinic.com",
-        role: "doctor",
-        specialty: "Dermatology",
-        status: "active",
-        lastLogin: new Date("2024-01-15T14:45:00"),
-        joinedDate: new Date("2023-09-05"),
-        avatar: "/placeholder.svg?height=40&width=40",
-        phone: "+1 (555) 456-7890",
-        appointmentsCount: 156,
-    },
-    {
-        id: "user-005",
-        name: "Lisa Thompson",
-        email: "lisa.thompson@email.com",
-        role: "patient",
-        specialty: null,
-        status: "active",
-        lastLogin: new Date("2024-01-13T11:30:00"),
-        joinedDate: new Date("2023-11-12"),
-        avatar: "/placeholder.svg?height=40&width=40",
-        phone: "+1 (555) 567-8901",
-        appointmentsCount: 8,
-    },
-    {
-        id: "user-006",
-        name: "Robert Brown",
-        email: "robert.brown@email.com",
-        role: "patient",
-        specialty: null,
-        status: "disabled",
-        lastLogin: new Date("2024-01-05T16:20:00"),
-        joinedDate: new Date("2023-07-18"),
-        avatar: "/placeholder.svg?height=40&width=40",
-        phone: "+1 (555) 678-9012",
-        appointmentsCount: 15,
-    },
-    {
-        id: "user-007",
-        name: "Dr. David Kim",
-        email: "david.kim@clinic.com",
-        role: "doctor",
-        specialty: "Orthopedics",
-        status: "active",
-        lastLogin: new Date("2024-01-15T08:00:00"),
-        joinedDate: new Date("2023-03-22"),
-        avatar: "/placeholder.svg?height=40&width=40",
-        phone: "+1 (555) 789-0123",
-        appointmentsCount: 203,
-    },
-    {
-        id: "user-008",
-        name: "Admin User",
-        email: "admin@clinic.com",
-        role: "admin",
-        specialty: null,
-        status: "active",
-        lastLogin: new Date("2024-01-15T16:45:00"),
-        joinedDate: new Date("2023-01-01"),
-        avatar: "/placeholder.svg?height=40&width=40",
-        phone: "+1 (555) 890-1234",
-        appointmentsCount: 0,
-    },
-]
+import useUsers from "../_hooks/use-users"
+import MainLoadingPage from "@/components/globals/main-loading"
+import { useDebounce } from "@/utils/helpers/use-debounce"
 
 export default function AdminMainPage({ user }: { user: User }) {
     const [searchTerm, setSearchTerm] = useState("")
-    const [roleFilter, setRoleFilter] = useState("all")
+    const [roleFilter, setRoleFilter] = useState<any>("ALL")
     const [statusFilter, setStatusFilter] = useState("all")
     const [selectedUsers, setSelectedUsers] = useState<string[]>([])
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -166,31 +61,23 @@ export default function AdminMainPage({ user }: { user: User }) {
     const [userToAction, setUserToAction] = useState<string | null>(null)
     const [bulkAction, setBulkAction] = useState<"delete" | "disable" | "enable" | null>(null)
 
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
+    const users = useUsers({ roleFilter, searchTerm: debouncedSearchTerm });
+
     // Filter users based on search and filters
-    const filteredUsers = useMemo(() => {
-        return mockUsers.filter((user) => {
-            const matchesSearch =
-                user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (user.specialty && user.specialty.toLowerCase().includes(searchTerm.toLowerCase()))
+    const { data: filteredUsers, totalUsers } = useMemo(() => {
+        return {
+            data: users?.payload?.data?.users ?? [],
+            totalUsers: users?.payload?.data?.totalUsersByRoleName
+        }
+    }, [users])
 
-            const matchesRole = roleFilter === "all" || user.role === roleFilter
-            const matchesStatus = statusFilter === "all" || user.status === statusFilter
-
-            return matchesSearch && matchesRole && matchesStatus
-        })
-    }, [searchTerm, roleFilter, statusFilter])
-
-    // Calculate stats
     const stats = useMemo(() => {
-        const totalUsers = mockUsers.length
-        const activeUsers = mockUsers.filter((u) => u.status === "active").length
-        const disabledUsers = mockUsers.filter((u) => u.status === "disabled").length
-        const doctors = mockUsers.filter((u) => u.role === "doctor").length
-        const patients = mockUsers.filter((u) => u.role === "patient").length
+        const doctors = totalUsers?.find((u) => u.roleName.toLowerCase() === "doctor")?.count ?? 0
+        const patients = totalUsers?.find((u) => u.roleName.toLowerCase() === "patient")?.count ?? 0
 
-        return { totalUsers, activeUsers, disabledUsers, doctors, patients }
-    }, [])
+        return { totalUsers: doctors + patients, doctors, patients }
+    }, [filteredUsers])
 
     const getRoleBadge = (role: string) => {
         switch (role) {
@@ -294,6 +181,10 @@ export default function AdminMainPage({ user }: { user: User }) {
         // In a real app, this would generate and download a CSV/Excel file
     }
 
+    if (users.isLoading || users.isFetching) {
+        return <MainLoadingPage />
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
             <div className="container mx-auto p-6 space-y-8">
@@ -363,7 +254,7 @@ export default function AdminMainPage({ user }: { user: User }) {
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                                 <Input
-                                    placeholder="Search users by name, email, or specialty..."
+                                    placeholder="Search users by name..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="pl-10"
@@ -375,14 +266,13 @@ export default function AdminMainPage({ user }: { user: User }) {
                                     <SelectValue placeholder="Filter by role" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Roles</SelectItem>
-                                    <SelectItem value="doctor">Doctors</SelectItem>
-                                    <SelectItem value="patient">Patients</SelectItem>
-                                    <SelectItem value="admin">Admins</SelectItem>
+                                    <SelectItem value="ALL">All Roles</SelectItem>
+                                    <SelectItem value="DOCTOR">Doctors</SelectItem>
+                                    <SelectItem value="PATIENT">Patients</SelectItem>
                                 </SelectContent>
                             </Select>
 
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            {/* <Select value={statusFilter} onValueChange={setStatusFilter}>
                                 <SelectTrigger className="w-full sm:w-[180px]">
                                     <SelectValue placeholder="Filter by status" />
                                 </SelectTrigger>
@@ -391,7 +281,7 @@ export default function AdminMainPage({ user }: { user: User }) {
                                     <SelectItem value="active">Active</SelectItem>
                                     <SelectItem value="disabled">Disabled</SelectItem>
                                 </SelectContent>
-                            </Select>
+                            </Select> */}
                         </div>
 
                         {/* Bulk Actions */}
@@ -427,8 +317,7 @@ export default function AdminMainPage({ user }: { user: User }) {
                                         <TableHead>User</TableHead>
                                         <TableHead>Role</TableHead>
                                         <TableHead>Status</TableHead>
-                                        <TableHead>Specialty</TableHead>
-                                        <TableHead>Last Login</TableHead>
+                                        <TableHead>Joined Date</TableHead>
                                         <TableHead>Appointments</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -445,11 +334,11 @@ export default function AdminMainPage({ user }: { user: User }) {
                                             <TableCell>
                                                 <div className="flex items-center space-x-3">
                                                     <Avatar className="h-10 w-10">
-                                                        <AvatarImage src={user.avatar || "/placeholder.svg"} />
+                                                        <AvatarImage src={user?.image || "/placeholder.svg"} />
                                                         <AvatarFallback>
                                                             {user.name
                                                                 .split(" ")
-                                                                .map((n) => n[0])
+                                                                .map((n: any) => n[0])
                                                                 .join("")}
                                                         </AvatarFallback>
                                                     </Avatar>
@@ -460,23 +349,23 @@ export default function AdminMainPage({ user }: { user: User }) {
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{getRoleBadge(user.role)}</TableCell>
-                                            <TableCell>{getStatusBadge(user.status)}</TableCell>
-                                            <TableCell>
+                                            <TableCell>{getRoleBadge(user.role.roleName.toLocaleLowerCase())}</TableCell>
+                                            <TableCell>{getStatusBadge(user.isActive ? "active" : "disabled")}</TableCell>
+                                            {/* <TableCell>
                                                 {user.specialty ? (
                                                     <span className="text-sm">{user.specialty}</span>
                                                 ) : (
                                                     <span className="text-sm text-muted-foreground">-</span>
                                                 )}
-                                            </TableCell>
+                                            </TableCell> */}
                                             <TableCell>
-                                                <div className="text-sm">{user.lastLogin.toLocaleDateString()}</div>
+                                                <div className="text-sm">{new Date(user.createdAt).toLocaleDateString()}</div>
                                                 <div className="text-xs text-muted-foreground">
-                                                    {user.lastLogin.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                    {new Date(user.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <span className="text-sm font-medium">{user.appointmentsCount}</span>
+                                                <span className="text-sm font-medium">{user.appointmentsAsDoctor.length + user.appointmentsAsPatient.length}</span>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <DropdownMenu>
@@ -487,16 +376,12 @@ export default function AdminMainPage({ user }: { user: User }) {
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                        <DropdownMenuItem>
+                                                        {/* <DropdownMenuItem>
                                                             <Eye className="mr-2 h-4 w-4" />
                                                             View Details
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem>
-                                                            <Edit className="mr-2 h-4 w-4" />
-                                                            Edit User
-                                                        </DropdownMenuItem>
+                                                        </DropdownMenuItem> */}
                                                         <DropdownMenuSeparator />
-                                                        {user.status === "active" ? (
+                                                        {user.isActive ? (
                                                             <DropdownMenuItem onClick={() => handleDisableUser(user.id)}>
                                                                 <UserX className="mr-2 h-4 w-4" />
                                                                 Disable Account

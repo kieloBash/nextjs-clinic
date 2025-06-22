@@ -2,6 +2,8 @@ import { Appointment, Invoice, Queue, Role, TimeSlot, User } from "@prisma/clien
 
 export type UserFullType = User & {
     role: Role
+    appointmentsAsDoctor: Appointment[]
+    appointmentsAsPatient: Appointment[]
 }
 
 export type FullDoctorSearchType = User & {
