@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { signOut } from "next-auth/react"
 import { User } from "next-auth"
-import { NotificationsDropdown } from "./notifications-dropdown"
+import { NotificationsDropdown } from "../notifications-dropdown"
 import Link from "next/link"
 
 export function DoctorHeader({ user, title }: { user: User; title?: string }) {
