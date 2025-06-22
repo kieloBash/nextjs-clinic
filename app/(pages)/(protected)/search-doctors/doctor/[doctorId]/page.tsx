@@ -42,6 +42,7 @@ import { WaitingLineCard } from "../../_components/waiting-line-card"
 import useDoctorQueues from "../../../appointments/_hooks/use-queues"
 import { KEY_GET_NOTIFICATIONS } from "../../../notifications/_hooks/keys"
 import { KEY_GET_DOCTOR_QUEUES } from "../../../appointments/_hooks/keys"
+import { getExperienceBadge } from "@/utils/helpers/appointment"
 
 const DoctorDetailsPage = () => {
     const params = useParams()
@@ -109,8 +110,11 @@ const DoctorDetailsPage = () => {
         setCurrentWeekStart(addDays(currentWeekStart, 7))
     }
 
-    const handleTimeSlotSelect = (slotId: FullTimeSlotType) => {
-        setSelectedTimeSlot(slotId)
+    const handleTimeSlotSelect = (slot: FullTimeSlotType) => {
+        if (selectedTimeSlot?.id === slot.id) {
+            setSelectedTimeSlot(null)
+        } else
+            setSelectedTimeSlot(slot)
     }
 
     const handleBookAppointment = async () => {
@@ -138,20 +142,10 @@ const DoctorDetailsPage = () => {
         }
     }
 
-    const getExperienceBadge = (appointments: number) => {
-        if (appointments >= 300) {
-            return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Highly Experienced</Badge>
-        } else if (appointments >= 150) {
-            return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Experienced</Badge>
-        } else if (appointments >= 50) {
-            return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Developing</Badge>
-        } else {
-            return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">New</Badge>
-        }
-    }
-
     const renderTimeSlotGroup = (title: string, slots: TimeSlot[], icon: React.ReactNode) => {
         if (slots.length === 0) return null
+
+
 
         return (
             <div className="space-y-3">
@@ -160,30 +154,46 @@ const DoctorDetailsPage = () => {
                     <h4 className="font-medium text-sm">{title}</h4>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                    {slots.map((slot) => (
-                        <Button
-                            key={slot.id}
-                            variant={selectedTimeSlot?.id === slot.id ? "default" : "outline"}
-                            size="sm"
-                            disabled={slot.status === TimeSlotStatus.CLOSED}
-                            onClick={() => handleTimeSlotSelect(slot)}
-                            className={`h-10 ${selectedTimeSlot?.id === slot.id
-                                ? "bg-primary text-primary-foreground"
-                                : slot.status === TimeSlotStatus.OPEN
-                                    ? "hover:bg-primary/10"
-                                    : "opacity-50 cursor-not-allowed"
-                                }`}
-                        >
-                            {slot.status === TimeSlotStatus.OPEN ? (
-                                <div className="flex items-center gap-1">
-                                    {selectedTimeSlot?.id === slot.id && <Check className="w-3 h-3" />}
-                                    <span className="text-xs">{formatDateBaseOnTimeZone_Date(slot.startTime).displayTime}</span>
-                                </div>
-                            ) : (
-                                <span className="text-xs text-muted-foreground">Booked</span>
-                            )}
-                        </Button>
-                    ))}
+                    {slots.map((slot) => {
+
+                        const isPast = isBefore(slot.startTime, new Date());
+
+                        const displaySlot = () => {
+                            if (slot.status === TimeSlotStatus.CLOSED) {
+                                return <span className="text-xs text-muted-foreground">Booked</span>
+                            }
+
+                            if (slot.status === TimeSlotStatus.OPEN && !isPast) {
+                                return (
+                                    <div className="flex items-center gap-1">
+                                        {selectedTimeSlot?.id === slot.id && <Check className="w-3 h-3" />}
+                                        <span className="text-xs">{formatDateBaseOnTimeZone_Date(slot.startTime).displayTime}</span>
+                                    </div>
+                                )
+                            }
+
+                            return <span className="text-xs text-muted-foreground">Unavailable</span>
+                        }
+
+
+                        return (
+                            <Button
+                                key={slot.id}
+                                variant={selectedTimeSlot?.id === slot.id ? "default" : "outline"}
+                                size="sm"
+                                disabled={slot.status === TimeSlotStatus.CLOSED || isPast}
+                                onClick={() => handleTimeSlotSelect(slot)}
+                                className={`h-10 ${selectedTimeSlot?.id === slot.id
+                                    ? "bg-primary text-primary-foreground"
+                                    : slot.status === TimeSlotStatus.OPEN
+                                        ? "hover:bg-primary/10"
+                                        : "opacity-50 cursor-not-allowed"
+                                    }`}
+                            >
+                                {displaySlot()}
+                            </Button>
+                        )
+                    })}
                 </div>
             </div>
         )
@@ -284,8 +294,6 @@ const DoctorDetailsPage = () => {
     if (doctorInfo.isLoading || doctorInfo.isFetching || queue.isLoading) {
         return <MainLoadingPage />
     }
-
-    console.log({ queue, patientPosition })
 
     return (
         <div className="container mx-auto p-6 space-y-6">
