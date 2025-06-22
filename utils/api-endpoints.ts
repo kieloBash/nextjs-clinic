@@ -30,3 +30,4 @@ export const FETCH_SEARCH_DOCTORS = "/api/search/doctors"
 export const FETCH_SEARCH_SINGLE_DOCTOR = "/api/search/doctors/single"
 export const BOOK_APPOINTMENT = "/api/appointment/book"
 
+export const FETCH_ANALYTICS_PATIENT= "/api/analytics/patient"

@@ -44,3 +44,15 @@ export type DoctorAnalyticsPayload = {
     appointmentStatusBreakdown: { status: string; count: number }[];
     revenueOverTime: { date: string; revenue: number }[];
 };
+
+export type PatientAnalyticsPayload = {
+    totalSpent: number,
+    paidInvoices: number,
+    unpaidInvoices: number,
+    uniqueDoctors: number,
+    totalAppointments: number,
+    topDoctors: {
+        name: string;
+        visits: number;
+    }[],
+};
