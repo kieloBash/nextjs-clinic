@@ -55,7 +55,7 @@ import { useDebounce } from "@/utils/helpers/use-debounce"
 import { showToast } from "@/utils/helpers/show-toast"
 import { KEY_GET_ALL_USERS } from "../_hooks/keys"
 import axios from "axios"
-import { DELETE_USER } from "@/utils/api-endpoints"
+import { DELETE_USER, DISABLE_USER } from "@/utils/api-endpoints"
 import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
 import { useQueryClient } from "@tanstack/react-query"
 import { useLoading } from "@/components/providers/loading-provider"
@@ -183,7 +183,7 @@ export default function AdminMainPage({ user }: { user: User }) {
         }
     }
 
-    const confirmAction = async () => {
+    const confirmAction = async (type: "delete" | "disable") => {
         if (bulkAction) {
             console.log(`Bulk ${bulkAction} for users:`, selectedUsers)
             setSelectedUsers([])
@@ -191,20 +191,39 @@ export default function AdminMainPage({ user }: { user: User }) {
         } else if (userToAction) {
             console.log(`Action for user:`, userToAction)
 
-            try {
-                setIsLoading(true)
-                const res = await axios.delete(DELETE_USER + "?userId=" + userToAction);
-                showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
-                await Promise.all([
-                    queryClient.invalidateQueries({ queryKey: [KEY_GET_ALL_USERS], exact: false }),
-                ]);
+            if (type === "delete") {
+                try {
+                    setIsLoading(true)
+                    const res = await axios.delete(DELETE_USER + "?userId=" + userToAction);
+                    showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
+                    await Promise.all([
+                        queryClient.invalidateQueries({ queryKey: [KEY_GET_ALL_USERS], exact: false }),
+                    ]);
 
-            } catch (error: any) {
-                showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
-            } finally {
-                setIsLoading(false)
+                } catch (error: any) {
+                    showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
+                } finally {
+                    setIsLoading(false)
+                }
+                setUserToAction(null)
+            } else {
+                try {
+                    setIsLoading(true)
+                    const body = { userId: userToAction };
+
+                    const res = await axios.post(DISABLE_USER, body);
+                    showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
+                    await Promise.all([
+                        queryClient.invalidateQueries({ queryKey: [KEY_GET_ALL_USERS], exact: false }),
+                    ]);
+
+                } catch (error: any) {
+                    showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
+                } finally {
+                    setIsLoading(false)
+                }
+                setUserToAction(null)
             }
-            setUserToAction(null)
         }
         setDeleteDialogOpen(false)
         setDisableDialogOpen(false)
@@ -474,7 +493,10 @@ export default function AdminMainPage({ user }: { user: User }) {
                                                                 Disable Account
                                                             </DropdownMenuItem>
                                                         ) : (
-                                                            <DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => {
+                                                                setUserToAction(user.id)
+                                                                confirmAction("disable")
+                                                            }}>
                                                                 <UserCheck className="mr-2 h-4 w-4" />
                                                                 Enable Account
                                                             </DropdownMenuItem>
@@ -574,7 +596,7 @@ export default function AdminMainPage({ user }: { user: User }) {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={confirmAction} className="bg-red-600 hover:bg-red-700">
+                            <AlertDialogAction onClick={() => confirmAction("delete")} className="bg-red-600 hover:bg-red-700">
                                 Delete
                             </AlertDialogAction>
                         </AlertDialogFooter>
@@ -598,7 +620,7 @@ export default function AdminMainPage({ user }: { user: User }) {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={confirmAction}>
+                            <AlertDialogAction onClick={() => confirmAction("disable")}>
                                 {bulkAction === "disable" || (!bulkAction && userToAction) ? "Disable" : "Enable"}
                             </AlertDialogAction>
                         </AlertDialogFooter>

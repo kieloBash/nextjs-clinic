@@ -3,10 +3,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/prisma";
 import { MISSING_PARAMETERS } from "@/utils/constants";
 
-export async function DELETE(request: Request) {
-    const { searchParams } = new URL(request.url || "");
-
-    const userId = searchParams.get("userId") || "";
+export async function POST(request: Request) {
+    const body = await request.json();
+    const { userId } = body;
 
     if (!userId) {
         return new NextResponse(JSON.stringify({ message: MISSING_PARAMETERS }), {
@@ -22,9 +21,12 @@ export async function DELETE(request: Request) {
             });
         }
 
-        await prisma.queue.delete({ where: { id: existingUser.id } })
+        const updatedUser = await prisma.user.update({
+            where: { id: existingUser.id },
+            data: { isActive: !existingUser.isActive }
+        })
 
-        return new NextResponse(JSON.stringify({ message: "Deleted user", payload: existingUser }), { status: 200 })
+        return new NextResponse(JSON.stringify({ message: "Change active status of user", payload: updatedUser }), { status: 200 })
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
             return new NextResponse(
