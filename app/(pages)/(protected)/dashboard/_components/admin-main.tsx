@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
     Users,
     Search,
@@ -17,6 +17,8 @@ import {
     UserPlus,
     BarChart3,
     Users2Icon,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -61,14 +63,23 @@ export default function AdminMainPage({ user }: { user: User }) {
     const [userToAction, setUserToAction] = useState<string | null>(null)
     const [bulkAction, setBulkAction] = useState<"delete" | "disable" | "enable" | null>(null)
 
+    const [currentPage, setCurrentPage] = useState(1)
+    const [limit, setLimit] = useState(5)
+
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
-    const users = useUsers({ roleFilter, searchTerm: debouncedSearchTerm });
+
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [debouncedSearchTerm])
+
+    const users = useUsers({ roleFilter, searchTerm: debouncedSearchTerm, limit, page: currentPage });
 
     // Filter users based on search and filters
-    const { data: filteredUsers, totalUsers } = useMemo(() => {
+    const { data: filteredUsers, totalUsers, pagination } = useMemo(() => {
         return {
             data: users?.payload?.data?.users ?? [],
-            totalUsers: users?.payload?.data?.totalUsersByRoleName
+            totalUsers: users?.payload?.data?.totalUsersByRoleName,
+            pagination: users?.payload?.pagination
         }
     }, [users])
 
@@ -176,9 +187,62 @@ export default function AdminMainPage({ user }: { user: User }) {
         setDisableDialogOpen(false)
     }
 
-    const exportUsers = () => {
-        console.log("Exporting users...")
-        // In a real app, this would generate and download a CSV/Excel file
+    const handleSearchChange = (value: string) => {
+        setSearchTerm(value)
+    }
+
+    const handleLimitChange = (value: string) => {
+        setLimit(Number.parseInt(value))
+        setCurrentPage(1)
+    }
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page)
+        // Scroll to top when page changes
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    const getPageNumbers = () => {
+        if (!pagination) return []
+
+        const { page, totalPages } = pagination
+        const pages = []
+        const maxVisiblePages = 5
+
+        if (totalPages <= maxVisiblePages) {
+            // Show all pages if total pages is small
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i)
+            }
+        } else {
+            // Show smart pagination
+            if (page <= 3) {
+                // Show first pages
+                for (let i = 1; i <= 4; i++) {
+                    pages.push(i)
+                }
+                pages.push("...")
+                pages.push(totalPages)
+            } else if (page >= totalPages - 2) {
+                // Show last pages
+                pages.push(1)
+                pages.push("...")
+                for (let i = totalPages - 3; i <= totalPages; i++) {
+                    pages.push(i)
+                }
+            } else {
+                // Show middle pages
+                pages.push(1)
+                pages.push("...")
+                for (let i = page - 1; i <= page + 1; i++) {
+                    pages.push(i)
+                }
+                pages.push("...")
+                pages.push(totalPages)
+            }
+        }
+
+        return pages
     }
 
     if (users.isLoading || users.isFetching) {
@@ -256,7 +320,7 @@ export default function AdminMainPage({ user }: { user: User }) {
                                 <Input
                                     placeholder="Search users by name..."
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) => handleSearchChange(e.target.value)}
                                     className="pl-10"
                                 />
                             </div>
@@ -414,6 +478,65 @@ export default function AdminMainPage({ user }: { user: User }) {
                         )}
                     </CardContent>
                 </Card>
+
+                {!users.isLoading && pagination && pagination.totalPages > 1 && (
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handlePageChange(pagination.page - 1)}
+                                        disabled={pagination.page === 1}
+                                    >
+                                        <ChevronLeft className="h-4 w-4 mr-1" />
+                                        Previous
+                                    </Button>
+                                </div>
+
+                                <div className="flex items-center gap-1">
+                                    {getPageNumbers().map((pageNum, index) => (
+                                        <div key={index}>
+                                            {pageNum === "..." ? (
+                                                <span className="px-3 py-2 text-muted-foreground">...</span>
+                                            ) : (
+                                                <Button
+                                                    variant={pageNum === pagination.page ? "default" : "outline"}
+                                                    size="sm"
+                                                    onClick={() => handlePageChange(pageNum as number)}
+                                                    className="min-w-[40px]"
+                                                >
+                                                    {pageNum}
+                                                </Button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handlePageChange(pagination.page + 1)}
+                                        disabled={pagination.page === pagination.totalPages}
+                                    >
+                                        Next
+                                        <ChevronRight className="h-4 w-4 ml-1" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Pagination Info */}
+                            <div className="text-center mt-4">
+                                <p className="text-sm text-muted-foreground">
+                                    Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                                    {Math.min(pagination.page * pagination.limit, pagination.totalItems)} of {pagination.totalItems} results
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Delete Confirmation Dialog */}
                 <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
