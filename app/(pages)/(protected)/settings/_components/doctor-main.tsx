@@ -379,50 +379,52 @@ const DoctorMainPage = ({ user }: { user: ExtendedUser }) => {
             </Card>
 
             {/* Account Management */}
-            <Card className="border-red-200">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-red-600">
-                        <Trash2 className="w-5 h-5" />
-                        Account Management
-                    </CardTitle>
-                    <CardDescription>Manage your account status and data</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                            <h4 className="font-semibold text-red-800 mb-2">Disable Account</h4>
-                            <p className="text-sm text-red-700 mb-4">
-                                Disabling your account will prevent you from logging in and accessing the system. This action can be
-                                reversed by contacting support.
-                            </p>
+            {user.role !== "HEAD_ADMIN" && user.role !== "IT_ADMIN" && (
+                <Card className="border-red-200">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-red-600">
+                            <Trash2 className="w-5 h-5" />
+                            Account Management
+                        </CardTitle>
+                        <CardDescription>Manage your account status and data</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <h4 className="font-semibold text-red-800 mb-2">Disable Account</h4>
+                                <p className="text-sm text-red-700 mb-4">
+                                    Disabling your account will prevent you from logging in and accessing the system. This action can be
+                                    reversed by contacting support.
+                                </p>
 
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive">
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Disable My Account
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure you want to disable your account?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action will prevent you from logging in to your account. You can contact support to re-enable
-                                            your account later. Your data will be preserved.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleDisableAccount} className="bg-red-600 hover:bg-red-700">
-                                            Yes, Disable Account
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive">
+                                            <Trash2 className="w-4 h-4 mr-2" />
+                                            Disable My Account
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure you want to disable your account?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action will prevent you from logging in to your account. You can contact support to re-enable
+                                                your account later. Your data will be preserved.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleDisableAccount} className="bg-red-600 hover:bg-red-700">
+                                                Yes, Disable Account
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     )
 }

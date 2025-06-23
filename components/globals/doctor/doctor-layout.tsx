@@ -22,7 +22,7 @@ const DoctorLayout = ({ children, user }: ILayout & { user: User }) => {
             },
             {
                 title: "Appointments",
-                url: "appointments",
+                url: "/appointments",
                 icon: Calendar,
                 isActive: pathname.includes("/appointments"),
             },
