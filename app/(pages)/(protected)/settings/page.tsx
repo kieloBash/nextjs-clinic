@@ -15,6 +15,10 @@ const SettingsPage = () => {
             return (
                 <DoctorMainPage user={user} />
             );
+        } else if (user.role === "HEAD_ADMIN" || user.role === "IT_ADMIN") {
+            return (
+                <DoctorMainPage user={user} />
+            );
         }
     }
 
