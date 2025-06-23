@@ -16,6 +16,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import axios from "axios"
+import { REGISTER_ACCOUNT } from "@/utils/api-endpoints"
+import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
+import { showToast } from "@/utils/helpers/show-toast"
+import { useLoading } from "@/components/providers/loading-provider"
+import { useQueryClient } from "@tanstack/react-query"
+import { KEY_GET_ALL_USERS } from "../../_hooks/keys"
 
 interface CreateUserModalProps {
     onUserCreated?: (user: CreateUserData) => void
@@ -30,16 +37,11 @@ interface CreateUserData {
     isActive: boolean
 }
 
-// Mock role data - replace with actual roles from your database
-const roles = [
-    { id: "role-patient", name: "Patient", value: "patient" },
-    { id: "role-doctor", name: "Doctor", value: "doctor" },
-]
-
 export default function CreateUserModal({ onUserCreated }: CreateUserModalProps) {
     const [open, onOpenChange] = useState(false)
     const [isCreating, setIsCreating] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const { isLoading, setIsLoading } = useLoading()
     const [formData, setFormData] = useState<CreateUserData>({
         email: "",
         name: "",
@@ -50,6 +52,7 @@ export default function CreateUserModal({ onUserCreated }: CreateUserModalProps)
     })
 
     const [errors, setErrors] = useState<Partial<CreateUserData>>({})
+    const queryClient = useQueryClient();
 
     const updateFormData = (field: keyof CreateUserData, value: string | boolean) => {
         setFormData((prev) => ({
@@ -84,7 +87,7 @@ export default function CreateUserModal({ onUserCreated }: CreateUserModalProps)
         }
 
         // Phone validation (optional but if provided, should be valid)
-        if (formData.phone && !/^[+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/[\s\-$$$$]/g, ""))) {
+        if (!formData.phone) {
             newErrors.phone = "Please enter a valid phone number"
         }
 
@@ -111,18 +114,22 @@ export default function CreateUserModal({ onUserCreated }: CreateUserModalProps)
             return
         }
 
-        setIsCreating(true)
+        const formDatas = new FormData();
+        formDatas.append("name", formData.name);
+        formDatas.append("email", formData.email);
+        formDatas.append("phone", formData.phone);
+        formDatas.append("role", formData.roleId);
+        formDatas.append("password", formData.password);
 
         try {
-            // Simulate API call - replace with actual API call
-            await new Promise((resolve) => setTimeout(resolve, 2000))
-
-            console.log("Creating user:", formData)
-
-            // Call the callback if provided
-            onUserCreated?.(formData)
-
-            // Reset form
+            setIsCreating(true)
+            setIsLoading(true)
+            const res = await axios.post(REGISTER_ACCOUNT, formDatas, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
             setFormData({
                 email: "",
                 name: "",
@@ -131,14 +138,18 @@ export default function CreateUserModal({ onUserCreated }: CreateUserModalProps)
                 password: "",
                 isActive: true,
             })
-
-            // Close modal
             onOpenChange(false)
-        } catch (error) {
-            console.error("Error creating user:", error)
-            // Handle error (show toast, etc.)
+
+
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: [KEY_GET_ALL_USERS], exact: false }),
+            ]);
+
+        } catch (error: any) {
+            showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
         } finally {
             setIsCreating(false)
+            setIsLoading(false)
         }
     }
 
@@ -164,10 +175,6 @@ export default function CreateUserModal({ onUserCreated }: CreateUserModalProps)
             .join("")
 
         updateFormData("password", password)
-    }
-
-    const getRoleDisplayName = (roleId: string) => {
-        return roles.find((role) => role.id === roleId)?.name || ""
     }
 
     return (
@@ -238,11 +245,12 @@ export default function CreateUserModal({ onUserCreated }: CreateUserModalProps)
                                 <SelectValue placeholder="Select user role" />
                             </SelectTrigger>
                             <SelectContent>
-                                {roles.map((role) => (
-                                    <SelectItem key={role.id} value={role.id}>
-                                        {role.name}
-                                    </SelectItem>
-                                ))}
+                                <SelectItem value={"PATIENT"}>
+                                    {"Patient"}
+                                </SelectItem>
+                                <SelectItem value={"DOCTOR"}>
+                                    {"Doctor"}
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                         {errors.roleId && <p className="text-sm text-red-500">{errors.roleId}</p>}
@@ -292,7 +300,7 @@ export default function CreateUserModal({ onUserCreated }: CreateUserModalProps)
                     </div>
 
                     {/* Active Status */}
-                    <div className="flex items-center justify-between">
+                    {/* <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                             <Label htmlFor="isActive">Account Status</Label>
                             <p className="text-sm text-gray-500">
@@ -304,7 +312,7 @@ export default function CreateUserModal({ onUserCreated }: CreateUserModalProps)
                             checked={formData.isActive}
                             onCheckedChange={(checked) => updateFormData("isActive", checked)}
                         />
-                    </div>
+                    </div> */}
                 </div>
 
                 <DialogFooter>
