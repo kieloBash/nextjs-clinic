@@ -33,3 +33,5 @@ export const BOOK_APPOINTMENT = "/api/appointment/book"
 export const FETCH_ANALYTICS_PATIENT= "/api/analytics/patient"
 
 export const FETCH_ALL_USERS= "/api/admin/users/fetch-all"
+export const DELETE_USER= "/api/admin/users/delete"
+export const DISABLE_USER= "/api/admin/users/disable"

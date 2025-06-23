@@ -52,6 +52,13 @@ import CreateUserModal from "./admin/create-user-modal"
 import useUsers from "../_hooks/use-users"
 import MainLoadingPage from "@/components/globals/main-loading"
 import { useDebounce } from "@/utils/helpers/use-debounce"
+import { showToast } from "@/utils/helpers/show-toast"
+import { KEY_GET_ALL_USERS } from "../_hooks/keys"
+import axios from "axios"
+import { DELETE_USER } from "@/utils/api-endpoints"
+import { CREATED_PROMPT_SUCCESS } from "@/utils/constants"
+import { useQueryClient } from "@tanstack/react-query"
+import { useLoading } from "@/components/providers/loading-provider"
 
 export default function AdminMainPage({ user }: { user: User }) {
     const [searchTerm, setSearchTerm] = useState("")
@@ -67,6 +74,8 @@ export default function AdminMainPage({ user }: { user: User }) {
     const [limit, setLimit] = useState(5)
 
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
+    const queryClient = useQueryClient();
+    const { isLoading, setIsLoading } = useLoading()
 
     useEffect(() => {
         setCurrentPage(1)
@@ -174,13 +183,27 @@ export default function AdminMainPage({ user }: { user: User }) {
         }
     }
 
-    const confirmAction = () => {
+    const confirmAction = async () => {
         if (bulkAction) {
             console.log(`Bulk ${bulkAction} for users:`, selectedUsers)
             setSelectedUsers([])
             setBulkAction(null)
         } else if (userToAction) {
             console.log(`Action for user:`, userToAction)
+
+            try {
+                setIsLoading(true)
+                const res = await axios.delete(DELETE_USER + "?userId=" + userToAction);
+                showToast("success", CREATED_PROMPT_SUCCESS, res.data.message)
+                await Promise.all([
+                    queryClient.invalidateQueries({ queryKey: [KEY_GET_ALL_USERS], exact: false }),
+                ]);
+
+            } catch (error: any) {
+                showToast("error", "Something went wrong!", error?.response?.data?.message || error.message)
+            } finally {
+                setIsLoading(false)
+            }
             setUserToAction(null)
         }
         setDeleteDialogOpen(false)
@@ -349,7 +372,7 @@ export default function AdminMainPage({ user }: { user: User }) {
                         </div>
 
                         {/* Bulk Actions */}
-                        {selectedUsers.length > 0 && (
+                        {/* {selectedUsers.length > 0 && (
                             <div className="flex items-center gap-2 mb-4 p-3 bg-blue-50 rounded-lg">
                                 <span className="text-sm font-medium">{selectedUsers.length} users selected</span>
                                 <Button size="sm" variant="outline" onClick={() => handleBulkAction("enable")}>
@@ -365,19 +388,19 @@ export default function AdminMainPage({ user }: { user: User }) {
                                     Delete
                                 </Button>
                             </div>
-                        )}
+                        )} */}
 
                         {/* Users Table */}
-                        <div className="rounded-md border">
-                            <Table>
+                        <div className="rounded-md border p-2">
+                            <Table className="">
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-12">
+                                        {/* <TableHead className="w-12">
                                             <Checkbox
                                                 checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
                                                 onCheckedChange={handleSelectAll}
                                             />
-                                        </TableHead>
+                                        </TableHead> */}
                                         <TableHead>User</TableHead>
                                         <TableHead>Role</TableHead>
                                         <TableHead>Status</TableHead>
@@ -389,12 +412,12 @@ export default function AdminMainPage({ user }: { user: User }) {
                                 <TableBody>
                                     {filteredUsers.map((user) => (
                                         <TableRow key={user.id}>
-                                            <TableCell>
+                                            {/* <TableCell>
                                                 <Checkbox
                                                     checked={selectedUsers.includes(user.id)}
                                                     onCheckedChange={(checked) => handleSelectUser(user.id, checked as boolean)}
                                                 />
-                                            </TableCell>
+                                            </TableCell> */}
                                             <TableCell>
                                                 <div className="flex items-center space-x-3">
                                                     <Avatar className="h-10 w-10">
