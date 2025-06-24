@@ -1,10 +1,11 @@
 import { AppointmentStatus, QueueStatus, TimeSlotStatus } from "@prisma/client"
 import { createNotification } from "@/libs/notification";
-import { BOOKING_CONFIRMED_NOTIFICATION_DOCTOR, BOOKING_CONFIRMED_NOTIFICATION_PATIENT, MISSING_PARAMETERS, NEW_BOOKED_APPOINTMENT_CONFIRMED_HISTORY } from "@/utils/constants";
-import { addHours } from "date-fns";
+import { BOOKING_CONFIRMED_NOTIFICATION_DOCTOR, BOOKING_CONFIRMED_NOTIFICATION_PATIENT, MISSING_PARAMETERS, NEW_BOOKED_APPOINTMENT_CONFIRMED_HISTORY, TIME_ZONE } from "@/utils/constants";
+import { addHours, startOfDay } from "date-fns";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/prisma";
+import { formatDateBaseOnTimeZone_Date, formatDateBaseOnTimeZone_String, getTodayDateTimezone, nowUTC, parseDate } from "@/utils/helpers/date";
 
 export async function POST(request: Request) {
 
@@ -39,14 +40,23 @@ export async function POST(request: Request) {
             where: { doctorId: existingQueue.doctorId, status: QueueStatus.APPROVED },
         })
 
-        if (!hasCurrentQueue) {
+        if (hasCurrentQueue) {
             return new NextResponse(
                 JSON.stringify({ message: `You have currently a patient in queue. Please complete the current appointment first to proceed.` }),
                 { status: 404 }
             );
         }
 
-        const today = new Date();
+        const d = nowUTC()
+
+        console.log("UTC RAW TODAY:", d)
+        const today = parseDate(d.toISOString());
+        console.log("UTC PARSED TODAY:", today)
+
+        const timezoned = formatDateBaseOnTimeZone_String(today);
+        const timezoneDate = formatDateBaseOnTimeZone_Date(today);
+        console.log(TIME_ZONE + " PARSED TODAY STRING:", timezoned)
+        console.log(TIME_ZONE + " PARSED TODAY DATE:", timezoneDate)
 
         const result = await prisma.$transaction(async (tx) => {
 
@@ -70,7 +80,7 @@ export async function POST(request: Request) {
                 },
             });
 
-            await tx.queue.update({ where: { id: queueId }, data: { status: QueueStatus.APPROVED } });
+            await tx.queue.update({ where: { id: queueId }, data: { status: QueueStatus.APPROVED, appointmentId: confirmedAppointment.id } });
 
             await Promise.all([
                 await tx.appointmentHistory.create({
@@ -87,9 +97,6 @@ export async function POST(request: Request) {
 
             return { confirmedAppointment, timeSlot };
         })
-
-
-
 
         return new NextResponse(
             JSON.stringify({

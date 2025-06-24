@@ -2,50 +2,9 @@ import { TimeSlotStatus } from "@prisma/client"
 import { getDoctor } from "@/libs/user";
 import { prisma } from "@/prisma";
 import { NextResponse } from "next/server";
-import { parseDate } from "@/utils/helpers/date";
+import { nowUTC, parseDate, timeSlotFormatterUTC } from "@/utils/helpers/date";
 import { MISSING_PARAMETERS } from "@/utils/constants";
-import { isBefore, isAfter, startOfDay, differenceInMinutes, addHours } from "date-fns";
-
-function isDateTodayOrFuture(date: Date): boolean {
-  return !isBefore(date, startOfDay(new Date()));
-}
-
-function isStartTimeBeforeEndTime(start: Date, end: Date): boolean {
-  return isBefore(start, end);
-}
-
-function isMinimumDurationMet(start: Date, end: Date, minMinutes = 30): boolean {
-  return differenceInMinutes(end, start) >= minMinutes;
-}
-
-function isAtLeastOneHourFromNow(dateTime: Date): boolean {
-  const oneHourFromNow = addHours(new Date(), 1);
-  return isAfter(dateTime, oneHourFromNow);
-}
-
-function isMaximumDurationMet(start: Date, end: Date, maxMinutes = 180): boolean {
-  return differenceInMinutes(end, start) <= maxMinutes;
-}
-
-async function hasOverlappingTimeSlot(doctorId: string, start: Date, end: Date): Promise<boolean> {
-  const overlappingSlots = await prisma.timeSlot.findFirst({
-    where: {
-      doctorId,
-      OR: [
-        {
-          startTime: {
-            lte: end,
-          },
-          endTime: {
-            gte: start,
-          },
-        },
-      ],
-    },
-  });
-
-  return !!overlappingSlots;
-}
+import { timeslotValid } from "@/utils/helpers/timeslot";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -79,50 +38,23 @@ export async function POST(request: Request) {
   }
 
   const status = statusRaw.toString() as TimeSlotStatus;
-  const date = parseDate(dateRaw.toString());
-  const startTime = parseDate(startTimeRaw.toString());
-  const endTime = parseDate(endTimeRaw.toString());
 
-  if (!isDateTodayOrFuture(date)) {
-    return new NextResponse(
-      JSON.stringify({ message: "Date must be today or in the future." }),
-      { status: 400 }
-    );
-  }
+  const { date, start, end } = timeSlotFormatterUTC({ isoDate: dateRaw.toString(), isoStart: startTimeRaw.toString(), isoEnd: endTimeRaw.toString() });
 
-  if (!isStartTimeBeforeEndTime(startTime, endTime)) {
-    return new NextResponse(
-      JSON.stringify({ message: "Start time must be before end time." }),
-      { status: 400 }
-    );
-  }
+  console.log({ date, start, end })
+  console.log(date, start.toISOString(), end.toISOString(), doctorId)
 
-  if (!isMinimumDurationMet(startTime, endTime)) {
-    return new NextResponse(
-      JSON.stringify({ message: "Time slot must be at least 30 minutes long." }),
-      { status: 400 }
-    );
-  }
+  // console.log("RAW DETAILS -- DATE:", dateRaw.toString(), " START:", startTimeRaw.toString(), " END:", endTimeRaw.toString())
+  // const d = nowUTC(new Date(dateRaw.toString()))
+  // const date = parseDate(d.toISOString());
 
-  if (!isAtLeastOneHourFromNow(startTime)) {
-    return new NextResponse(
-      JSON.stringify({ message: "Start time must be at least 1 hour from now." }),
-      { status: 400 }
-    );
-  }
+  // const startTime = parseDate(startTimeRaw.toString());
+  // const endTime = parseDate(endTimeRaw.toString());
+  // console.log("PARSED DETAILS -- DATE:", date, " START:", startTime, " END:", endTime)
 
-  if (!isMaximumDurationMet(startTime, endTime)) {
-    return new NextResponse(
-      JSON.stringify({ message: "Time slot must not exceed 3 hours." }),
-      { status: 400 }
-    );
-  }
-
-  if (await hasOverlappingTimeSlot(doctorId, startTime, endTime)) {
-    return new NextResponse(
-      JSON.stringify({ message: "This time slot overlaps with an existing one." }),
-      { status: 400 }
-    );
+  const checker = await timeslotValid(date, start.toISOString(), end.toISOString(), doctorId)
+  if (checker) {
+    return checker;
   }
 
   try {
@@ -131,10 +63,13 @@ export async function POST(request: Request) {
         doctorId: existingDoctor.id,
         status,
         date,
-        startTime,
-        endTime,
+        startTime: start,
+        endTime: end,
       },
     });
+
+    console.log(newTimeSlot)
+
 
     return new NextResponse(
       JSON.stringify({ message: "Created time slot", payload: newTimeSlot }),
@@ -157,5 +92,7 @@ export async function POST(request: Request) {
       }),
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }

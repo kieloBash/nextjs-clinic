@@ -17,7 +17,7 @@ export const LoadingProvider = ({ children }: { children: React.ReactNode }) => 
 
             {children}
             {isLoading && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/80 backdrop-blur-sm">
                     <SimpleLoadingPage />
                 </div>
             )}

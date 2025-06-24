@@ -65,7 +65,7 @@ export async function GET(request: Request) {
                 doctorId,
                 ...filters,
             },
-            include: { timeSlot: true, patient: true, doctor: true },
+            include: { timeSlot: true, patient: true, doctor: true, invoice: { select: { id: true, amount: true, status: true, createdAt: true } } },
             orderBy: [
                 { date: "asc" }
             ]

@@ -5,7 +5,7 @@ datasource db {
 }
 
 generator client {
-  provider      = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 enum AppointmentStatus {
@@ -14,6 +14,7 @@ enum AppointmentStatus {
   CANCELLED // cancelled by either party
   RESCHEDULED // was moved to a different time
   COMPLETED // appointment is done
+  PENDING_PAYMENT
 }
 
 enum InvoiceStatus {
@@ -25,6 +26,8 @@ enum QueueStatus {
   WAITING
   APPROVED
   SKIPPED
+  COMPLETED
+  CANCELLED
 }
 
 enum TimeSlotStatus {
@@ -33,13 +36,14 @@ enum TimeSlotStatus {
 }
 
 model User {
-  id             String  @id @default(cuid())
-  email          String  @unique
+  id             String   @id @default(cuid())
+  email          String   @unique
   name           String
   image          String?
   phone          String?
   roleId         String
   hashedPassword String
+  isActive       Boolean? @default(true)
 
   accounts Account[]
   sessions Session[]
@@ -57,7 +61,11 @@ model User {
   doctorTimeSlots       TimeSlot[]     @relation("DoctorTimeSlot")
   queuesAsPatient       Queue[]        @relation("QueuePatient")
   queuesAsDoctor        Queue[]        @relation("QueueDoctor")
+  completedAppointments Int?           @default(0) //new
 
+  @@index([name])
+  @@index([roleId])
+  @@index([completedAppointments])
   @@map("users")
 }
 
@@ -119,9 +127,10 @@ model Appointment {
   // Relations
   patient  User                 @relation("PatientAppointments", fields: [patientId], references: [id])
   doctor   User                 @relation("DoctorAppointments", fields: [doctorId], references: [id])
-  timeSlot TimeSlot             @relation(fields: [timeSlotId], references: [id])
+  timeSlot TimeSlot             @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
   history  AppointmentHistory[]
   queue    Queue[]
+  invoice  Invoice?
 
   @@index([doctorId, date]) // For finding a doctor’s schedule
   @@index([patientId, date]) // For checking patient history
@@ -156,7 +165,7 @@ model AppointmentHistory {
   createdAt DateTime @default(now())
 
   // Relation
-  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
   @@map("appointment-histories")
 }
@@ -169,7 +178,7 @@ model Notification {
   sentAt DateTime @default(now())
 
   // Relation
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }
@@ -185,9 +194,10 @@ model Role {
 }
 
 model Invoice {
-  id        String @id @default(cuid())
-  patientId String
-  createdBy String
+  id            String @id @default(cuid())
+  patientId     String
+  appointmentId String @unique
+  createdBy     String
 
   amount Float
   status InvoiceStatus
@@ -196,8 +206,9 @@ model Invoice {
   updatedAt DateTime @updatedAt
 
   // Relations
-  patient User @relation("InvoicePatient", fields: [patientId], references: [id])
-  creator User @relation("InvoiceCreator", fields: [createdBy], references: [id])
+  patient     User        @relation("InvoicePatient", fields: [patientId], references: [id], onDelete: Cascade)
+  creator     User        @relation("InvoiceCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
   @@map("invoices")
 }
@@ -214,7 +225,7 @@ model Queue {
   updatedAt DateTime @updatedAt
 
   // Relations
-  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
   patient     User         @relation("QueuePatient", fields: [patientId], references: [id])
   doctor      User         @relation("QueueDoctor", fields: [doctorId], references: [id])
 

@@ -2,14 +2,12 @@
 import { useCurrentUser } from '@/libs/hooks';
 import React from 'react'
 import DoctorMainPage from './_components/doctor-main';
-import PatientMainPage from './_components/patient.main';
-import DoctorLayout from '@/components/globals/doctor-layout';
-import PatientLayout from '@/components/globals/patient-layout';
+import PatientMainPage from './_components/patient-main';
+import AdminMainPage from './_components/admin-main';
 
 const DashboardPage = () => {
     const user = useCurrentUser();
 
-    console.log(user)
     if (user) {
         if (user.role === "DOCTOR")
             return (
@@ -20,11 +18,16 @@ const DashboardPage = () => {
                 <PatientMainPage user={user} />
             )
         }
+        else if (user.role === "HEAD_ADMIN" || user.role === "IT_ADMIN") {
+            return (
+                <AdminMainPage user={user} />
+            )
+        }
     }
 
 
     return (
-        <div className="">No Roles found!</div>
+        <div className="">Invalid User</div>
     )
 }
 

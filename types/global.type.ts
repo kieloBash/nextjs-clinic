@@ -1,3 +1,5 @@
+import { FullAppointmentType } from "./prisma.type";
+
 export interface ILayout {
     children: React.ReactNode
 }
@@ -25,3 +27,36 @@ export interface IQueryProps {
     startDate?: Date;
     endDate?: Date;
 }
+
+export interface IPaginatedQuery<T> {
+    data: T;
+    pagination: {
+        page: number;
+        limit: number;
+        totalPages: number;
+        totalItems: number;
+    }
+}
+
+export type DoctorAnalyticsPayload = {
+    totalPatients: number;
+    totalAppointments: number;
+    totalRevenue: number;
+    completionRate: number;
+    appointmentStatusBreakdown: { status: string; count: number }[];
+    revenueOverTime: { date: string; revenue: number }[];
+};
+
+export type PatientAnalyticsPayload = {
+    totalSpent: number,
+    paidInvoices: number,
+    unpaidInvoices: number,
+    uniqueDoctors: number,
+    topDoctors: {
+        name: string;
+        visits: number;
+    }[],
+    appointments: FullAppointmentType[]
+    upcomingAppointments: FullAppointmentType[]
+    totalAppointments: number;
+};
