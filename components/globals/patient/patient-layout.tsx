@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { Calendar, Home, MessageSquare, Settings, Users } from 'lucide-react'
 import { PatientSidebar } from './patient-sidebar'
 import { PatientHeader } from './patient-header'
+import AIChatbot from '../chatbot'
 
 
 const PatientLayout = ({ children, user }: ILayout & { user: User }) => {
@@ -56,6 +57,7 @@ const PatientLayout = ({ children, user }: ILayout & { user: User }) => {
                 <PatientHeader user={user} title={activeRoute?.title} />
                 {children}
             </div>
+            <AIChatbot />
         </div>
     )
 }
