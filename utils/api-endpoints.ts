@@ -30,8 +30,10 @@ export const FETCH_SEARCH_DOCTORS = "/api/search/doctors"
 export const FETCH_SEARCH_SINGLE_DOCTOR = "/api/search/doctors/single"
 export const BOOK_APPOINTMENT = "/api/appointment/book"
 
-export const FETCH_ANALYTICS_PATIENT= "/api/analytics/patient"
+export const FETCH_ANALYTICS_PATIENT = "/api/analytics/patient"
 
-export const FETCH_ALL_USERS= "/api/admin/users/fetch-all"
-export const DELETE_USER= "/api/admin/users/delete"
-export const DISABLE_USER= "/api/admin/users/disable"
+export const FETCH_ALL_USERS = "/api/admin/users/fetch-all"
+export const DELETE_USER = "/api/admin/users/delete"
+export const DISABLE_USER = "/api/admin/users/disable"
+
+export const AI_CHAT_PROMPT = "/api/openai"
