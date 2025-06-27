@@ -18,7 +18,7 @@ export async function PATCH(request: Request) {
     }
 
     try {
-        const existingUser = await prisma.user.findUnique({ where: { id: userId } });
+        const existingUser = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, hashedPassword: true, email: true, name: true }, });
         if (!existingUser || !existingUser.hashedPassword) {
             return NextResponse.json({ message: "User not found or password missing" }, { status: 404 });
         }
@@ -39,6 +39,11 @@ export async function PATCH(request: Request) {
             tx: prisma,
             userId: updatedUser.id,
             message: PASSWORD_UPDATE,
+            email: {
+                to: existingUser.email,
+                subject: "Password Changed Successfully",
+                htmlContent: `<p>Hi ${existingUser.name}, your password has been successfully updated. If you did not perform this action, please contact support immediately.</p>`,
+            },
         });
 
         return NextResponse.json({ message: "Password updated successfully", payload: updatedUser }, { status: 200 });

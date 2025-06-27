@@ -30,8 +30,8 @@ export async function POST(request: Request) {
             prisma.appointment.findFirst({
                 where: { id: appointmentId },
                 include: {
-                    patient: { select: { name: true } },
-                    doctor: { select: { name: true } },
+                    patient: { select: { name: true, email: true } },
+                    doctor: { select: { name: true, email: true } },
                 },
             }),
             prisma.queue.findFirst({
@@ -96,11 +96,21 @@ export async function POST(request: Request) {
                     tx,
                     userId: existingAppointment.patientId,
                     message: BOOKING_COMPLETED_NOTIFICATION_PATIENT,
+                    email: {
+                        to: existingAppointment.patient.email,
+                        subject: "Appointment Completed",
+                        htmlContent: `<p>Hi ${existingAppointment.patient.name}, your appointment with Dr. ${existingAppointment.doctor.name} has been marked as completed. Thank you for visiting NextJS Clinic!</p>`,
+                    },
                 }),
                 createNotification({
                     tx,
                     userId: existingAppointment.doctorId,
                     message: BOOKING_COMPLETED_NOTIFICATION_DOCTOR,
+                    email: {
+                        to: existingAppointment.doctor.email,
+                        subject: "Appointment Completed",
+                        htmlContent: `<p>Hi Dr. ${existingAppointment.doctor.name}, your appointment with ${existingAppointment.patient.name} has been marked as completed.</p>`,
+                    },
                 }),
             ]);
 

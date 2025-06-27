@@ -16,8 +16,8 @@ export async function POST(request: Request) {
     const existingAppointment = await prisma.appointment.findFirst({
         where: { id: appointmentId },
         include: {
-            patient: { select: { name: true } },
-            doctor: { select: { name: true } },
+            patient: { select: { name: true, email: true } },
+            doctor: { select: { name: true, email: true } },
         },
     });
 
@@ -105,11 +105,21 @@ export async function POST(request: Request) {
                     tx,
                     userId: existingAppointment.patientId,
                     message: BOOKING_RESCHEDULED_NOTIFICATION_PATIENT,
+                    email: {
+                        to: existingAppointment.patient.email,
+                        subject: "Appointment Rescheduled",
+                        htmlContent: `<p>Hi ${existingAppointment.patient.name}, your appointment with Dr. ${existingAppointment.doctor.name} has been successfully rescheduled.</p>`,
+                    },
                 }),
                 createNotification({
                     tx,
                     userId: existingAppointment.doctorId,
                     message: BOOKING_RESCHEDULED_NOTIFICATION_DOCTOR,
+                    email: {
+                        to: existingAppointment.doctor.email,
+                        subject: "Appointment Rescheduled",
+                        htmlContent: `<p>Hi Dr. ${existingAppointment.doctor.name}, the appointment with ${existingAppointment.patient.name} has been successfully rescheduled.</p>`,
+                    },
                 }),
             ]);
 

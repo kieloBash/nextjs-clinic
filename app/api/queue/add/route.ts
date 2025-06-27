@@ -98,8 +98,27 @@ export async function POST(request: Request) {
 
 
         await Promise.all([
-            await createNotification({ tx: prisma, userId: newQueue.patientId, message: QUEUE_ADDED_NOTIFICATION_PATIENT(newQueue.position) }),
-            await createNotification({ tx: prisma, userId: newQueue.doctorId, message: QUEUE_ADDED_NOTIFICATION_DOCTOR(patient.name, newQueue.position) })
+            await createNotification({ 
+                tx: prisma, 
+                userId: newQueue.patientId, 
+                message: QUEUE_ADDED_NOTIFICATION_PATIENT(newQueue.position),
+                email: {
+                    to: patient.email,
+                    subject: "Added to Queue",
+                    htmlContent: `<p>Hi ${patient.name}, you have been added to the queue for Dr. ${doctor.name}. Your position is <strong>#${newQueue.position}</strong>.</p>`,
+                },
+            }),
+            
+            await createNotification({ 
+                tx: prisma, 
+                userId: newQueue.doctorId, 
+                message: QUEUE_ADDED_NOTIFICATION_DOCTOR(patient.name, newQueue.position), 
+                email: {
+                    to: doctor.email,
+                    subject: "New Patient in Queue",
+                    htmlContent: `<p>Hi Dr. ${doctor.name}, ${patient.name} has been added to your queue. Their position is <strong>#${newQueue.position}</strong>.</p>`,
+                },
+            })
         ])
 
         return new NextResponse(

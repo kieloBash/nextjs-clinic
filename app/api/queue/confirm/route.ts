@@ -90,8 +90,26 @@ export async function POST(request: Request) {
                         newStatus: AppointmentStatus.PENDING
                     }
                 }),
-                await createNotification({ tx, userId: existingQueue.patientId, message: BOOKING_CONFIRMED_NOTIFICATION_PATIENT }),
-                await createNotification({ tx, userId: existingQueue.doctorId, message: BOOKING_CONFIRMED_NOTIFICATION_DOCTOR })
+                await createNotification({ 
+                    tx, 
+                    userId: existingQueue.patientId, 
+                    message: BOOKING_CONFIRMED_NOTIFICATION_PATIENT,
+                    email: {
+                        to: existingQueue.patient.email,
+                        subject: "Appointment Confirmed",
+                        htmlContent: `<p>Hi ${existingQueue.patient.name}, your appointment with Dr. ${existingQueue.doctor.name} has been confirmed for today.</p>`,
+                    },
+                }),
+                await createNotification({ 
+                    tx, 
+                    userId: existingQueue.doctorId, 
+                    message: BOOKING_CONFIRMED_NOTIFICATION_DOCTOR,
+                    email: {
+                        to: existingQueue.doctor.email,
+                        subject: "Appointment Confirmed",
+                        htmlContent: `<p>Hi Dr. ${existingQueue.doctor.name}, your appointment with ${existingQueue.patient.name} has been confirmed for today.</p>`,
+                    },
+                })
             ])
 
 

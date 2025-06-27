@@ -75,27 +75,32 @@ export async function POST(request: Request) {
                     ]
                 }),
                 
-        createNotification({
-          tx,
-          userId: patientId,
-          message: PENDING_BOOKING_NOTIFICATION_PATIENT,
-          email: {
-            to: patient.email,
-            subject: "Appointment Pending Confirmation",
-            htmlContent: `<p>Hi ${patient.name}, your appointment with Dr. ${doctor.name} is pending confirmation.</p>`,
-          },
-        }),
-        createNotification({
-          tx,
-          userId: doctorId,
-          message: PENDING_BOOKING_NOTIFICATION_DOCTOR,
-          email: {
-            to: doctor.email,
-            subject: "New Appointment Request",
-            htmlContent: `<p>Hi Dr. ${doctor.name}, you have a new appointment request from ${patient.name}.</p>`,
-          },
-        }),
-      ]);
+                createNotification({
+                    tx,
+                    userId: patientId,
+                    message: PENDING_BOOKING_NOTIFICATION_PATIENT,
+                    email: {
+                        to: patient.email,
+                        subject: "Appointment Pending Confirmation",
+                        htmlContent: `<p>Hi ${patient.name}, your appointment with Dr. ${doctor.name} is pending confirmation.</p>
+                        <p>Please confirm your appointment by clicking the link below:</p>
+                        https://nextjs-clinic-sigma.vercel.app/confirm-appointment?appointmentId=${newAppointment.id}`,
+                    },
+                }),
+                
+                createNotification({
+                    tx,
+                    userId: doctorId,
+                    message: PENDING_BOOKING_NOTIFICATION_DOCTOR,
+                    email: {
+                        to: doctor.email,
+                        subject: "New Appointment Request",
+                        htmlContent: `<p>Hi Dr. ${doctor.name}, you have a new appointment request from ${patient.name}.</p>
+                        <p>Please confirm your appointment by clicking the link below:</p>
+                        https://nextjs-clinic-sigma.vercel.app/confirm-appointment?appointmentId=${newAppointment.id}`,
+                    },
+                }),
+            ]);
             return { newAppointment, updatedTimeSlot };
         });
 

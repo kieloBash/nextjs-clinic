@@ -16,8 +16,8 @@ export async function POST(request: Request) {
     const existingAppointment = await prisma.appointment.findFirst({
         where: { id: appointmentId },
         include: {
-            patient: { select: { name: true } },
-            doctor: { select: { name: true } },
+            patient: { select: { name: true, email: true } },
+            doctor: { select: { name: true, email: true } },
         },
     });
 
@@ -60,15 +60,33 @@ export async function POST(request: Request) {
                         },
                     ],
                 }),
+                //PATIENT NOTIFICATION
                 createNotification({
                     tx,
                     userId: existingAppointment.patientId,
                     message: BOOKING_CANCELLED_NOTIFICATION_PATIENT,
+                    email: {
+                        to: existingAppointment.patient.email,
+                        subject: "Appointment Cancelled",
+                        htmlContent: `<p>Dear ${existingAppointment.patient.name},</p>
+                                      <p>Your appointment with Dr. ${existingAppointment.doctor.name} has been cancelled.</p>
+                                      <p>We apologize for any inconvenience this may cause.</p>
+                                      <p>Thank you for your understanding.</p>`,
+                    },
                 }),
+
+                //DOCTOR NOTIFICATION
                 createNotification({
                     tx,
                     userId: existingAppointment.doctorId,
                     message: BOOKING_CANCELLED_NOTIFICATION_DOCTOR,
+                    email: {
+                        to: existingAppointment.doctor.email,
+                        subject: "Appointment Cancelled",
+                        htmlContent: `<p>Dear Dr. ${existingAppointment.doctor.name},</p>
+                                      <p>The appointment with ${existingAppointment.patient.name} has been cancelled.</p>
+                                      <p>Please check your schedule for any updates.</p>`,
+                    },
                 }),
             ]);
 

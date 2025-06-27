@@ -26,12 +26,19 @@ export async function PATCH(request: Request) {
         const updatedUser = await prisma.user.update({
             where: { id: userId },
             data,
+            select: { id: true, name: true, email: true, phone: true },
         });
 
         await createNotification({
             tx: prisma,
             userId: updatedUser.id,
             message: PROFILE_UPDATE,
+            email: {
+                to: updatedUser.email,
+                subject: "Profile Updated",
+                htmlContent: `<p>Hi ${updatedUser.name}, your profile information has been successfully updated. If you did not make this change, please contact support immediately.</p>`,
+            },
+
         });
 
         return NextResponse.json({ message: "Updated user profile", payload: updatedUser }, { status: 200 });

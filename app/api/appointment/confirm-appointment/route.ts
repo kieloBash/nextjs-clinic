@@ -52,8 +52,27 @@ export async function POST(request: Request) {
                         },
                     ]
                 }),
-                await createNotification({ tx, userId: newAppointment.patientId, message: BOOKING_CONFIRMED_NOTIFICATION_PATIENT }),
-                await createNotification({ tx, userId: newAppointment.doctorId, message: BOOKING_CONFIRMED_NOTIFICATION_DOCTOR })
+                await createNotification({ 
+                    tx, 
+                    userId: newAppointment.patientId, 
+                    message: BOOKING_CONFIRMED_NOTIFICATION_PATIENT,
+                    email: {
+                        to: newAppointment.patient.email,
+                        subject: "Appointment Booking Confirmed",
+                        htmlContent: `<p>Hi ${newAppointment.patient.name}, your appointment with Dr. ${newAppointment.doctor.name} has been confirmed.</p>`,
+                    },
+                }),
+
+                await createNotification({ 
+                    tx, 
+                    userId: newAppointment.doctorId, 
+                    message: BOOKING_CONFIRMED_NOTIFICATION_DOCTOR,
+                    email: {
+                        to: newAppointment.doctor.email,
+                        subject: "Appointment Confirmed",
+                        htmlContent: `<p>Hi Dr. ${newAppointment.doctor.name}, your appointment with ${newAppointment.patient.name} has been confirmed.</p>`,
+                    },
+                })
             ])
 
             return { newAppointment };

@@ -17,8 +17,8 @@ export async function POST(request: Request) {
     const existingAppointment = await prisma.appointment.findFirst({
         where: { id: appointmentId },
         include: {
-            patient: { select: { name: true } },
-            doctor: { select: { name: true } },
+            patient: { select: { name: true, email: true } },
+            doctor: { select: { name: true, email: true } },
         },
     });
 
@@ -84,11 +84,25 @@ export async function POST(request: Request) {
                     tx,
                     userId: existingAppointment.patientId,
                     message: BOOKING_WAITING_PAYMENT_NOTIFICATION_PATIENT,
+                    email: {
+                        to: existingAppointment.patient.email,
+                        subject: "Payment Pending for Your Appointment",
+                        htmlContent: `<p>Dear ${existingAppointment.patient.name},</p>
+                                      <p>Your appointment with Dr. ${existingAppointment.doctor.name} is pending payment with an amount of ₱${amount}.</p>
+                                      <p>Please complete the payment to confirm your appointment.</p>`,
+                    },
                 }),
                 createNotification({
                     tx,
                     userId: existingAppointment.doctorId,
                     message: BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR,
+                    email: {
+                        to: existingAppointment.doctor.email,
+                        subject: "Payment Pending for Appointment",
+                        htmlContent: `<p>Dear Dr. ${existingAppointment.doctor.name},</p>
+                                      <p>The appointment with ${existingAppointment.patient.name} is pending payment with an amount of ₱${amount}.</p>
+                                      <p>Please check your schedule for any updates.</p>`,
+                    },
                 }),
             ]);
 

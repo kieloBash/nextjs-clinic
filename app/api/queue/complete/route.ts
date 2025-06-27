@@ -27,8 +27,8 @@ export async function POST(request: Request) {
         const queue = await prisma.queue.findFirst({
             where: { id: queueId },
             include: {
-                patient: { select: { name: true } },
-                doctor: { select: { name: true } },
+                patient: { select: { name: true, email: true } },
+                doctor: { select: { name: true, email: true } },
             },
         });
 
@@ -89,11 +89,21 @@ export async function POST(request: Request) {
                     tx,
                     userId: queue.patientId,
                     message: BOOKING_WAITING_PAYMENT_NOTIFICATION_PATIENT,
+                    email: {
+                        to: queue.patient.email,
+                        subject: "Payment Required for Appointment",
+                        htmlContent: `<p>Hi ${queue.patient.name}, your appointment with Dr. ${queue.doctor.name} is awaiting payment of ₱${amount}. Please proceed to payment at your earliest convenience.</p>`,
+                    },
                 }),
                 createNotification({
                     tx,
                     userId: queue.doctorId,
                     message: BOOKING_WAITING_PAYMENT_NOTIFICATION_DOCTOR,
+                    email: {
+                        to: queue.doctor.email,
+                        subject: "Appointment Awaiting Patient Payment",
+                        htmlContent: `<p>Hi Dr. ${queue.doctor.name}, the appointment with ${queue.patient.name} is now pending payment of ₱${amount}.</p>`,
+                    },
                 }),
             ]);
 
