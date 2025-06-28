@@ -20,6 +20,7 @@ export const RESCHEDULE_APPOINTMENT_PATIENT = "/api/appointment/patient/reschedu
 
 export const FETCH_ALL_DOCTOR_INVOICES = "/api/invoice/doctor/fetch-all"
 export const FETCH_ALL_NOTIFICATIONS = "/api/notification/fetch-all"
+export const FETCH_SINGLE_NOTIFICATION = "/api/notification/fetch-all/id"
 export const CLEAR_NOTIFICATIONS = "/api/notification/clear"
 export const UPDATE_PROFILE = "/api/settings/profile"
 export const UPDATE_PASSWORD = "/api/settings/password"

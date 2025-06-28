@@ -1,10 +1,15 @@
-import { Appointment, Invoice, Queue, Role, TimeSlot, User } from "@prisma/client"
+import { Appointment, Invoice, Notification, Queue, Role, TimeSlot, User } from "@prisma/client"
 
 export type UserFullType = User & {
     role: Role
     appointmentsAsDoctor: Appointment[]
     appointmentsAsPatient: Appointment[]
 }
+
+export type FullNotificationType = Notification & {
+    user: UserFullType
+}
+
 
 export type FullDoctorSearchType = User & {
     role: Role
