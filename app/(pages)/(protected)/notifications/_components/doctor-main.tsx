@@ -19,6 +19,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { CLEAR_NOTIFICATIONS } from "@/utils/api-endpoints"
 import { KEY_GET_NOTIFICATIONS } from "../_hooks/keys"
 import MainLoadingPage from "@/components/globals/main-loading"
+import Link from "next/link"
 
 
 const DoctorMainPage = ({ user }: { user: User }) => {
@@ -153,24 +154,26 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                                 <h3 className="text-sm font-semibold text-muted-foreground mb-3">{dateGroup}</h3>
                                 <div className="space-y-3">
                                     {notifications.map((notification) => (
-                                        <div
-                                            key={notification.id}
-                                            className="flex items-start justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                                        <Link key={notification.id}
+                                            href={`/notifications/${notification.id}`}
                                         >
-                                            <div className="flex items-start space-x-3 flex-1">
-                                                <div className="flex-shrink-0 mt-1">
-                                                    <Bell className="w-4 h-4 text-muted-foreground" />
+                                            <div
+                                                className="flex items-start justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                                            >
+                                                <div className="flex items-start space-x-3 flex-1">
+                                                    <div className="flex-shrink-0 mt-1">
+                                                        <Bell className="w-4 h-4 text-muted-foreground" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium leading-relaxed">{notification.message}</p>
+                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                            {format(notification.sentAt, "h:mm a")} •{" "}
+                                                            {formatDistanceToNow(notification.sentAt, { addSuffix: true })}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-medium leading-relaxed">{notification.message}</p>
-                                                    <p className="text-xs text-muted-foreground mt-1">
-                                                        {format(notification.sentAt, "h:mm a")} •{" "}
-                                                        {formatDistanceToNow(notification.sentAt, { addSuffix: true })}
-                                                    </p>
-                                                </div>
-                                            </div>
 
-                                            {/* <DropdownMenu>
+                                                {/* <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
                                                         <MoreHorizontal className="h-4 w-4" />
@@ -183,7 +186,8 @@ const DoctorMainPage = ({ user }: { user: User }) => {
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu> */}
-                                        </div>
+                                            </div>
+                                        </Link>
                                     ))}
                                 </div>
                                 {dateGroup !== groupedNotifications[groupedNotifications.length - 1][0] && (

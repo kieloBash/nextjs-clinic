@@ -43,6 +43,10 @@ export function NotificationsDropdown({ user }: { user: User }) {
         router.push("/notifications")
     }
 
+    const handleViewNotification = (id: string) => {
+        router.push(`/notifications/${id}`)
+    }
+
     const truncateMessage = (message: string, maxLength = 60) => {
         return message.length > maxLength ? message.substring(0, maxLength) + "..." : message
     }
@@ -80,6 +84,7 @@ export function NotificationsDropdown({ user }: { user: User }) {
                             <div className="space-y-1">
                                 {notifications.slice(0, 5).map((notification) => (
                                     <div
+                                        onClick={() => handleViewNotification(notification.id)}
                                         key={notification.id}
                                         className="flex items-start space-x-3 p-3 hover:bg-muted/50 rounded-sm transition-colors"
                                     >
