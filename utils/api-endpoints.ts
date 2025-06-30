@@ -38,3 +38,5 @@ export const DELETE_USER = "/api/admin/users/delete"
 export const DISABLE_USER = "/api/admin/users/disable"
 
 export const AI_CHAT_PROMPT = "/api/openai"
+export const RESET_EMAIL = "/api/auth/send-reset-email"
+export const RESET_PASSWORD = "/api/auth/new-password"
